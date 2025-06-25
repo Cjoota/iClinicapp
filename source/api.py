@@ -5,6 +5,9 @@ import subprocess
 import threading
 import os
 servidor_iniciado = False
+os.makedirs("temp",exist_ok=True)
+os.makedirs("documentos_gerados",exist_ok=True)
+os.makedirs("modelos_excel",exist_ok=True)
 def iniciar_servidor_fastapi():
     global servidor_iniciado
     if not servidor_iniciado:
@@ -14,14 +17,14 @@ def iniciar_servidor_fastapi():
         thread.start()
         servidor_iniciado = True
 app = FastAPI()
-app.mount("/files", StaticFiles(directory=rf"C:\Users\claud\OneDrive\Desktop\iClinica\temp"), name="files")
+app.mount("/files", StaticFiles(directory=rf"temp"), name="files")
 @app.get("/")
 def read_root():
     return {"message": "Servidor FastAPI rodando!"}
 @app.get("/pdf/{filename}")
 def get_pdf(filename: str):
     """Endpoint para servir arquivos PDF"""
-    file_path = rf"C:\Users\claud\OneDrive\Desktop\iClinica\temp\{filename}"
+    file_path = rf"temp\{filename}"
     if os.path.exists(file_path):
         return FileResponse(file_path, media_type="application/pdf")
     else:

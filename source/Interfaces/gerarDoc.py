@@ -80,7 +80,7 @@ class Gerardoc:
             )
             return ft.Row(
                 [
-                    self.sidebar.build(),
+                    ft.Column([self.sidebar.build()],alignment=ft.MainAxisAlignment.CENTER,horizontal_alignment=ft.CrossAxisAlignment.CENTER),
                     ft.Column([ft.Container(content=self.doccontent,width=self.page.width*0.90)],scroll=ft.ScrollMode.ADAPTIVE,
                                 width=self.page.width*0.90,adaptive=True,alignment=ft.MainAxisAlignment.START,horizontal_alignment=ft.CrossAxisAlignment.START)
                 ],
@@ -102,7 +102,7 @@ class Gerardoc:
         
         def carregar_modelos_excel(self):
             modelos = []
-            modelos_dir = Path(r"C:\Users\claud\OneDrive\Desktop\iClinica\modelos_excel")
+            modelos_dir = Path(r"modelos_excel")
                 
             if not modelos_dir.exists():
                  modelos_dir.mkdir()
@@ -228,7 +228,7 @@ class Gerardoc:
         
         def gerar_documento(self, e):
             def converter():
-                converter_xlsx_para_pdf(rf"C:\Users\claud\OneDrive\Desktop\iClinica\documentos_gerados\{nome_arquivo}",rf"C:\Users\claud\OneDrive\Desktop\iClinica\temp\{nome_arquivo.replace(".xlsx",".pdf")}")
+                converter_xlsx_para_pdf(rf"documentos_gerados\{nome_arquivo}",rf"temp\{nome_arquivo.replace(".xlsx",".pdf")}")
             nome = self.nomeclb.value or ""
             cpf = self.cpfclb.value or ""
             nascimento = self.datanascimentoclb.value or ""
@@ -247,7 +247,7 @@ class Gerardoc:
                 self.page.add(self.modal)
                 return
             for modelo in modelos_selecionados:
-                caminho_modelo = Path(r"C:\Users\claud\OneDrive\Desktop\iClinica\modelos_excel") / f"{modelo}.xlsx"
+                caminho_modelo = Path(r"modelos_excel") / f"{modelo}.xlsx"
                 print(modelo)
                 if not caminho_modelo.exists():
                     continue  
@@ -262,7 +262,7 @@ class Gerardoc:
                     ws["B7"] = empresa # type: ignore
                     ws["B8"] = dt.datetime.now().strftime("%d/%m/%Y") # type: ignore
                     ws["B9"] = cnpj[0][0] # type: ignore
-                    saida = Path(r"C:\Users\claud\OneDrive\Desktop\iClinica\documentos_gerados")
+                    saida = Path(r"documentos_gerados")
                     saida.mkdir(exist_ok=True)
                     nome_arquivo = f"{modelo}--{empresa.replace(' ', '_')}_{nome.replace(' ', '_')}_{dt.datetime.now().strftime('%Y-%m-%d_%H-%M')}.xlsx"
                     wb.save(saida / nome_arquivo)
@@ -280,7 +280,7 @@ class Gerardoc:
                     ws["B7"] = empresa # type: ignore
                     ws["B8"] = dt.datetime.now().strftime("%d/%m/%Y") # type: ignore
                     ws["B9"] = cnpj[0][0] # type: ignore
-                    saida = Path(r"C:\Users\claud\OneDrive\Desktop\iClinica\documentos_gerados")
+                    saida = Path(r"documentos_gerados")
                     saida.mkdir(exist_ok=True)
                     nome_arquivo = f"{modelo}--{empresa.replace(' ', '_')}_{nome.replace(' ', '_')}_{dt.datetime.now().strftime('%Y-%m-%d_%H-%M')}.xlsx"
                     wb.save(saida / nome_arquivo)
@@ -298,7 +298,7 @@ class Gerardoc:
                     ws["B7"] = empresa # type: ignore
                     ws["B8"] = dt.datetime.now().strftime("%d/%m/%Y") # type: ignore
                     ws["B9"] = cnpj[0][0] # type: ignore
-                    saida = Path(r"C:\Users\claud\OneDrive\Desktop\iClinica\documentos_gerados")
+                    saida = Path(r"documentos_gerados")
                     saida.mkdir(exist_ok=True)
                     nome_arquivo = f"{modelo}--{empresa.replace(' ', '_')}_{nome.replace(' ', '_')}_{dt.datetime.now().strftime('%Y-%m-%d_%H-%M')}.xlsx"
                     wb.save(saida / nome_arquivo)

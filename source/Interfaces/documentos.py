@@ -31,7 +31,7 @@ class Documentos:
             self.atualizar_lista()
             return ft.Row(
             [
-                self.sidebar.build(),
+                ft.Column([self.sidebar.build()],alignment=ft.MainAxisAlignment.CENTER,horizontal_alignment=ft.CrossAxisAlignment.CENTER),
                 ft.Column([ft.Container(content=self.doccontent,padding=10,width=self.page.width*0.88,)],scroll=ft.ScrollMode.ADAPTIVE,width=self.page.width*0.88,expand=True,adaptive=True,alignment=ft.MainAxisAlignment.CENTER,horizontal_alignment=ft.CrossAxisAlignment.CENTER)
             ],
             width=self.page.width,
@@ -39,11 +39,10 @@ class Documentos:
             )
         def documentosgerados(self)-> list:
             documents = []
-            documentosdir = Path(r"C:\Users\claud\OneDrive\Desktop\iClinica\documentos_gerados")
+            documentosdir = Path(r"documentos_gerados")
             if not documentosdir.exists():
                 documents.append(ft.ListTile(ft.Text("A Pasta de saída não existe!")))
                 return documents
-                
             else:
                 for doc in documentosdir.glob("*.xlsx"):
                     documents.append(doc.name.replace(".xlsx",""))

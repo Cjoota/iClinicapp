@@ -157,7 +157,7 @@ class Empresas:
             # PAGE CONSTRUCT
             return ft.Row(
                 [
-                    self.sidebar.build(),
+                    ft.Column([self.sidebar.build()],alignment=ft.MainAxisAlignment.CENTER,horizontal_alignment=ft.CrossAxisAlignment.CENTER),
                     ft.Column([ft.Container(content=self.empresascontent,padding=10,width=self.page.width*0.88,)],scroll=ft.ScrollMode.ADAPTIVE,
                             width=self.page.width*0.88,expand=True,adaptive=True,alignment=ft.MainAxisAlignment.CENTER,horizontal_alignment=ft.CrossAxisAlignment.CENTER)
                 ],

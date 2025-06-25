@@ -16,6 +16,7 @@ class Router:
         self.page.on_route_change = self.route_change
         self.page.go(self.page.route)
 
+            
     def route_change(self, route):
         self.page.views.clear()
         if route.route in self.routes:
@@ -35,7 +36,7 @@ class Router:
     def main_interface_view(self):
         from Interfaces.main_interface import Main_interface
         if self.page.client_storage.get("logado") != "sim":
-            self.page.go("/")
+            self.page.go("/login")
             return
         main_view = Main_interface(self.page)
         self.page.views.append(
@@ -43,7 +44,8 @@ class Router:
                 "/home",
                 [
                     main_view.build_view()
-                ]
+                    
+                ],scroll=ft.ScrollMode.ADAPTIVE
             )
         )
 
@@ -60,18 +62,33 @@ class Router:
 
     def contabilidade_view(self):
         from Interfaces.contab import ContabilidadePage
-        contab_view = ContabilidadePage(self.page)
-        self.page.views.append(
-            ft.View(
-                "/contabilidade",
-                [
-                    contab_view.build_view()
-                ]
+        if self.page.client_storage.get("logado") != "sim":
+            self.page.go("/login")
+            return
+        if self.page.client_storage.get("perm") == "all":
+            contab_view = ContabilidadePage(self.page)
+            self.page.views.append(
+                ft.View(
+                    "/contabilidade",
+                    [
+                        contab_view.build_view()
+                    ]
+                )
             )
-        )
-    
+        else:
+            self.page.views.append(
+                ft.View(
+                    "/contabilidade",
+                    [
+                        ft.Row([ft.Text("Sem Permissões para acessar!", scale=1.8)], alignment=ft.MainAxisAlignment.CENTER)
+                    ]
+                )
+            )
     def documentos_view(self):
         from Interfaces.documentos import Documentos
+        if self.page.client_storage.get("logado") != "sim":
+            self.page.go("/login")
+            return
         documentos_view = Documentos(self.page)
         self.page.views.append(
             ft.View(
@@ -83,6 +100,9 @@ class Router:
         )
     def empresas_view(self):
         from Interfaces.empresas import Empresas
+        if self.page.client_storage.get("logado") != "sim":
+            self.page.go("/login")
+            return
         Empresas_view = Empresas(self.page)
         self.page.views.append(
             ft.View(
@@ -94,6 +114,9 @@ class Router:
         )
     def gerardoc_view(self):
         from Interfaces.gerarDoc import Gerardoc
+        if self.page.client_storage.get("logado") != "sim":
+            self.page.go("/login")
+            return
         gerardoc_view = Gerardoc(self.page)
         self.page.views.append(
             ft.View(
