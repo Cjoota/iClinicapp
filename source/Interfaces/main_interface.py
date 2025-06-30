@@ -105,7 +105,7 @@ class Main_interface:
         self.card_contas_home = self.cardfloat(icon=ft.Icons.MONEY_OFF, title="A Pagar", value=locale.currency(contas, grouping=True),
                                   barra="Saida de caixa", iconbarra=ft.Icons.ARROW_DOWNWARD, corbarra=ft.Colors.RED, larg=None, color=ft.Colors.RED)
         for card in [self.card_diario_home, self.card_mensal_home, self.card_contas_home]:
-            card.col = {"xs": 4, "md": 2, "sm": 3}
+            card.col = {"xs": 4, "md": 2 if self.responsive.is_mobile() else 2.3, "sm": 3}
 
         return ft.ResponsiveRow(
             [
@@ -140,7 +140,7 @@ class Main_interface:
                     [
                         ft.Row([
                             ft.Text(title, color=ft.Colors.BLACK54),
-                            ft.Icon(icon, color=ft.Colors.PURPLE),
+                            ft.Icon(icon, color="#3D3D3D"),
                         ], alignment=ft.MainAxisAlignment.SPACE_BETWEEN),
                         text_widget,
                         ft.Row(
@@ -175,7 +175,7 @@ class Main_interface:
                     ], alignment=ft.MainAxisAlignment.CENTER, vertical_alignment=ft.CrossAxisAlignment.CENTER),
                     value
                 ], alignment=ft.MainAxisAlignment.CENTER, horizontal_alignment=ft.CrossAxisAlignment.CENTER),
-                padding=20,
+                padding=10,
                 width=larg,
                 height=alt,
                 bgcolor=ft.Colors.WHITE,
@@ -254,7 +254,6 @@ class Main_interface:
                         content=self.cardmain("Documentos Gerados", None ,None, self.tabct,True)
                     ),
                 ],alignment=ft.MainAxisAlignment.START, horizontal_alignment=ft.CrossAxisAlignment.START)
-            
         self.future = self.page.run_task(self.diccreate_force)
         self.future.add_done_callback(self.on_diccreate_done)
         self.page.run_task(self.clock)

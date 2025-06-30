@@ -72,7 +72,7 @@ class Router:
                     "/contabilidade",
                     [
                         contab_view.build_view()
-                    ]
+                    ],scroll=ft.ScrollMode.ADAPTIVE
                 )
             )
         else:

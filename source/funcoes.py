@@ -136,7 +136,7 @@ def vercontas() :
     try:
         dados = connectlocal("SELECT descricao,valor,vencimento, data_pagamento, status FROM contas_a_pagar")
         if dados == []:
-            return [("Não há contas","0,00","-","-","-")]
+            return [("-","0,00","-","-","-")]
         else: 
             return dados
     except Exception as e:
