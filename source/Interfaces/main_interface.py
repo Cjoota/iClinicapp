@@ -71,7 +71,7 @@ class Main_interface:
         self.empresastb = ft.Column([
             ft.Row([
                 ft.DataTable(
-                    heading_row_color="#DFFFD7",
+                    heading_row_color="#A1FB8B",
                     horizontal_lines=ft.BorderSide(1),
                     data_row_color=ft.Colors.WHITE,
                     divider_thickness=1,
@@ -171,7 +171,7 @@ class Main_interface:
             content=ft.Container(
                 content=ft.Column([
                     ft.Row([
-                        ft.Text(title, color=ft.Colors.BLACK54, weight=ft.FontWeight.BOLD, size=19),
+                        ft.Text(title, color=ft.Colors.BLACK54, weight=ft.FontWeight.BOLD, size=19,text_align=ft.TextAlign.CENTER),
                     ], alignment=ft.MainAxisAlignment.CENTER, vertical_alignment=ft.CrossAxisAlignment.CENTER),
                     value
                 ], alignment=ft.MainAxisAlignment.CENTER, horizontal_alignment=ft.CrossAxisAlignment.CENTER),

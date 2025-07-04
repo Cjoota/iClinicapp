@@ -9,9 +9,12 @@ dependencies = [
     "comtypes>=1.4.11",
     "dotenv>=0.9.9",
     "fastapi>=0.115.12",
-    "flet[all]==0.28.3",
+    "flet[all]>=0.28.3",
     "openpyxl>=3.1.5",
     "psycopg2-binary>=2.9.10",
     "pywin32>=310",
     "sqlalchemy>=2.0.41",
 ]
+
+[dependency-groups]
+dev = []

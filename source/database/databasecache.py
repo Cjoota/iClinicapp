@@ -72,8 +72,21 @@ class SmartCache:
 class ContabilidadeDB:
     
     def __init__(self, cache_config: Optional[CacheConfig] = None):
-        self.engine = None
-        self.async_session = None
+        _database_url = (
+                f"postgresql+asyncpg://{os.getenv('DB_USER')}:"
+                f"{os.getenv('DB_PASSWORD')}@{os.getenv('DB_HOST')}:"
+                f"{os.getenv('DB_PORT')}/{os.getenv('DB_NAME')}"
+            )
+        self.engine = create_async_engine(
+                _database_url, 
+                echo=False,
+                future=True
+            )
+        self.async_session = async_sessionmaker(
+            self.engine,
+            class_=AsyncSession,
+            expire_on_commit=False
+        )
         self.cache = SmartCache(cache_config or CacheConfig())
         self._initialized = False
         self._auto_refresh_task = None
@@ -81,19 +94,6 @@ class ContabilidadeDB:
     async def initialize(self) -> None:
 
         try:
-            database_url = (
-                f"postgresql+asyncpg://{os.getenv('DB_USER')}:"
-                f"{os.getenv('DB_PASSWORD')}@{os.getenv('DB_HOST')}:"
-                f"{os.getenv('DB_PORT')}/{os.getenv('DB_NAME')}"
-            )
-            
-            self.engine = create_async_engine(
-                database_url,
-                poolclass=NullPool,  
-                echo=False,
-                future=True
-            )
-            
             self.async_session = async_sessionmaker(
                 self.engine,
                 class_=AsyncSession,
@@ -117,6 +117,13 @@ class ContabilidadeDB:
             logger.error(f"Erro ao inicializar banco: {e}")
             raise
     
+
+    async def buscar_contas(self):
+        async with self.async_session() as session:
+            stmt = select(ContaAPagar)
+            result = await session.execute(stmt)
+            return result.scalars().all()
+
     async def _executar_diario(self, session: AsyncSession) -> Decimal:
 
         hoje = datetime.date.today()

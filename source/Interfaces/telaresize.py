@@ -30,6 +30,15 @@ class Responsive:
         self.width = page.width
         self.height = page.height
 
+    def atualizar_widgets(self,build_view):
+        self.page.views.clear()
+        self.page.views.append(
+            ft.View(
+                self.page.route,
+                [build_view]
+            )
+        )
+        self.page.go(self.page.route)
     def is_mobile(self):
         return self.width <= 480
 
@@ -38,6 +47,9 @@ class Responsive:
 
     def is_desktop(self):
         return self.width > 1337
+    
+    def is_shd(self):
+        return self.width <= 1337 and self.width >= 1335
 
     def content_width(self) -> float:
         if self.is_mobile():

@@ -10,6 +10,7 @@ class Sidebar:
         self.login = Login(page)
         self.page.on_window_event = self.fechar_app
         self.item_selecionado = self.page.route
+        self.avatar = None
         self.usuario = str(self.page.client_storage.get("nome_usuario")).capitalize().strip()
     async def fechar_app(self, e):
         if e.data == "close":
@@ -54,16 +55,16 @@ class Sidebar:
     def build(self):
         self.sidebar_items = [
             ft.Container(
-                content=ft.Row([ft.Image(src="logo.png",width=28, height=28),ft.Text("iClínicaApp", weight=ft.FontWeight.BOLD, size=20),],alignment=ft.MainAxisAlignment.START),
+                content=ft.Row([ft.Image(src="logo.png",height=60,width=60),],alignment=ft.MainAxisAlignment.CENTER,vertical_alignment=ft.CrossAxisAlignment.CENTER),
                 bgcolor=ft.Colors.WHITE,
-                margin=ft.Margin(left=20,right=0,top=10,bottom=0)
+                margin=ft.margin.only(top=5)
             ),
             
             ft.Container(
                 content=ft.Row([ft.Icon(ft.Icons.HOME_OUTLINED, color=ft.Colors.GREY_600), ft.Text("Home")]),
                 padding=7,
                 on_click=lambda _: self.page.go("/home"),
-                margin=ft.Margin(bottom=5, top=10, right=0, left=0),
+                margin=ft.Margin(bottom=0, top=10, right=0, left=0),
                 ink=True,
 
             ),
@@ -75,9 +76,9 @@ class Sidebar:
                 ink=True,
             ),
             ft.Container(
-                content=ft.Text("Empresarial", weight=ft.FontWeight.BOLD, size=16),
-                padding=1,
-                margin=ft.Margin(bottom=0, top=10, left=0, right=0),
+                content=ft.Row([ft.Text("Empresarial", weight=ft.FontWeight.BOLD, size=16)],alignment=ft.MainAxisAlignment.START),
+                padding=0,
+                margin=ft.Margin(bottom=0, top=10, left=5, right=0),
             ),
             ft.Container(
                 content=ft.Row([ft.Icon(ft.Icons.BUSINESS, color=ft.Colors.GREY_600), ft.Text("Empresas")]),
@@ -87,36 +88,24 @@ class Sidebar:
                 ink=True,
             ),
             ft.Container(
-                content=ft.Row([ft.Icon(ft.Icons.CREATE_ROUNDED, color=ft.Colors.GREY_600), ft.Text("Gerar Documento")]),
+                content=ft.Row([ft.Icon(ft.Icons.CREATE_ROUNDED, color=ft.Colors.GREY_600), ft.Text("Gerar exames")]),
                 padding=4,
                 on_click=lambda _: self.page.go("/gerardoc"), # Assuming a gerardoc route
                 margin=ft.Margin(bottom=5, top=0, right=0, left=0),
                 ink=True,
             ),
             ft.Container(
-                content=ft.Row([ft.Icon(ft.Icons.DESCRIPTION, color=ft.Colors.GREY_600), ft.Text("Documentos")]),
+                content=ft.Row([ft.Icon(ft.Icons.DESCRIPTION, color=ft.Colors.GREY_600), ft.Text("Exames gerados")]),
                 padding=4,
                 on_click=lambda _: self.page.go("/documentos"), # Assuming a documentos route
                 margin=ft.Margin(bottom=5, top=0, right=0, left=0),
                 ink=True,
             ),
+            
             ft.Container(
-                content=ft.Text("Ferramentas", weight=ft.FontWeight.BOLD, size=16),
-                padding=4,
-                margin=ft.Margin(bottom=0, top=10, left=0, right=0),
-            ),
-            ft.Container(
-                content=ft.Row([ft.Icon(ft.Icons.FILE_UPLOAD, color=ft.Colors.GREY_600), ft.Text("Converter Arquivo")]),
+                content=ft.Row([ft.Icon(ft.Icons.FILE_UPLOAD, color=ft.Colors.GREY_600), ft.Text("Exames prontos")]),
                 padding=4,
                 on_click=lambda _: print("Converter Arquivo clicked"),
-                margin=ft.Margin(bottom=5, top=0, right=0, left=0),
-                ink=True,
-                disabled=True
-            ),
-            ft.Container(
-                content=ft.Row([ft.Icon(ft.Icons.SCANNER, color=ft.Colors.GREY_600), ft.Text("Digitalizar")]),
-                padding=4,
-                on_click=lambda _: print("Digitalizar clicked"),
                 margin=ft.Margin(bottom=5, top=0, right=0, left=0),
                 ink=True,
                 disabled=True
@@ -146,33 +135,52 @@ class Sidebar:
             self.menu_item(ft.Icons.DESCRIPTION,"/documentos"),
             
         ]
-        
-        self.avatar = ft.Container(
-            content=ft.Column([
-                ft.Container(
-                    content=ft.Column([ft.Divider(thickness=1, color=ft.Colors.with_opacity(0.4, ft.Colors.GREY_400))],alignment=ft.MainAxisAlignment.CENTER,horizontal_alignment=ft.CrossAxisAlignment.CENTER),
-                    width=200,
-                    margin=ft.Margin(left=0,top=0,right=0,bottom=-10)
+        if not self.resize.is_shd():
+            self.avatar = ft.Container(
+                content=ft.Column([
+                    ft.Container(
+                        content=ft.Column([ft.Divider(thickness=1, color=ft.Colors.with_opacity(0.4, ft.Colors.GREY_400))],alignment=ft.MainAxisAlignment.CENTER,horizontal_alignment=ft.CrossAxisAlignment.CENTER),
+                        width=200,
+                        margin=ft.Margin(left=0,top=0,right=0,bottom=-10)
+                    ),
+                    ft.Row([
+                        ft.CircleAvatar(foreground_image_src="mano.png" if "o" in self.usuario else "female.png",radius=25,bgcolor="#83ff58"),
+                        ft.Text(f"{self.usuario}",color=ft.Colors.BLACK,weight=ft.FontWeight.BOLD,size=16)
+                    ],spacing=15),
+                    ft.Container(
+                        content=ft.Column([ft.Text("Administrador" if self.page.client_storage.get("perm") == "all" else "Funcionário",size=12,color='#26BD00')],alignment=ft.MainAxisAlignment.CENTER,horizontal_alignment=ft.CrossAxisAlignment.CENTER),
+                        margin=ft.Margin(bottom=0, top=-35, right=0, left=65),
+                    ),
+                    ft.Container(
+                    content=ft.Row([ft.Icon(ft.Icons.PERSON, color='#26BD00'), ft.Text("Logout",color='#26BD00')],alignment=ft.MainAxisAlignment.CENTER,vertical_alignment=ft.CrossAxisAlignment.CENTER),
+                    on_click=lambda _: self.logout(), # Assuming a login route
+                    margin=ft.Margin(bottom=0, top=-10, right=0, left=-10),
+                    ink=True,
+                    
                 ),
-                ft.Row([
-                    ft.CircleAvatar(foreground_image_src="mano.png" if "o" in self.usuario else "female.png",radius=35,bgcolor="#83ff58"),
-                    ft.Text(f"{self.usuario}",color=ft.Colors.BLACK,weight=ft.FontWeight.BOLD,size=16)
-                ],spacing=15),
-                ft.Container(
-                    content=ft.Column([ft.Text("Administrador" if self.page.client_storage.get("perm") == "all" else "Funcionário",size=12,color='#26BD00')],alignment=ft.MainAxisAlignment.CENTER,horizontal_alignment=ft.CrossAxisAlignment.CENTER),
-                    margin=ft.Margin(bottom=0, top=-50, right=0, left=81),
+                ]),
+                margin=ft.Margin(bottom=13, top=0, right=0, left=0)
+            )
+        else:
+            self.avatar = ft.Container(
+                content=ft.Column([
+                    ft.Row([
+                        ft.Text(f"{self.usuario}",color=ft.Colors.BLACK,weight=ft.FontWeight.BOLD,size=16)
+                    ],spacing=15),
+                    ft.Container(
+                        content=ft.Column([ft.Text("Administrador" if self.page.client_storage.get("perm") == "all" else "Funcionário",size=12,color='#26BD00')],alignment=ft.MainAxisAlignment.CENTER,horizontal_alignment=ft.CrossAxisAlignment.CENTER),
+                        margin=ft.Margin(bottom=0, top=-35, right=0, left=65),
+                    ),
+                    ft.Container(
+                    content=ft.Row([ft.Icon(ft.Icons.PERSON, color='#26BD00'), ft.Text("Logout",color='#26BD00')],alignment=ft.MainAxisAlignment.CENTER,vertical_alignment=ft.CrossAxisAlignment.CENTER),
+                    on_click=lambda _: self.logout(), # Assuming a login route
+                    margin=ft.Margin(bottom=0, top=-10, right=0, left=-10),
+                    ink=True,
+                    
                 ),
-                ft.Container(
-                content=ft.Row([ft.Icon(ft.Icons.PERSON, color='#26BD00'), ft.Text("Logout",color='#26BD00')],alignment=ft.MainAxisAlignment.CENTER,vertical_alignment=ft.CrossAxisAlignment.CENTER),
-                on_click=lambda _: self.logout(), # Assuming a login route
-                margin=ft.Margin(bottom=0, top=-10, right=0, left=-10),
-                ink=True,
-                width=200
-            ),
-            ]),
-            margin=ft.Margin(bottom=13, top=0, right=0, left=0)
-        )
-
+                ]),
+                margin=ft.Margin(bottom=13, top=0, right=0, left=0)
+            )
         if self.resize.is_desktop():
             return ft.Container(
                 content=ft.Column([ft.Column(self.sidebar_items, expand=True),self.avatar],alignment=ft.MainAxisAlignment.SPACE_BETWEEN, horizontal_alignment=ft.CrossAxisAlignment.START,expand=True),
@@ -180,7 +188,7 @@ class Sidebar:
                 border=ft.Border(right=ft.BorderSide(2, "#B9F4A9")),
                 border_radius=8,
                 height=self.page.height,
-                width=self.page.width * 0.11
+                width=self.page.width * 0.12
             )
         elif self.resize.is_mobile():
             return ft.Container(

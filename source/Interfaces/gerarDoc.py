@@ -3,97 +3,199 @@ from funcoes import (verempresa,puxardados,converter_xlsx_para_pdf)
 import flet as ft
 import datetime as dt
 from pathlib import Path
+from Interfaces.telaresize import Responsive
+from Interfaces.main_interface import Main_interface
+from Interfaces.sidebar import Sidebar
+
 class Gerardoc:
         def __init__(self,page:ft.Page) -> None:
             self.page = page
+            self.responsive = Responsive(self.page)
+            self.sidebar = Sidebar(self.page)
+            self.main = Main_interface(self.page)
             self.page.clean()
             self.modelos_excel = self.carregar_modelos_excel()
             self.empresas = verempresa()
+            self.dataselect = None
+            self.risks = []
+            self.page.on_resized = self.on_resize
+
+        def on_resize(self,e):
+            if self.page.route == "/gerardoc":
+                self.responsive = Responsive(self.page)
+                self.responsive.atualizar_widgets(self.build_view())
+
 
         def build_view(self):
-            from Interfaces.main_interface import Main_interface
-            from Interfaces.sidebar import Sidebar
-            self.sidebar = Sidebar(self.page)
-            self.main = Main_interface(self.page)
-            self.listview = ft.ListView(expand=True)
-            self.listviewtypes = ft.ListView(expand=True)
-            self.listviewexam = ft.ListView(expand=True)
-            self.atualizar_lista_modelos()
-            self.drop = ft.Dropdown(label="Empresas",autofocus=True,options=[],width=200)
-            self.carregardrop()
-            self.nomeclb = ft.TextField(label="Nome Completo",border_radius=16,width=300)
-            self.cpfclb = ft.TextField(label="CPF",border_radius=16,width=300)
-            self.datanascimentoclb = ft.TextField(label="Data de nascimento",border_radius=16,width=300)
-            self.funcaoclb = ft.TextField(label="Função",border_radius=16,width=300)
-            self.setorclb = ft.TextField(label="Setor",border_radius=16,width=300)
-            self.clbinterface =ft.Column([
-                    ft.Row([
-                        ft.Text("Insira os dados do colaborador")
-                    ],alignment=ft.MainAxisAlignment.CENTER,vertical_alignment=ft.CrossAxisAlignment.CENTER
-                    ),
-                    ft.Row([
-                        self.nomeclb,self.cpfclb
-                    ],alignment=ft.MainAxisAlignment.CENTER,vertical_alignment=ft.CrossAxisAlignment.CENTER
-                    ),
-                    ft.Row([
-                        self.datanascimentoclb
-                    ],alignment=ft.MainAxisAlignment.CENTER,vertical_alignment=ft.CrossAxisAlignment.CENTER
-                    ),
-                    ft.Row([
-                        self.setorclb,self.funcaoclb
-                    ],alignment=ft.MainAxisAlignment.CENTER,vertical_alignment=ft.CrossAxisAlignment.CENTER
-                    ),
-                    ft.Row([
-                        ft.TextButton(text="Gerar documento",icon=ft.Icons.SEND_AND_ARCHIVE,
-                                        style=ft.ButtonStyle(color=ft.Colors.BLACK,elevation=5,bgcolor=ft.Colors.LIGHT_GREEN_ACCENT,text_style=ft.TextStyle(weight=ft.FontWeight.W_400,color=ft.Colors.WHITE)),
-                                        icon_color=ft.Colors.BLACK45,width=150,on_click=self.gerar_documento),
-                        ft.TextButton(text="Limpar",icon=ft.Icons.SEND_AND_ARCHIVE,
-                                        style=ft.ButtonStyle(color=ft.Colors.BLACK,elevation=5,bgcolor=ft.Colors.LIGHT_GREEN_ACCENT,text_style=ft.TextStyle(weight=ft.FontWeight.W_400,color=ft.Colors.WHITE)),
-                                        icon_color=ft.Colors.BLACK45,on_click=lambda e: self.limpar(e),width=150)
-                    ],alignment=ft.MainAxisAlignment.CENTER,vertical_alignment=ft.CrossAxisAlignment.CENTER
-                    ),
-                ],alignment=ft.MainAxisAlignment.CENTER,horizontal_alignment=ft.CrossAxisAlignment.CENTER)
-            self.doccontent = ft.Container(
-                content=ft.Row([
-                    ft.Column([
-                        self.main.cardmain("Modelos de Exame",self.page.width*0.19,None,self.listview,False),
-                        self.main.cardmain("Tipos do exame",self.page.width*0.19,None,self.listviewtypes,True)
-                    ],alignment=ft.MainAxisAlignment.CENTER,horizontal_alignment=ft.CrossAxisAlignment.CENTER
-                    ),
-                    ft.Column([
+            if self.responsive.is_desktop():
+                self.listview = ft.ListView(expand=True)
+                self.listviewtypes = ft.ListView(expand=True)
+                self.listviewexam = ft.ListView(expand=True)
+                self.atualizar_lista_modelos()
+                self.drop = ft.Dropdown(label="Empresas",autofocus=True,options=[],width=200)
+                self.carregardrop()
+                self.date = ft.TextField(label="Data do exame",border_radius=16,width=140)
+                self.nomeclb = ft.TextField(label="Nome Completo",border_radius=16,width=250)
+                self.cpfclb = ft.TextField(label="CPF",border_radius=16,width=250)
+                self.datanascimentoclb = ft.TextField(label="Data de nascimento",border_radius=16,width=250)
+                self.funcaoclb = ft.TextField(label="Função",border_radius=16,width=250)
+                self.setorclb = ft.TextField(label="Setor",border_radius=16,width=250)
+                self.clbinterface =ft.Column([
                         ft.Row([
-                            ft.Icon(ft.Icons.EDIT, color=ft.Colors.GREY_700),
-                            ft.Text("Gerar documento", size=30),
-                        ]
+                            ft.Text("Insira os dados do colaborador")
+                        ],alignment=ft.MainAxisAlignment.CENTER,vertical_alignment=ft.CrossAxisAlignment.CENTER
                         ),
-                        self.main.cardmain("Contratante".upper(),self.page.width*0.25,None,self.drop,False),
-                        self.main.cardmain("Colaborador".upper(),None,None,self.clbinterface,False)
-                    ],alignment=ft.MainAxisAlignment.CENTER,horizontal_alignment=ft.CrossAxisAlignment.CENTER
-                    ),
-                    ft.Column([
-                        self.main.cardmain("Exames a elencar",self.page.width*0.20,None,self.listviewexam,False)
-                    ],alignment=ft.MainAxisAlignment.CENTER,horizontal_alignment=ft.CrossAxisAlignment.CENTER
-                    ),
-                    
-                    
-                ],alignment=ft.MainAxisAlignment.START,vertical_alignment=ft.CrossAxisAlignment.CENTER,spacing=35)
-            )
-            return ft.Row(
-                [
-                    ft.Column([self.sidebar.build()],alignment=ft.MainAxisAlignment.CENTER,horizontal_alignment=ft.CrossAxisAlignment.CENTER),
-                    ft.Column([ft.Container(content=self.doccontent,width=self.page.width*0.90)],scroll=ft.ScrollMode.ADAPTIVE,
-                                width=self.page.width*0.90,adaptive=True,alignment=ft.MainAxisAlignment.START,horizontal_alignment=ft.CrossAxisAlignment.START)
-                ],
-                width=self.page.width,
-                height=self.page.height,
-            )
+                        ft.Row([
+                            self.nomeclb,self.cpfclb
+                        ],alignment=ft.MainAxisAlignment.CENTER,vertical_alignment=ft.CrossAxisAlignment.CENTER
+                        ),
+                        ft.Row([
+                            self.datanascimentoclb
+                        ],alignment=ft.MainAxisAlignment.CENTER,vertical_alignment=ft.CrossAxisAlignment.CENTER
+                        ),
+                        ft.Row([
+                            self.setorclb,self.funcaoclb
+                        ],alignment=ft.MainAxisAlignment.CENTER,vertical_alignment=ft.CrossAxisAlignment.CENTER
+                        ),
+                        ft.Row([
+                            ft.TextButton(text="Gerar documento",icon=ft.Icons.SEND_AND_ARCHIVE,
+                                            style=ft.ButtonStyle(color=ft.Colors.BLACK,elevation=5,bgcolor=ft.Colors.LIGHT_GREEN_ACCENT,text_style=ft.TextStyle(weight=ft.FontWeight.W_400,color=ft.Colors.WHITE)),
+                                            icon_color=ft.Colors.BLACK45,width=150,on_click=self.gerar_documento),
+                            ft.TextButton(text="Limpar",icon=ft.Icons.SEND_AND_ARCHIVE,
+                                            style=ft.ButtonStyle(color=ft.Colors.BLACK,elevation=5,bgcolor=ft.Colors.LIGHT_GREEN_ACCENT,text_style=ft.TextStyle(weight=ft.FontWeight.W_400,color=ft.Colors.WHITE)),
+                                            icon_color=ft.Colors.BLACK45,on_click=lambda e: self.limpar(e),width=150)
+                        ],alignment=ft.MainAxisAlignment.CENTER,vertical_alignment=ft.CrossAxisAlignment.CENTER
+                        ),
+                    ],alignment=ft.MainAxisAlignment.CENTER,horizontal_alignment=ft.CrossAxisAlignment.CENTER)
+                self.checkdate = ft.Checkbox(label="Usar data de hoje",check_color=ft.Colors.BLACK,active_color="#74FE4E",on_change=lambda e: self.selectdate(e))
+                self.risk_selector = ft.ElevatedButton(text="Defina os Riscos",icon=ft.Icons.WARNING,icon_color=ft.Colors.YELLOW_800,color=ft.Colors.BLACK54,on_click=lambda e: self.risk_page(e))
+                self.dates = ft.Container(
+                    content=ft.Column([
+                        ft.Column([self.checkdate,self.date])
+                    ])
+                )
+                self.riscos = ft.Container(
+                    content=ft.Column([
+                        ft.Column([self.risk_selector])
+                    ])
+                )
+                self.doccontent = ft.Column([
+                    ft.Row([ft.Text("Gerar documento", size=30)],alignment=ft.MainAxisAlignment.CENTER,vertical_alignment=ft.CrossAxisAlignment.CENTER),
+                    ft.Container(
+                        content=ft.Row([
+                            ft.Column([
+                                self.main.cardmain("Modelos de Exame",self.page.width*0.19,None,self.listview,False),
+                                self.main.cardmain("Tipos do exame",self.page.width*0.19,None,self.listviewtypes,True)
+                            ],alignment=ft.MainAxisAlignment.CENTER,horizontal_alignment=ft.CrossAxisAlignment.CENTER
+                            ),
+                            ft.Column([
+                                ft.Row([self.main.cardmain("Riscos\nOcupacionais".upper(),None,None,self.riscos,True),
+                                        self.main.cardmain("Contratante".upper(),None,None,self.drop,True),
+                                        self.main.cardmain("Data a elencar".upper(),None,None,self.dates,True)],expand=True),
+                                self.main.cardmain("Colaborador".upper(),None,None,self.clbinterface,False)
+                            ],alignment=ft.MainAxisAlignment.CENTER,horizontal_alignment=ft.CrossAxisAlignment.CENTER
+                            ),
+                            ft.Column([
+                                self.main.cardmain("Exames a elencar",self.page.width*0.20,None,self.listviewexam,False)
+                            ],alignment=ft.MainAxisAlignment.CENTER,horizontal_alignment=ft.CrossAxisAlignment.CENTER
+                            ),
+                        ],alignment=ft.MainAxisAlignment.CENTER,vertical_alignment=ft.CrossAxisAlignment.CENTER,spacing=5),
+                        margin=ft.margin.only(top=-20)
+                )])
+                return ft.Row(
+                    [
+                        ft.Column([self.sidebar.build()],alignment=ft.MainAxisAlignment.START,horizontal_alignment=ft.CrossAxisAlignment.START),
+                        ft.Container(content=self.doccontent,expand=True,adaptive=True)
+                    ],
+                    width=self.page.width,
+                    height=self.page.height,
+
+                
+                )
+            elif self.responsive.is_tablet():
+                self.listview = ft.ListView(expand=True)
+                self.listviewtypes = ft.ListView(expand=True)
+                self.listviewexam = ft.ListView(expand=True)
+                self.atualizar_lista_modelos()
+                self.drop = ft.Dropdown(label="Empresas",autofocus=True,options=[],width=200)
+                self.carregardrop()
+                self.nomeclb = ft.TextField(label="Nome Completo",border_radius=16,width=300)
+                self.cpfclb = ft.TextField(label="CPF",border_radius=16,width=300)
+                self.datanascimentoclb = ft.TextField(label="Data de nascimento",border_radius=16,width=300)
+                self.funcaoclb = ft.TextField(label="Função",border_radius=16,width=300)
+                self.setorclb = ft.TextField(label="Setor",border_radius=16,width=300)
+                self.clbinterface =ft.Column([
+                        ft.Row([
+                            ft.Text("Insira os dados do colaborador")
+                        ],alignment=ft.MainAxisAlignment.CENTER,vertical_alignment=ft.CrossAxisAlignment.CENTER
+                        ),
+                        ft.Row([
+                            self.nomeclb,self.cpfclb
+                        ],alignment=ft.MainAxisAlignment.CENTER,vertical_alignment=ft.CrossAxisAlignment.CENTER
+                        ),
+                        ft.Row([
+                            self.datanascimentoclb
+                        ],alignment=ft.MainAxisAlignment.CENTER,vertical_alignment=ft.CrossAxisAlignment.CENTER
+                        ),
+                        ft.Row([
+                            self.setorclb,self.funcaoclb
+                        ],alignment=ft.MainAxisAlignment.CENTER,vertical_alignment=ft.CrossAxisAlignment.CENTER
+                        ),
+                        ft.Row([
+                            ft.TextButton(text="Gerar documento",icon=ft.Icons.SEND_AND_ARCHIVE,
+                                            style=ft.ButtonStyle(color=ft.Colors.BLACK,elevation=5,bgcolor=ft.Colors.LIGHT_GREEN_ACCENT,text_style=ft.TextStyle(weight=ft.FontWeight.W_400,color=ft.Colors.WHITE)),
+                                            icon_color=ft.Colors.BLACK45,width=150,on_click=self.gerar_documento),
+                            ft.TextButton(text="Limpar",icon=ft.Icons.SEND_AND_ARCHIVE,
+                                            style=ft.ButtonStyle(color=ft.Colors.BLACK,elevation=5,bgcolor=ft.Colors.LIGHT_GREEN_ACCENT,text_style=ft.TextStyle(weight=ft.FontWeight.W_400,color=ft.Colors.WHITE)),
+                                            icon_color=ft.Colors.BLACK45,on_click=lambda e: self.limpar(e),width=150)
+                        ],alignment=ft.MainAxisAlignment.CENTER,vertical_alignment=ft.CrossAxisAlignment.CENTER
+                        ),
+                    ],alignment=ft.MainAxisAlignment.CENTER,horizontal_alignment=ft.CrossAxisAlignment.CENTER)
+                self.doccontent = ft.Column([
+                    ft.Row([ft.Text("Gerar documento", size=30)],alignment=ft.MainAxisAlignment.CENTER,vertical_alignment=ft.CrossAxisAlignment.CENTER),
+                    ft.Container(
+                        content=ft.Row([
+                            ft.Column([
+                                self.main.cardmain("Modelos de Exame",self.page.width*0.19,None,self.listview,False),
+                                self.main.cardmain("Tipos do exame",self.page.width*0.19,None,self.listviewtypes,True)
+                            ],alignment=ft.MainAxisAlignment.START,horizontal_alignment=ft.CrossAxisAlignment.CENTER
+                            ),
+                            ft.Column([
+                                self.main.cardmain("Contratante".upper(),self.page.width*0.25,None,self.drop,False),
+                                self.main.cardmain("Colaborador".upper(),None,None,self.clbinterface,False)
+                            ],alignment=ft.MainAxisAlignment.CENTER,horizontal_alignment=ft.CrossAxisAlignment.CENTER
+                            ),
+                            ft.Column([
+                                self.main.cardmain("Exames a elencar",self.page.width*0.20,None,self.listviewexam,False)
+                            ],alignment=ft.MainAxisAlignment.CENTER,horizontal_alignment=ft.CrossAxisAlignment.CENTER
+                            ),
+                        ],alignment=ft.MainAxisAlignment.CENTER,vertical_alignment=ft.CrossAxisAlignment.CENTER,spacing=35)
+                )])
+                return ft.Column(
+                    [
+                        ft.Row([self.sidebar.build()],alignment=ft.MainAxisAlignment.START,vertical_alignment=ft.CrossAxisAlignment.START),
+                        ft.Container(content=self.doccontent,expand=True,adaptive=True)
+                    ],
+                    width=self.page.width,
+                    height=self.page.height,
+                    scroll=ft.ScrollMode.ADAPTIVE
+                )
+            elif self.responsive.is_mobile():
+                return ft.Column(
+                    [
+                        ft.Row([self.sidebar.build()],alignment=ft.MainAxisAlignment.START,vertical_alignment=ft.CrossAxisAlignment.START),
+                        ft.Container(content=ft.Text("Uso não permitido",size=35),expand=True)
+                    ],
+                    width=self.page.width,
+                    height=self.page.height
+                )
         
         def limpar(self,e):
-            self.nomeclb.value = None
-            self.datanascimentoclb.value = None
-            self.cpfclb.value = None
-            self.setorclb.value = None
-            self.funcaoclb.value = None
+            self.nomeclb.value = ""
+            self.datanascimentoclb.value = ""
+            self.cpfclb.value = ""
+            self.setorclb.value = ""
+            self.funcaoclb.value = ""
             self.nomeclb.update()
             self.datanascimentoclb.update()
             self.cpfclb.update()
@@ -125,14 +227,17 @@ class Gerardoc:
                 "HEMOGRAMA",
                 "PARASITOLOGICO",
                 "ELETROCARDIOGRAMA",
+                "ELETROENCEFALOGRAMA",
                 "GLICEMIA",
                 "PSICOSSOCIAL",
                 "V.D.R.L",
                 "ESPIROMETRIA",
-                "RAIO-X", 
+                "RAIO-X (TORAX)",
+                "RAIO-X (LOMBO)",
+                "ACUIDADE VISUAL" 
             ]
             self.listview.controls.clear()
-            self.checkbox = ft.Checkbox(label=ft.Text("Gerar em todos os modelos"),on_change=self.selecionartodos,
+            self.checkbox = ft.Checkbox(label=ft.Text("Gerar em todos os modelos"),on_change=self.selecionar_todos,
                                         label_position=ft.LabelPosition.LEFT,check_color="#26BD00",active_color="#D3FACA")
             self.listview.controls.append(ft.Text("Modelos disponiveis: ",text_align=ft.TextAlign.START))
             self.listviewtypes.controls.append(ft.Text("Qual tipo do documento: ",text_align=ft.TextAlign.START))
@@ -202,13 +307,141 @@ class Gerardoc:
                 e.control.selected = True
             self.page.update()           
         
-        async def selecionartodos(self,e):
+        async def selecionar_todos(self,e):
             selecionar_todos = e.control.value
                 # Aplica a seleção a todos os ListTiles
             for control in self.listview.controls:
                 if isinstance(control, ft.ListTile):
                     control.selected = selecionar_todos       
         
+        async def selecionar_exames(self, e):
+            e.control.selected = not getattr(e.control, 'selected', False)
+            self.page.update()
+        
+        def risk_page(self,e):
+            def close(e):
+                self.page.close(modal)
+            def catch_risk(e):
+                if not e.control.data in self.risks:
+                    self.risks.append(e.control.data)
+                if e.control.value is False:
+                    self.risks.remove(e.control.data)
+                print(self.risks)
+            def criar_risco(risco):
+                rsk = ft.Checkbox(label=risco,data=risco,on_change=catch_risk)
+                return rsk
+            riscos_fisicos = [
+                "Calor",
+                "Frio",
+                "Radiações-ION",
+                "Radiações-Não-ION",
+                "Ruidos",
+                "Vibrações",
+                "Outros"
+            ]
+            riscos_quimicos = [
+                "Fumos Metálicos",
+                "Gases",
+                "Hidrocarbonetos",
+                "Neblinas",
+                "Produtos Tóxicos",
+                "Névoas",
+                "Solventes",
+                "Vapores Orgânicos",
+                "Poeiras Minerais",
+                "Outros"]
+            riscos_biologicos = [
+                "Bactérias",
+                "Fungos",
+                "Párasitas",
+                "Vírus",
+                "Bacilos",
+                "Protozoarios",
+                "Micoses",
+                "Outros"]
+            riscos_ergonomicos = [
+                "Esforço Fisícos",
+                "Levantamento de carga",
+                "Impacto de Objetos",
+                "Movimento Repetitivo",
+                "Trabalho em Turno",
+                "Postura Inadequada",
+                "Objetos Perfurocortantes",
+                "Deslocamento em Ambiente Industrial",
+                "Outros"]
+            modal = ft.AlertDialog(
+                modal=True,
+                bgcolor="#FFFFFF",
+                title="Riscos Ocupacionais",
+                actions=[ft.ElevatedButton("Enviar",on_click=close)],
+                content=ft.Column(
+                    [
+                        ft.Text("Selecione os Riscos Ocupacionais: "),
+                        ft.Row([
+                            ft.Column([
+                                ft.Text("FISÍCOS",weight=ft.FontWeight.BOLD,size=20),
+                                criar_risco(riscos_fisicos[0]),
+                                criar_risco(riscos_fisicos[1]),
+                                criar_risco(riscos_fisicos[2]),
+                                criar_risco(riscos_fisicos[3]),
+                                criar_risco(riscos_fisicos[4]),
+                                criar_risco(riscos_fisicos[5]),
+                                criar_risco(riscos_fisicos[6]),
+                                ],alignment=ft.MainAxisAlignment.CENTER,horizontal_alignment=ft.CrossAxisAlignment.START),
+                            ft.Column([
+                                ft.Text("QUÍMICOS",weight=ft.FontWeight.BOLD,size=20),
+                                criar_risco(riscos_quimicos[0]),
+                                criar_risco(riscos_quimicos[1]),
+                                criar_risco(riscos_quimicos[2]),
+                                criar_risco(riscos_quimicos[3]),
+                                criar_risco(riscos_quimicos[4]),
+                                criar_risco(riscos_quimicos[5]),
+                                criar_risco(riscos_quimicos[6]),
+                                criar_risco(riscos_quimicos[7]),
+                                criar_risco(riscos_quimicos[8]),
+                                criar_risco(riscos_quimicos[9]),
+
+                            ],horizontal_alignment=ft.CrossAxisAlignment.START),
+                            ft.Column([
+                                ft.Text("BIOLÓGICOS",weight=ft.FontWeight.BOLD,size=20),
+                                criar_risco(riscos_biologicos[0]),
+                                criar_risco(riscos_biologicos[1]),
+                                criar_risco(riscos_biologicos[2]),
+                                criar_risco(riscos_biologicos[3]),
+                                criar_risco(riscos_biologicos[4]),
+                                criar_risco(riscos_biologicos[5]),
+                                criar_risco(riscos_biologicos[6]),
+                                criar_risco(riscos_biologicos[7]),
+                            ],horizontal_alignment=ft.CrossAxisAlignment.START),
+                            ft.Column([
+                                ft.Text("ERGONÔMICOS",weight=ft.FontWeight.BOLD,size=20),
+                                criar_risco(riscos_ergonomicos[0]),
+                                criar_risco(riscos_ergonomicos[1]),
+                                criar_risco(riscos_ergonomicos[2]),
+                                criar_risco(riscos_ergonomicos[3]),
+                                criar_risco(riscos_ergonomicos[4]),
+                                criar_risco(riscos_ergonomicos[5]),
+                                criar_risco(riscos_ergonomicos[6]),
+                                criar_risco(riscos_ergonomicos[7]),
+                                criar_risco(riscos_ergonomicos[8]),
+                            ],horizontal_alignment=ft.CrossAxisAlignment.START),
+                        ],alignment=ft.MainAxisAlignment.CENTER,vertical_alignment=ft.CrossAxisAlignment.START,spacing=100)
+                        
+                    ],height=500,width=1100
+                ),
+            )
+            self.page.open(modal)
+
+        def selectdate(self, e):
+            if self.date.disabled == False:
+                self.date.disabled = True
+                self.date.update()
+                self.dataselect = dt.datetime.now().strftime("%d/%m/%Y")
+            else:
+                self.date.disabled = False
+                self.dataselect = None
+                self.date.update()
+
         def carregardrop(self):
             self.drop.options.clear() #type: ignore
             if self.empresas:
@@ -229,6 +462,8 @@ class Gerardoc:
         def gerar_documento(self, e):
             def converter():
                 converter_xlsx_para_pdf(rf"documentos_gerados\{nome_arquivo}",rf"temp\{nome_arquivo.replace(".xlsx",".pdf")}")
+            if not self.checkdate.value:
+                self.dataselect = self.date.value
             nome = self.nomeclb.value or ""
             cpf = self.cpfclb.value or ""
             nascimento = self.datanascimentoclb.value or ""
@@ -240,15 +475,23 @@ class Gerardoc:
                 control.title.value # type: ignore
                 for control in self.listview.controls 
                 if isinstance(control, ft.ListTile) and getattr(control, "selected", False)]
+            exames_selecionados = [
+                control.title.value # type: ignore
+                for control in self.listviewexam.controls 
+                if isinstance(control, ft.ListTile) and getattr(control, "selected", False)]
+            tipo_exame = [
+                control.title.value # type: ignore
+                for control in self.listviewtypes.controls 
+                if isinstance(control, ft.ListTile) and getattr(control, "selected", False)]
             if not modelos_selecionados:
                 self.modal = ft.SnackBar(content=ft.Text("Selecione pelo menos um modelo!"),bgcolor=ft.Colors.RED)
                 self.page.snack_bar = self.modal
                 self.modal.open = True
                 self.page.add(self.modal)
                 return
+            
             for modelo in modelos_selecionados:
                 caminho_modelo = Path(r"modelos_excel") / f"{modelo}.xlsx"
-                print(modelo)
                 if not caminho_modelo.exists():
                     continue  
                 if modelo == "ANAMNESE":
@@ -260,11 +503,12 @@ class Gerardoc:
                     ws["B5"] = funcao # type: ignore
                     ws["B6"] = setor # type: ignore
                     ws["B7"] = empresa # type: ignore
-                    ws["B8"] = dt.datetime.now().strftime("%d/%m/%Y") # type: ignore
+                    ws["B8"] = self.dataselect # type: ignore
                     ws["B9"] = cnpj[0][0] # type: ignore
+                    ws["B10"] = tipo_exame[0]
                     saida = Path(r"documentos_gerados")
                     saida.mkdir(exist_ok=True)
-                    nome_arquivo = f"{modelo}--{empresa.replace(' ', '_')}_{nome.replace(' ', '_')}_{dt.datetime.now().strftime('%Y-%m-%d_%H-%M')}.xlsx"
+                    nome_arquivo = f"{modelo}__{empresa.replace(' ', '_')}_{nome.replace(' ', '_')}_{dt.datetime.now().strftime('%Y-%m-%d_%H-%M')}.xlsx"
                     wb.save(saida / nome_arquivo)
                     self.show_loading(self.page,True)
                     converter()
@@ -278,11 +522,16 @@ class Gerardoc:
                     ws["B5"] = funcao # type: ignore
                     ws["B6"] = setor # type: ignore
                     ws["B7"] = empresa # type: ignore
-                    ws["B8"] = dt.datetime.now().strftime("%d/%m/%Y") # type: ignore
+                    ws["B8"] = self.dataselect # type: ignore
                     ws["B9"] = cnpj[0][0] # type: ignore
+                    for i, valor in enumerate(exames_selecionados):
+                        ws[f"B{10+i}"] = valor
+                    ws["B22"] = tipo_exame[0]
+                    for i, valor in enumerate(self.risks):
+                        ws[f"B{23+i}"] = valor
                     saida = Path(r"documentos_gerados")
                     saida.mkdir(exist_ok=True)
-                    nome_arquivo = f"{modelo}--{empresa.replace(' ', '_')}_{nome.replace(' ', '_')}_{dt.datetime.now().strftime('%Y-%m-%d_%H-%M')}.xlsx"
+                    nome_arquivo = f"{modelo}__{empresa.replace(' ', '_')}_{nome.replace(' ', '_')}_{dt.datetime.now().strftime('%Y-%m-%d_%H-%M')}.xlsx"
                     wb.save(saida / nome_arquivo)
                     self.show_loading(self.page,True)
                     converter()
@@ -296,11 +545,12 @@ class Gerardoc:
                     ws["B5"] = funcao # type: ignore
                     ws["B6"] = setor # type: ignore
                     ws["B7"] = empresa # type: ignore
-                    ws["B8"] = dt.datetime.now().strftime("%d/%m/%Y") # type: ignore
+                    ws["B8"] = self.dataselect # type: ignore
                     ws["B9"] = cnpj[0][0] # type: ignore
+                    ws["B10"] = tipo_exame[0]
                     saida = Path(r"documentos_gerados")
                     saida.mkdir(exist_ok=True)
-                    nome_arquivo = f"{modelo}--{empresa.replace(' ', '_')}_{nome.replace(' ', '_')}_{dt.datetime.now().strftime('%Y-%m-%d_%H-%M')}.xlsx"
+                    nome_arquivo = f"{modelo}__{empresa.replace(' ', '_')}_{nome.replace(' ', '_')}_{dt.datetime.now().strftime('%Y-%m-%d_%H-%M')}.xlsx"
                     wb.save(saida / nome_arquivo)
                     self.show_loading(self.page,True)
                     converter()
@@ -347,6 +597,3 @@ class Gerardoc:
                 else:
                     pass    
         
-        async def selecionar_exames(self, e):
-            e.control.selected = not getattr(e.control, 'selected', False)
-            self.page.update()

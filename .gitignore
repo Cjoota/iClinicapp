@@ -8,5 +8,7 @@ wheels/
 .env
 test.py
 # Virtual environments
-.venv
-.xlsx
+*.venv
+*.xlsx
+*.pdf
+*.vscode
