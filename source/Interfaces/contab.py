@@ -1,6 +1,6 @@
-from funcoes import (inserirdiario,vercontas,retirardiario)
+from funcoes import vercontas
 from decimal import Decimal
-from database.models import ContaAPagar
+from database.models import ContaAPagar,Caixa
 from database.databasecache import diccreate,ContabilidadeDB
 from Interfaces.main_interface import Main_interface
 import locale
@@ -10,26 +10,42 @@ from Interfaces.telaresize import Responsive
 
 class ContabilidadePage:
     def __init__(self, page: ft.Page):
+        locale.setlocale(locale.LC_ALL, 'pt_BR.UTF-8')
         self.page = page
         self.responsive = Responsive(self.page)
         self.sidebar = Sidebar(self.page)
         self.db = ContabilidadeDB()
-        locale.setlocale(locale.LC_ALL, 'pt_BR.UTF-8')
+        self.main_interface_instance = Main_interface(page)
         self.diario = 0.0
         self.mensal = 0.0
         self.contas = 0.0
         self.selected_chip = None
-        self.dados = vercontas()
-        self.main_interface_instance = Main_interface(page)
-        self.page.on_resized = self.on_resize
         self.data_conta = ""
+        self.dados = vercontas()
+        self.page.run_task(self.atualizar_cards)
+        self.page.on_resized = self.on_resize
+    
     def on_resize(self,e):
         if self.page.route == "/contabilidade":
             self.responsive = Responsive(self.page)
             self.responsive.atualizar_widgets(self.build_view())
     
+    async def atualizar_cards(self):
+        dados_novos = await diccreate(force_update=True)
+        self.diario = dados_novos['diario'] if dados_novos else 0.0
+        self.mensal = dados_novos['mensal'] if dados_novos else 0.0
+        self.contas = dados_novos['contas'] if dados_novos else 0.0
+        if self.cardcontainer.page is not None:
+            self.cardcontainer.content = self.buildcards(self.diario,self.mensal,self.contas)
+            self.cardcontainer.update()
+    async def atualizar_tabela(self): 
+        self.dados_tabela = await self.db.buscar_contas()
+        if self.tablecontent.page is not None:
+            self.tablecontent.content = self.buildtable(self.gerar_linhas(self.dados_tabela))
+            self.tablecontent.update()
+
     def build_view(self):
-        if self.responsive.is_desktop():
+        async def retirar_valores(e):
             async def atualizar_cards():
                 dados_novos = await diccreate(force_update=True)
                 self.diario = dados_novos['diario'] if dados_novos else 0.0
@@ -37,6 +53,49 @@ class ContabilidadePage:
                 self.contas = dados_novos['contas'] if dados_novos else 0.0
                 self.cardcontainer.content = self.buildcards(self.diario,self.mensal,self.contas)
                 self.cardcontainer.update()
+            saida = str(self.valoresRetiro.value).replace(",",".")
+            saida = Decimal(saida)
+            forma_pagamento = self.selected_chip.label.value if self.selected_chip else "Nenhuma"
+            motivoSaida = f"{self.motivo.value}, retirado via: {forma_pagamento}"
+            if saida and motivoSaida:
+                async with self.db.async_session() as session:
+                    _retiro_ = Caixa(valor=-saida,descricao=motivoSaida,type="Saída")
+                    session.add(_retiro_)
+                    await session.commit()
+                self.page.run_task(atualizar_cards)
+                self.valoresRetiro.value = ""
+                self.motivo.value = ""
+                self.valoresRetiro.update()
+                self.motivo.update()
+            else:
+                snack = ft.SnackBar(content=ft.Text("Preencha todos os campos"))
+                snack.open = True
+                self.page.open(snack)
+        async def registrar_pagamento(e):
+            async def atualizar_cards():
+                dados_novos = await diccreate(force_update=True)
+                self.diario = dados_novos['diario'] if dados_novos else 0.0
+                self.mensal = dados_novos['mensal'] if dados_novos else 0.0
+                self.contas = dados_novos['contas'] if dados_novos else 0.0
+                self.cardcontainer.content = self.buildcards(self.diario,self.mensal,self.contas)
+                self.cardcontainer.update()
+            entrada = str(self.valores.value).replace(",",".")
+            entrada = Decimal(entrada)
+            forma_pagamento = self.selected_chip.label.value if self.selected_chip else "Nenhuma"
+            servico = f"{self.servico.value}, Pago com: {forma_pagamento} "
+            if entrada and servico:
+                async with self.db.async_session() as session:
+                    __insert__ = Caixa(valor=entrada,descricao=servico)
+                    session.add(__insert__)
+                    await session.commit()
+                self.valores.value = ""
+                self.servico.value = ""
+                self.valores.update()
+                self.servico.update()
+                self.page.run_task(atualizar_cards)
+            else:
+                self.barra_aviso("Preencha todos os campos!","#FF0000")
+        if self.responsive.is_desktop():
             def selected(e: ft.ControlEvent):
                 self.clicked = e.control
                 if self.selected_chip and self.selected_chip != self.clicked:
@@ -44,52 +103,6 @@ class ContabilidadePage:
                 self.clicked.selected = True
                 self.selected_chip = self.clicked
                 self.page.update()
-            async def retirarpg(e):
-                def on_update_done(future):
-                    dadosapi = future.result()
-                    diario = dadosapi['diario'] if dadosapi else 0.0
-                    mensal = dadosapi['mensal'] if dadosapi else 0.0
-                    contas = dadosapi['contas'] if dadosapi else 0.0
-                    self.cardcontainer.content = self.buildcards(diario, mensal, contas)
-                    self.cardcontainer.update()
-                    self.page.update()
-                saida = str(self.valoresRetiro.value)
-                saida = saida.replace(",",".")
-                saida = Decimal(saida)
-                motivoSaida = self.motivo.value
-                forma_pagamento = self.selected_chip.label.value if self.selected_chip else "Nenhuma"
-                if saida and motivoSaida:
-                    retirardiario(saida, motivoSaida)
-                    future = self.page.run_task(diccreate_force)
-                    future.add_done_callback(on_update_done)
-                    self.valoresRetiro.value = ""
-                    self.motivo.value = ""
-                    self.valoresRetiro.update()
-                    self.motivo.update()
-                else:
-                    snack = ft.SnackBar(content=ft.Text("Preencha todos os campos"))
-                    snack.open = True
-                    self.page.open(snack)
-            async def registrarpg(e):
-                entrada = str(self.valores.value)
-                entrada = entrada.replace(",",".")
-                entrada = Decimal(entrada)
-                servico = self.servico.value
-                forma_pagamento = self.selected_chip.label.value if self.selected_chip else "Nenhuma"
-                if entrada and servico:
-                    inserirdiario(entrada, servico)
-                    dadosapi = await diccreate(force_update=True)
-                    self.diario = dadosapi['diario'] if dadosapi else 0.0
-                    self.mensal = dadosapi['mensal'] if dadosapi else 0.0
-                    self.contas = dadosapi['contas'] if dadosapi else 0.0
-                    self.cardcontainer.content = self.buildcards(self.diario, self.mensal, self.contas)
-                    self.cardcontainer.update()
-                    self.valores.value = ""
-                    self.servico.value = ""
-                    self.valores.update()
-                    self.servico.update()
-                else:
-                    pass
             self.valores = ft.TextField(label="Valor",prefix_text="R$",width=200, height=35, border_radius=10,
                                 input_filter=ft.InputFilter(regex_string=r'[0-9,.]*', replacement_string=""),
                                 keyboard_type=ft.KeyboardType.NUMBER,bgcolor=ft.Colors.WHITE,prefix_icon=ft.Icons.MONETIZATION_ON)
@@ -104,26 +117,10 @@ class ContabilidadePage:
                                 keyboard_type=ft.KeyboardType.NUMBER,bgcolor=ft.Colors.WHITE,prefix_icon=ft.Icons.MONETIZATION_ON)
             self.motivo = ft.TextField(label="Motivo e Quem",width=200, height=35, border_radius=10
                                 ,bgcolor=ft.Colors.WHITE,prefix_icon=ft.Icons.TEXT_SNIPPET)
-            self.linhas = [
-                    ft.DataRow(
-                        cells=[
-                            ft.DataCell(ft.Text(conta[0])),
-                            ft.DataCell(ft.Text(f"R${conta[1]}")),
-                            ft.DataCell(ft.Text(conta[2])),
-                            ft.DataCell(ft.Text(conta[3])),
-                            ft.DataCell(ft.Text(conta[4])),
-                            ft.DataCell(ft.IconButton(icon=ft.Icons.CHECK, icon_color=ft.Colors.BLACK,bgcolor=ft.Colors.GREEN_100)),
-                            ft.DataCell(ft.IconButton(icon=ft.Icons.DELETE, icon_color=ft.Colors.BLACK,bgcolor=ft.Colors.RED_100))
-
-                        ]
-                    ) for i, conta in enumerate(self.dados)
-                ]
             self.cardcontainer = ft.Container(
                 content=self.buildcards(self.diario,self.mensal,self.contas)
             )
-            self.tablecontent =ft.Container(
-                content=self.buildtable(self.linhas)
-            ) 
+            self.tablecontent = ft.Container(expand=True,border_radius=10) 
             self.caixainterface = ft.Column([
                 ft.Row([
                     self.valores,self.servico
@@ -140,7 +137,7 @@ class ContabilidadePage:
                 ],alignment=ft.MainAxisAlignment.CENTER,vertical_alignment=ft.CrossAxisAlignment.CENTER
                 ),
                 ft.Row([
-                    ft.TextButton(icon=ft.Icons.SEND,text="Registrar",style=ft.ButtonStyle(color=ft.Colors.BLACK),icon_color=ft.Colors.BLACK45,on_click=registrarpg)
+                    ft.TextButton(icon=ft.Icons.SEND,text="Registrar",style=ft.ButtonStyle(color=ft.Colors.BLACK),icon_color=ft.Colors.BLACK45,on_click=registrar_pagamento)
                 ],alignment=ft.MainAxisAlignment.CENTER,vertical_alignment=ft.CrossAxisAlignment.CENTER
                 ),
                 
@@ -160,7 +157,7 @@ class ContabilidadePage:
                 ],alignment=ft.MainAxisAlignment.CENTER,vertical_alignment=ft.CrossAxisAlignment.CENTER
                 ),
                 ft.Row([
-                    ft.TextButton(icon=ft.Icons.SEND,text="Registrar",style=ft.ButtonStyle(color=ft.Colors.BLACK),icon_color=ft.Colors.BLACK45,on_click=retirarpg)
+                    ft.TextButton(icon=ft.Icons.SEND,text="Registrar",style=ft.ButtonStyle(color=ft.Colors.BLACK),icon_color=ft.Colors.BLACK45,on_click=retirar_valores)
                 ],alignment=ft.MainAxisAlignment.CENTER,vertical_alignment=ft.CrossAxisAlignment.CENTER
                 ),
                 
@@ -186,7 +183,7 @@ class ContabilidadePage:
                         content=self.main_interface_instance.cardmain("Contabilidade de contas",None,None,self.tablecontent,True)
                     ),
             ],alignment=ft.MainAxisAlignment.START,horizontal_alignment=ft.CrossAxisAlignment.START)
-            self.page.run_task(atualizar_cards)
+            self.page.run_task(self.atualizar_tabela)
             return ft.Row(
                 [
                     ft.Column([self.sidebar.build()],alignment=ft.MainAxisAlignment.START,horizontal_alignment=ft.CrossAxisAlignment.START),
@@ -197,8 +194,6 @@ class ContabilidadePage:
                 alignment=ft.MainAxisAlignment.START,
             ) 
         elif self.responsive.is_tablet():
-            async def diccreate_force():
-                return await diccreate(force_update=True)
             def selected(e: ft.ControlEvent):
                 self.clicked = e.control
                 if self.selected_chip and self.selected_chip != self.clicked:
@@ -206,60 +201,6 @@ class ContabilidadePage:
                 self.clicked.selected = True
                 self.selected_chip = self.clicked
                 self.page.update()
-            def on_diccreate_done(future):
-                dadosapi = future.result()
-                self.diario = dadosapi['diario'] if dadosapi else 0.0
-                self.mensal = dadosapi['mensal'] if dadosapi else 0.0
-                self.contas = dadosapi['contas'] if dadosapi else 0.0
-                self.cardcontainer.content = self.buildcards(self.diario,self.mensal,self.contas)
-                self.cardcontainer.update()
-                self.page.update()
-            async def retirarpg(e):
-                def on_update_done(future):
-                    dadosapi = future.result()
-                    diario = dadosapi['diario'] if dadosapi else 0.0
-                    mensal = dadosapi['mensal'] if dadosapi else 0.0
-                    contas = dadosapi['contas'] if dadosapi else 0.0
-                    self.cardcontainer.content = self.buildcards(diario, mensal, contas)
-                    self.cardcontainer.update()
-                    self.page.update()
-                saida = str(self.valoresRetiro.value)
-                saida = saida.replace(",",".")
-                saida = Decimal(saida)
-                motivoSaida = self.motivo.value
-                forma_pagamento = self.selected_chip.label.value if self.selected_chip else "Nenhuma"
-                if saida and motivoSaida:
-                    retirardiario(saida, motivoSaida)
-                    future = self.page.run_task(diccreate_force)
-                    future.add_done_callback(on_update_done)
-                    self.valoresRetiro.value = ""
-                    self.motivo.value = ""
-                    self.valoresRetiro.update()
-                    self.motivo.update()
-                else:
-                    snack = ft.SnackBar(content=ft.Text("Preencha todos os campos"))
-                    snack.open = True
-                    self.page.open(snack)
-            async def registrarpg(e):
-                entrada = str(self.valores.value)
-                entrada = entrada.replace(",",".")
-                entrada = Decimal(entrada)
-                servico = self.servico.value
-                forma_pagamento = self.selected_chip.label.value if self.selected_chip else "Nenhuma"
-                if entrada and servico:
-                    inserirdiario(entrada, servico)
-                    dadosapi = await diccreate(force_update=True)
-                    self.diario = dadosapi['diario'] if dadosapi else 0.0
-                    self.mensal = dadosapi['mensal'] if dadosapi else 0.0
-                    self.contas = dadosapi['contas'] if dadosapi else 0.0
-                    self.cardcontainer.content = self.buildcards(self.diario, self.mensal, self.contas)
-                    self.cardcontainer.update()
-                    self.valores.value = ""
-                    self.servico.value = ""
-                    self.valores.update()
-                    self.servico.update()
-                else:
-                    pass
             self.valores = ft.TextField(label="Valor",prefix_text="R$",width=170, height=42, border_radius=10,
                                 input_filter=ft.InputFilter(regex_string=r'[0-9,.]*', replacement_string=""),
                                 keyboard_type=ft.KeyboardType.NUMBER,bgcolor=ft.Colors.WHITE,prefix_icon=ft.Icons.MONETIZATION_ON)
@@ -309,7 +250,7 @@ class ContabilidadePage:
                 ],alignment=ft.MainAxisAlignment.CENTER,vertical_alignment=ft.CrossAxisAlignment.CENTER
                 ),
                 ft.Row([
-                    ft.TextButton(icon=ft.Icons.SEND,text="Registrar",style=ft.ButtonStyle(color=ft.Colors.BLACK,bgcolor="#dcdcdc"),icon_color=ft.Colors.BLACK45,on_click=registrarpg)
+                    ft.TextButton(icon=ft.Icons.SEND,text="Registrar",style=ft.ButtonStyle(color=ft.Colors.BLACK,bgcolor="#dcdcdc"),icon_color=ft.Colors.BLACK45,on_click=registrar_pagamento)
                 ],alignment=ft.MainAxisAlignment.CENTER,vertical_alignment=ft.CrossAxisAlignment.CENTER
                 ),
                 
@@ -328,7 +269,7 @@ class ContabilidadePage:
                 ],alignment=ft.MainAxisAlignment.CENTER,vertical_alignment=ft.CrossAxisAlignment.CENTER
                 ),
                 ft.Row([
-                    ft.TextButton(icon=ft.Icons.SEND,text="Registrar",style=ft.ButtonStyle(color=ft.Colors.BLACK,bgcolor="#dcdcdc"),icon_color=ft.Colors.BLACK45,on_click=retirarpg)
+                    ft.TextButton(icon=ft.Icons.SEND,text="Registrar",style=ft.ButtonStyle(color=ft.Colors.BLACK,bgcolor="#dcdcdc"),icon_color=ft.Colors.BLACK45,on_click=retirar_valores)
                 ],alignment=ft.MainAxisAlignment.CENTER,vertical_alignment=ft.CrossAxisAlignment.CENTER
                 ),
                 
@@ -354,8 +295,6 @@ class ContabilidadePage:
                         content=self.main_interface_instance.cardmain("Contabilidade de contas",None,None,self.tablecontent,True)
                     ),
             ],alignment=ft.MainAxisAlignment.START,horizontal_alignment=ft.CrossAxisAlignment.START)
-            future = self.page.run_task(diccreate_force)
-            future.add_done_callback(on_diccreate_done)
             return ft.Column(
                 [
                     ft.Column([self.sidebar.build()],alignment=ft.MainAxisAlignment.START,horizontal_alignment=ft.CrossAxisAlignment.START),
@@ -387,8 +326,6 @@ class ContabilidadePage:
                         ])
                 ])
                 return self.contasinterface
-            async def diccreate_force():
-                return await diccreate(force_update=True)
             def selected(e: ft.ControlEvent):
                 self.clicked = e.control
                 if self.selected_chip and self.selected_chip != self.clicked:
@@ -396,60 +333,6 @@ class ContabilidadePage:
                 self.clicked.selected = True
                 self.selected_chip = self.clicked
                 self.page.update()
-            def on_diccreate_done(future):
-                dadosapi = future.result()
-                self.diario = dadosapi['diario'] if dadosapi else 0.0
-                self.mensal = dadosapi['mensal'] if dadosapi else 0.0
-                self.contas = dadosapi['contas'] if dadosapi else 0.0
-                self.cardcontainer.content = self.buildcards(self.diario,self.mensal,self.contas)
-                self.cardcontainer.update()
-                self.page.update()
-            async def retirarpg(e):
-                def on_update_done(future):
-                    dadosapi = future.result()
-                    diario = dadosapi['diario'] if dadosapi else 0.0
-                    mensal = dadosapi['mensal'] if dadosapi else 0.0
-                    contas = dadosapi['contas'] if dadosapi else 0.0
-                    self.cardcontainer.content = self.buildcards(diario, mensal, contas)
-                    self.cardcontainer.update()
-                    self.page.update()
-                saida = str(self.valoresRetiro.value)
-                saida = saida.replace(",",".")
-                saida = Decimal(saida)
-                motivoSaida = self.motivo.value
-                forma_pagamento = self.selected_chip.label.value if self.selected_chip else "Nenhuma"
-                if saida and motivoSaida:
-                    retirardiario(saida, motivoSaida)
-                    future = self.page.run_task(diccreate_force)
-                    future.add_done_callback(on_update_done)
-                    self.valoresRetiro.value = ""
-                    self.motivo.value = ""
-                    self.valoresRetiro.update()
-                    self.motivo.update()
-                else:
-                    snack = ft.SnackBar(content=ft.Text("Preencha todos os campos"))
-                    snack.open = True
-                    self.page.open(snack)
-            async def registrarpg(e):
-                entrada = str(self.valores.value)
-                entrada = entrada.replace(",",".")
-                entrada = Decimal(entrada)
-                servico = self.servico.value
-                forma_pagamento = self.selected_chip.label.value if self.selected_chip else "Nenhuma"
-                if entrada and servico:
-                    inserirdiario(entrada, servico)
-                    dadosapi = await diccreate(force_update=True)
-                    self.diario = dadosapi['diario'] if dadosapi else 0.0
-                    self.mensal = dadosapi['mensal'] if dadosapi else 0.0
-                    self.contas = dadosapi['contas'] if dadosapi else 0.0
-                    self.cardcontainer.content = self.buildcards(self.diario, self.mensal, self.contas)
-                    self.cardcontainer.update()
-                    self.valores.value = ""
-                    self.servico.value = ""
-                    self.valores.update()
-                    self.servico.update()
-                else:
-                    pass
             self.valores = ft.TextField(label="Valor",prefix_text="R$",width=170, height=42, border_radius=10,
                                 input_filter=ft.InputFilter(regex_string=r'[0-9,.]*', replacement_string=""),
                                 keyboard_type=ft.KeyboardType.NUMBER,bgcolor=ft.Colors.WHITE,prefix_icon=ft.Icons.MONETIZATION_ON)
@@ -496,7 +379,7 @@ class ContabilidadePage:
                 ],alignment=ft.MainAxisAlignment.CENTER,vertical_alignment=ft.CrossAxisAlignment.CENTER
                 ),
                 ft.Row([
-                    ft.TextButton(icon=ft.Icons.SEND,text="Registrar",style=ft.ButtonStyle(color=ft.Colors.BLACK,bgcolor="#dcdcdc"),icon_color=ft.Colors.BLACK45,on_click=registrarpg)
+                    ft.TextButton(icon=ft.Icons.SEND,text="Registrar",style=ft.ButtonStyle(color=ft.Colors.BLACK,bgcolor="#dcdcdc"),icon_color=ft.Colors.BLACK45,on_click=registrar_pagamento)
                 ],alignment=ft.MainAxisAlignment.CENTER,vertical_alignment=ft.CrossAxisAlignment.CENTER
                 ),
                 
@@ -515,7 +398,7 @@ class ContabilidadePage:
                 ],alignment=ft.MainAxisAlignment.CENTER,vertical_alignment=ft.CrossAxisAlignment.CENTER
                 ),
                 ft.Row([
-                    ft.TextButton(icon=ft.Icons.SEND,text="Registrar",style=ft.ButtonStyle(color=ft.Colors.BLACK,bgcolor="#dcdcdc"),icon_color=ft.Colors.BLACK45,on_click=retirarpg)
+                    ft.TextButton(icon=ft.Icons.SEND,text="Registrar",style=ft.ButtonStyle(color=ft.Colors.BLACK,bgcolor="#dcdcdc"),icon_color=ft.Colors.BLACK45,on_click=retirar_valores)
                 ],alignment=ft.MainAxisAlignment.CENTER,vertical_alignment=ft.CrossAxisAlignment.CENTER
                 ),
                 
@@ -541,8 +424,6 @@ class ContabilidadePage:
                         content=self.main_interface_instance.cardmain("Contabilidade de contas",None,None,self.tablecontent,True)
                     ),
             ],alignment=ft.MainAxisAlignment.START,horizontal_alignment=ft.CrossAxisAlignment.START)
-            future = self.page.run_task(diccreate_force)
-            future.add_done_callback(on_diccreate_done)
             return ft.Column(
                 [
                     ft.Column([self.sidebar.build()],alignment=ft.MainAxisAlignment.START,horizontal_alignment=ft.CrossAxisAlignment.START),
@@ -583,35 +464,20 @@ class ContabilidadePage:
         )
         self.page.open(snack_bar)
 
-
+    async def deletar_conta(self,idx):
+        for i,conta in enumerate(self.dados_tabela):
+            if idx==i:
+                await self.db.deletar_contas(conta.descricao)
+        await self.atualizar_tabela()
+        dados_novos = await diccreate(force_update=True)
+        self.diario_ = dados_novos['diario'] if dados_novos else 0.0
+        self.mensal_ = dados_novos['mensal'] if dados_novos else 0.0
+        self.contas_ = dados_novos['contas'] if dados_novos else 0.0
+        self.cardcontainer.content = self.buildcards(self.diario_,self.mensal_,self.contas_)
+        self.cardcontainer.update()
+        
     def registrar_conta(self,e):
         import datetime
-        async def atualizar_cards():
-            dados_novos = await diccreate(force_update=True)
-            self.diario = dados_novos['diario'] if dados_novos else 0.0
-            self.mensal = dados_novos['mensal'] if dados_novos else 0.0
-            self.contas = dados_novos['contas'] if dados_novos else 0.0
-            self.cardcontainer.content = self.buildcards(self.diario,self.mensal,self.contas)
-            self.cardcontainer.update()
-
-        async def atualizar_tabela():
-            dados_tabela = await self.db.buscar_contas()
-            linhas = [
-                    ft.DataRow(
-                        cells=[
-                            ft.DataCell(ft.Text(conta.descricao)),
-                            ft.DataCell(ft.Text(f"R${conta.valor}")),
-                            ft.DataCell(ft.Text(conta.vencimento)),
-                            ft.DataCell(ft.Text(conta.data_pagamento)),
-                            ft.DataCell(ft.Text(conta.status)),
-                            ft.DataCell(ft.IconButton(icon=ft.Icons.CHECK, icon_color=ft.Colors.BLACK,bgcolor=ft.Colors.GREEN_100)),
-                            ft.DataCell(ft.IconButton(icon=ft.Icons.DELETE, icon_color=ft.Colors.BLACK,bgcolor=ft.Colors.RED_100))
-                        ]
-                    ) for i, conta in enumerate(dados_tabela)
-                ]
-            self.tablecontent.content = self.buildtable(linhas)
-            self.tablecontent.update()
-            
         def date_picker(e):
             self.data_conta = date.value.strftime("%d/%m/%Y")
             visualizer.label = "Vencimento"
@@ -630,12 +496,15 @@ class ContabilidadePage:
                 session.add(_insrt_)
                 await session.commit()   
             self.barra_aviso("Conta Registrada","#00FF15")
-            self.page.run_task(atualizar_cards)
-            self.page.run_task(atualizar_tabela)
-            
-
-
-                    
+            self.page.run_task(self.atualizar_tabela)
+            dados_novos = await diccreate(force_update=True)
+            self.diario_ = dados_novos['diario'] if dados_novos else 0.0
+            self.mensal_ = dados_novos['mensal'] if dados_novos else 0.0
+            self.contas_ = dados_novos['contas'] if dados_novos else 0.0
+            self.cardcontainer.content = self.buildcards(self.diario_,self.mensal_,self.contas_)
+            self.cardcontainer.update()
+        
+       
         date = ft.DatePicker(current_date=datetime.datetime.now(),on_change=lambda e: date_picker(e))
         self.descricao_conta = ft.TextField(label=ft.Text("Nome da conta"),border_radius=10,width=180,border_color=ft.Colors.RED)
         self.valor_conta = ft.TextField(label=ft.Text("Valor"),border_radius=10,width=180,border_color=ft.Colors.RED)
@@ -662,21 +531,21 @@ class ContabilidadePage:
             ],width=400,height=300)
         )
         self.page.open(modal)
+    
     def buildtable(self,linhas):
-        self.contasinterface = ft.Column([
+        return ft.Column([
             ft.Row([
                 ft.DataTable(
-                    column_spacing=40,
-                    border_radius=25,
+                    column_spacing=10,
+                    heading_row_color="#A1FB8B",
+                    border_radius=10,
                     expand=True,
                     columns=[
-                        ft.DataColumn(ft.Text("Conta"),heading_row_alignment=ft.MainAxisAlignment.CENTER),
-                        ft.DataColumn(ft.Text("Valor"),numeric=True),
-                        ft.DataColumn(ft.Text("Vencimento")),
-                        ft.DataColumn(ft.Text("Pagamento")),
-                        ft.DataColumn(ft.Text("Status")),
-                        ft.DataColumn(ft.Text("Ações")),
-                        ft.DataColumn(ft.Text("Ações")),
+                        ft.DataColumn(ft.Text("Conta",weight=ft.FontWeight.BOLD,size=15),heading_row_alignment=ft.MainAxisAlignment.START),
+                        ft.DataColumn(ft.Text("Valor",weight=ft.FontWeight.BOLD,size=15),numeric=True,heading_row_alignment=ft.MainAxisAlignment.CENTER),
+                        ft.DataColumn(ft.Text("Vencimento",weight=ft.FontWeight.BOLD,size=15),heading_row_alignment=ft.MainAxisAlignment.CENTER),
+                        ft.DataColumn(ft.Text("Status",weight=ft.FontWeight.BOLD,size=15),heading_row_alignment=ft.MainAxisAlignment.CENTER),
+                        ft.DataColumn(ft.Text("Ações",weight=ft.FontWeight.BOLD,size=15),heading_row_alignment=ft.MainAxisAlignment.CENTER),
                     ],
                     rows=linhas
                 )
@@ -686,27 +555,31 @@ class ContabilidadePage:
                                 icon_color=ft.Colors.BLACK45,on_click=lambda e: self.registrar_conta(e))
                 ])
         ])
-        return self.contasinterface
 
-    def gerar_linhas(self, dataatt):
-            return [
-                ft.DataRow(
-                    cells=[
-                        ft.DataCell(ft.Text(conta[0])),
-                        ft.DataCell(ft.Text(f"R${conta[1]}")),
-                        ft.DataCell(ft.Text(conta[2])),
-                        ft.DataCell(ft.Text(conta[3])),
-                        ft.DataCell(ft.Text(conta[4])),
-                        ft.DataCell(ft.IconButton(icon=ft.Icons.CHECK, icon_color=ft.Colors.BLACK, bgcolor=ft.Colors.GREEN_100)),
-                        ft.DataCell(
+    def gerar_linhas(self, data):
+        linhas = []
+        for i, conta in enumerate(data):
+            async def deletar():  
+                await self.deletar_conta(i)
+            row = ft.DataRow(
+                cells=[
+                    ft.DataCell(ft.Container(content=ft.Text(conta.descricao),alignment=ft.alignment.center_left)),
+                    ft.DataCell(ft.Container(content=ft.Text(f"R${conta.valor}"),alignment=ft.alignment.center)),
+                    ft.DataCell(ft.Container(content=ft.Text(conta.vencimento),alignment=ft.alignment.center)),
+                    ft.DataCell(ft.Container(content=ft.Text(conta.status),alignment=ft.alignment.center)),
+                    ft.DataCell(
+                        ft.Row([
                             ft.IconButton(
                                 icon=ft.Icons.DELETE,
                                 icon_color=ft.Colors.BLACK,
-                                bgcolor=ft.Colors.RED_100
+                                bgcolor=ft.Colors.RED_100,
+                                on_click=lambda e, fn=deletar: self.page.run_task(fn) 
                             )
-                        ),
-                    ]
-                ) for i, conta in enumerate(dataatt)
-            ]
+                        ],alignment=ft.MainAxisAlignment.CENTER)
+                    )
+                ]
+            )
+            linhas.append(row)
+        return linhas
 
-
+    

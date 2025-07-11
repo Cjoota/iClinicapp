@@ -15,8 +15,21 @@ class Router:
         }
         self.page.on_route_change = self.route_change
         self.page.go(self.page.route)
+        self.page.on_connect = self.auth
 
             
+
+    def auth(self):
+        if self.page.client_storage.contains_key("logado"):
+            if self.page.client_storage.get("logado") == "sim":
+                return
+            else:
+                self.page.go("/login")
+        elif not self.page.client_storage.contains_key("logado"):
+            self.go("/home")
+                
+
+
     def route_change(self, route):
         self.page.views.clear()
         if route.route in self.routes:
@@ -85,7 +98,7 @@ class Router:
                 )
             )
     def documentos_view(self):
-        from Interfaces.documentos import Documentos
+        from Interfaces.exames_prontos import Documentos
         if self.page.client_storage.get("logado") != "sim":
             self.page.go("/login")
             return

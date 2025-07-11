@@ -10,6 +10,9 @@ import datetime
 import locale
 import logging
 from database.datacreator import connectlocal,commitlocal
+from database.databasecache import ContabilidadeDB
+from database.models import CaixaDiario, CaixaMensal
+from sqlalchemy.sql import insert
 locale.setlocale(locale.LC_ALL, 'pt_BR.UTF-8')
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -164,17 +167,6 @@ def verempresa():
         print(e)
         return ["sem conexão","sem conexão","sem conexão","sem conexão"]
     
-def uptable():
-    hoje = datetime.datetime.now().strftime("%d")
-    if hoje == "01":
-        date = datetime.datetime.now().strftime(str("%Y-%m-%d"))
-        valores = connectlocal(f"SELECT valor FROM caixa_diario WHERE data='{date}' ")
-        commitlocal(f"INSERT INTO caixa_mensal (datarefence, descricao, valor) VALUES ('{date}','mensal','{valores[0][0]}')")
-        logging.info("Renda Mensal Disponível!")
-    else:
-        logging.info("O Mês não terminou!")
-        del hoje
-
 def excluiremp(cnpj):
     try:
         commitlocal(f"DELETE FROM empresas WHERE cnpj='{cnpj}'")
@@ -185,42 +177,65 @@ def puxardados(razao):
    dt = connectlocal(f"SELECT (cnpj) FROM empresas WHERE razao='{razao}'")
    return dt
 
-async def updiario():
-    try:
-        date = datetime.datetime.now().strftime(str("%Y-%m-%d"))
-        caixa = connectlocal(f"SELECT SUM(valor) FROM caixa WHERE data='{date}'")
-        commitlocal(f"INSERT INTO caixa_diario (data, descricao, valor) VALUES ('{date}','Fecha de caixa automático','{caixa[0][0]}')")
-        logging.info("Caixa Diario Registrado")
-    except psycopg2.DatabaseError as e:
-        logging.info(f"Erro inesperado no Banco de Dados!: {str(e)}")
-    except ValueError as v:
-        logging.info(f"Erro inesperado de VALORES: {str(v)}")
-    except Exception as ex:
-        logging.info(f"Erro INESPERADO: {str(ex)}")
-    finally:
-        del date
-async def verify():
-    executado_hoje = False
 
-    while True:
-        agora = datetime.datetime.now()
-        hora_atual = agora.time()
+class Verificacoes:
+    def __init__(self):
+        self.db = ContabilidadeDB()
+        self.executado_hoje = False
 
-        
-        if datetime.time(18, 0) <= hora_atual <= datetime.time(18, 1) and not executado_hoje:
-            logging.info(f"São 18h! Executando upload para DB... {agora}")
+    async def uptable(self):
+        hoje = datetime.datetime.now().strftime("%d")
+        if hoje == "01":
+            date = datetime.datetime.now()
+            valores = await self.db._executar_upmensal(self.db.async_session())
+            async with self.db.async_session() as session:
+                _isrt_ = insert(CaixaMensal).values(datarefence=datetime.datetime.date(date),descricao='Fecha de mensal automatico',valor=valores)
+                await session.execute(_isrt_)
+                await session.commit() 
+                await session.close()
+            logging.info("Renda Mensal Disponível!")
+        else:
+            logging.info("O Mês não terminou!")
+            del hoje
+            
+
+
+    async def updiario(self):
+        try:          
+            date = datetime.datetime.now()
+            caixa = await self.db._executar_diario(self.db.async_session())
+            async with self.db.async_session() as session:
+                _isrt_ = insert(CaixaDiario).values(data=datetime.datetime.date(date),descricao='Fecha de caixa automático',valor=caixa)
+                await session.execute(_isrt_)
+                await session.commit()
+                await session.close()
+            logging.info("Caixa Diario Registrado")
+        except Exception as e:
+            logging.info(f"Erro inesperado no Banco de Dados!: {str(e)}")
+        except ValueError as v:
+            logging.info(f"Erro inesperado de VALORES: {str(v)}")
+        except Exception as ex:
+            logging.info(f"Erro INESPERADO: {str(ex)}")
+        finally:
+            del date
+            del caixa
+            del _isrt_
+
+    async def verify(self):
+        while True:
+            agora = datetime.datetime.now()
+            hora_atual = agora.time()
 
             
-            await updiario()
+            if datetime.time(18, 0) <= hora_atual <= datetime.time(18, 1) and not self.executado_hoje:
+                logging.info(f"São 18h! Executando upload para DB... {agora}")
+                await self.updiario()
+                self.executado_hoje = True
 
-            executado_hoje = True
+            
 
-        
-        elif hora_atual < datetime.time(1, 0):  
-            executado_hoje = False
-
-        
-        await asyncio.sleep(30)
+            
+            await asyncio.sleep(30)
 
 def converter_xlsx_para_pdf(caminho_xlsx, caminho_pdf):
     excel = None

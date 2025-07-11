@@ -25,15 +25,14 @@ class Gerardoc:
                 self.responsive = Responsive(self.page)
                 self.responsive.atualizar_widgets(self.build_view())
 
-
         def build_view(self):
             if self.responsive.is_desktop():
                 self.listview = ft.ListView(expand=True)
                 self.listviewtypes = ft.ListView(expand=True)
                 self.listviewexam = ft.ListView(expand=True)
-                self.atualizar_lista_modelos()
+                self.checkbox = ft.Checkbox(label=ft.Text("Gerar em todos os modelos"),on_change=self.selecionar_todos,
+                                            label_position=ft.LabelPosition.LEFT,check_color="#26BD00",active_color="#D3FACA")
                 self.drop = ft.Dropdown(label="Empresas",autofocus=True,options=[],width=200)
-                self.carregardrop()
                 self.date = ft.TextField(label="Data do exame",border_radius=16,width=140)
                 self.nomeclb = ft.TextField(label="Nome Completo",border_radius=16,width=250)
                 self.cpfclb = ft.TextField(label="CPF",border_radius=16,width=250)
@@ -102,6 +101,12 @@ class Gerardoc:
                         ],alignment=ft.MainAxisAlignment.CENTER,vertical_alignment=ft.CrossAxisAlignment.CENTER,spacing=5),
                         margin=ft.margin.only(top=-20)
                 )])
+                self.listview.controls.append(ft.Text("Modelos disponiveis: ",text_align=ft.TextAlign.START))
+                self.listviewtypes.controls.append(ft.Text("Qual tipo do documento: ",text_align=ft.TextAlign.START))
+                self.listviewexam.controls.append(ft.Text("Quais exames elencar: ",text_align=ft.TextAlign.START))
+                self.listview.controls.append(self.checkbox)
+                self.page.run_task(self.atualizar_lista_modelos)
+                self.page.run_task(self.carregardrop)
                 return ft.Row(
                     [
                         ft.Column([self.sidebar.build()],alignment=ft.MainAxisAlignment.START,horizontal_alignment=ft.CrossAxisAlignment.START),
@@ -116,9 +121,10 @@ class Gerardoc:
                 self.listview = ft.ListView(expand=True)
                 self.listviewtypes = ft.ListView(expand=True)
                 self.listviewexam = ft.ListView(expand=True)
-                self.atualizar_lista_modelos()
+                self.checkbox = ft.Checkbox(label=ft.Text("Gerar em todos os modelos"),on_change=self.selecionar_todos,
+                                            label_position=ft.LabelPosition.LEFT,check_color="#26BD00",active_color="#D3FACA")
                 self.drop = ft.Dropdown(label="Empresas",autofocus=True,options=[],width=200)
-                self.carregardrop()
+                self.date = ft.TextField(label="Data do exame",border_radius=16,width=140)
                 self.nomeclb = ft.TextField(label="Nome Completo",border_radius=16,width=300)
                 self.cpfclb = ft.TextField(label="CPF",border_radius=16,width=300)
                 self.datanascimentoclb = ft.TextField(label="Data de nascimento",border_radius=16,width=300)
@@ -151,6 +157,18 @@ class Gerardoc:
                         ],alignment=ft.MainAxisAlignment.CENTER,vertical_alignment=ft.CrossAxisAlignment.CENTER
                         ),
                     ],alignment=ft.MainAxisAlignment.CENTER,horizontal_alignment=ft.CrossAxisAlignment.CENTER)
+                self.checkdate = ft.Checkbox(label="Usar data de hoje",check_color=ft.Colors.BLACK,active_color="#74FE4E",on_change=lambda e: self.selectdate(e))
+                self.risk_selector = ft.ElevatedButton(text="Defina os Riscos",icon=ft.Icons.WARNING,icon_color=ft.Colors.YELLOW_800,color=ft.Colors.BLACK54,on_click=lambda e: self.risk_page(e))
+                self.dates = ft.Container(
+                    content=ft.Column([
+                        ft.Column([self.checkdate,self.date])
+                    ])
+                )
+                self.riscos = ft.Container(
+                    content=ft.Column([
+                        ft.Column([self.risk_selector])
+                    ])
+                )
                 self.doccontent = ft.Column([
                     ft.Row([ft.Text("Gerar documento", size=30)],alignment=ft.MainAxisAlignment.CENTER,vertical_alignment=ft.CrossAxisAlignment.CENTER),
                     ft.Container(
@@ -161,7 +179,9 @@ class Gerardoc:
                             ],alignment=ft.MainAxisAlignment.START,horizontal_alignment=ft.CrossAxisAlignment.CENTER
                             ),
                             ft.Column([
-                                self.main.cardmain("Contratante".upper(),self.page.width*0.25,None,self.drop,False),
+                                ft.Row([self.main.cardmain("Riscos\nOcupacionais".upper(),None,None,self.riscos,True),
+                                        self.main.cardmain("Contratante".upper(),None,None,self.drop,True),
+                                        self.main.cardmain("Data a elencar".upper(),None,None,self.dates,True)],expand=True),
                                 self.main.cardmain("Colaborador".upper(),None,None,self.clbinterface,False)
                             ],alignment=ft.MainAxisAlignment.CENTER,horizontal_alignment=ft.CrossAxisAlignment.CENTER
                             ),
@@ -171,6 +191,12 @@ class Gerardoc:
                             ),
                         ],alignment=ft.MainAxisAlignment.CENTER,vertical_alignment=ft.CrossAxisAlignment.CENTER,spacing=35)
                 )])
+                self.listview.controls.append(ft.Text("Modelos disponiveis: ",text_align=ft.TextAlign.START))
+                self.listviewtypes.controls.append(ft.Text("Qual tipo do documento: ",text_align=ft.TextAlign.START))
+                self.listviewexam.controls.append(ft.Text("Quais exames elencar: ",text_align=ft.TextAlign.START))
+                self.listview.controls.append(self.checkbox)
+                self.page.run_task(self.atualizar_lista_modelos)
+                self.page.run_task(self.carregardrop)
                 return ft.Column(
                     [
                         ft.Row([self.sidebar.build()],alignment=ft.MainAxisAlignment.START,vertical_alignment=ft.CrossAxisAlignment.START),
@@ -213,7 +239,10 @@ class Gerardoc:
                 modelos.append(arquivo.name.replace(".xlsx",""))
             return modelos           
         
-        def atualizar_lista_modelos(self):
+        async def atualizar_lista_modelos(self):
+            self.listview.controls.clear()
+            self.listviewexam.controls.clear()
+            self.listviewtypes.controls.clear()
             self.types = [
                 "ADMISSIONAL",
                 "DEMISSIONAL" ,
@@ -236,12 +265,6 @@ class Gerardoc:
                 "RAIO-X (LOMBO)",
                 "ACUIDADE VISUAL" 
             ]
-            self.listview.controls.clear()
-            self.checkbox = ft.Checkbox(label=ft.Text("Gerar em todos os modelos"),on_change=self.selecionar_todos,
-                                        label_position=ft.LabelPosition.LEFT,check_color="#26BD00",active_color="#D3FACA")
-            self.listview.controls.append(ft.Text("Modelos disponiveis: ",text_align=ft.TextAlign.START))
-            self.listviewtypes.controls.append(ft.Text("Qual tipo do documento: ",text_align=ft.TextAlign.START))
-            self.listviewexam.controls.append(ft.Text("Quais exames elencar: ",text_align=ft.TextAlign.START))
             for modelo in self.modelos_excel:
                 self.listview.controls.append(
                     ft.ListTile(
@@ -288,8 +311,7 @@ class Gerardoc:
                         selected_tile_color=ft.Colors.with_opacity(0.2,ft.Colors.LIGHT_GREEN_ACCENT_100)
                     )
                 )
-            self.listview.controls.append(self.checkbox)            
-        
+
         async def selecionar_modelo(self, e):
             e.control.selected = not getattr(e.control, 'selected', False)
             tiles = [control for control in self.listview.controls if isinstance(control, ft.ListTile)]
@@ -318,6 +340,23 @@ class Gerardoc:
             e.control.selected = not getattr(e.control, 'selected', False)
             self.page.update()
         
+        async def carregardrop(self):
+            self.drop.options.clear() #type: ignore
+            if self.empresas:
+                for empresa in self.empresas:
+                    self.drop.options.append( #type: ignore
+                        ft.DropdownOption(
+                            text=f"{empresa[0]}",
+                        )
+                    )    
+            else:
+                self.drop.options.append( #type: ignore
+                    ft.DropdownOption(
+                        text=f"{"Nenhuma Empresa Cadastrada"}",
+                        disabled=True
+                    )
+                )            
+    
         def risk_page(self,e):
             def close(e):
                 self.page.close(modal)
@@ -326,7 +365,6 @@ class Gerardoc:
                     self.risks.append(e.control.data)
                 if e.control.value is False:
                     self.risks.remove(e.control.data)
-                print(self.risks)
             def criar_risco(risco):
                 rsk = ft.Checkbox(label=risco,data=risco,on_change=catch_risk)
                 return rsk
@@ -353,7 +391,7 @@ class Gerardoc:
             riscos_biologicos = [
                 "Bactérias",
                 "Fungos",
-                "Párasitas",
+                "Parásitas",
                 "Vírus",
                 "Bacilos",
                 "Protozoarios",
@@ -442,26 +480,7 @@ class Gerardoc:
                 self.dataselect = None
                 self.date.update()
 
-        def carregardrop(self):
-            self.drop.options.clear() #type: ignore
-            if self.empresas:
-                for empresa in self.empresas:
-                    self.drop.options.append( #type: ignore
-                        ft.DropdownOption(
-                            text=f"{empresa[0]}",
-                        )
-                    )    
-            else:
-                self.drop.options.append( #type: ignore
-                    ft.DropdownOption(
-                        text=f"{"DB OFF ou Nenhuma Empresa Cadastrada"}",
-                        disabled=True
-                    )
-                )            
-        
         def gerar_documento(self, e):
-            def converter():
-                converter_xlsx_para_pdf(rf"documentos_gerados\{nome_arquivo}",rf"temp\{nome_arquivo.replace(".xlsx",".pdf")}")
             if not self.checkdate.value:
                 self.dataselect = self.date.value
             nome = self.nomeclb.value or ""
@@ -508,11 +527,8 @@ class Gerardoc:
                     ws["B10"] = tipo_exame[0]
                     saida = Path(r"documentos_gerados")
                     saida.mkdir(exist_ok=True)
-                    nome_arquivo = f"{modelo}__{empresa.replace(' ', '_')}_{nome.replace(' ', '_')}_{dt.datetime.now().strftime('%Y-%m-%d_%H-%M')}.xlsx"
-                    wb.save(saida / nome_arquivo)
-                    self.show_loading(self.page,True)
-                    converter()
-                    self.page.overlay.clear()
+                    self.nome_arquivo = f"{modelo} {empresa.replace(' ', '-')} {nome.replace(' ', '-')} {dt.datetime.now().strftime('%d-%m-%Y %H-%M')} .xlsx"
+                    wb.save(saida / self.nome_arquivo)
                 elif modelo == "ASO":
                     wb = load_workbook(caminho_modelo)
                     ws = wb.active
@@ -531,11 +547,8 @@ class Gerardoc:
                         ws[f"B{23+i}"] = valor
                     saida = Path(r"documentos_gerados")
                     saida.mkdir(exist_ok=True)
-                    nome_arquivo = f"{modelo}__{empresa.replace(' ', '_')}_{nome.replace(' ', '_')}_{dt.datetime.now().strftime('%Y-%m-%d_%H-%M')}.xlsx"
-                    wb.save(saida / nome_arquivo)
-                    self.show_loading(self.page,True)
-                    converter()
-                    self.page.overlay.clear()
+                    self.nome_arquivo = f"{modelo} {empresa.replace(' ', '-')} {nome.replace(' ', '-')} {dt.datetime.now().strftime('%d-%m-%Y %H-%M')} .xlsx"
+                    wb.save(saida / self.nome_arquivo)
                 elif modelo == "AUDIOMETRIA":
                     wb = load_workbook(caminho_modelo)
                     ws = wb.active
@@ -550,11 +563,8 @@ class Gerardoc:
                     ws["B10"] = tipo_exame[0]
                     saida = Path(r"documentos_gerados")
                     saida.mkdir(exist_ok=True)
-                    nome_arquivo = f"{modelo}__{empresa.replace(' ', '_')}_{nome.replace(' ', '_')}_{dt.datetime.now().strftime('%Y-%m-%d_%H-%M')}.xlsx"
-                    wb.save(saida / nome_arquivo)
-                    self.show_loading(self.page,True)
-                    converter()
-                    self.page.overlay.clear()
+                    self.nome_arquivo = f"{modelo} {empresa.replace(' ', '-')} {nome.replace(' ', '-')} {dt.datetime.now().strftime('%d-%m-%Y %H-%M')} .xlsx"
+                    wb.save(saida / self.nome_arquivo)
             self.nomeclb.value = None
             self.cpfclb.value = None
             self.datanascimentoclb.value = None

@@ -6,11 +6,10 @@ from typing import Dict, Optional, Any
 from decimal import Decimal
 from dataclasses import dataclass
 from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession, async_sessionmaker
-from sqlalchemy import select, func
-from sqlalchemy.pool import NullPool
+from sqlalchemy import select, func, delete
 from dotenv import load_dotenv
 import os
-from database.models import Base, Caixa, CaixaMensal, ContaAPagar
+from database.models import Base, Caixa, CaixaMensal, ContaAPagar, CaixaDiario
 
 load_dotenv()
 logging.basicConfig(level=logging.INFO)
@@ -116,13 +115,22 @@ class ContabilidadeDB:
         except Exception as e:
             logger.error(f"Erro ao inicializar banco: {e}")
             raise
-    
+
 
     async def buscar_contas(self):
         async with self.async_session() as session:
             stmt = select(ContaAPagar)
             result = await session.execute(stmt)
             return result.scalars().all()
+        
+    async def deletar_contas(self,desc):
+        try:
+            async with self.async_session() as session:
+                stmt = delete(ContaAPagar).where(ContaAPagar.descricao==desc)
+                await session.execute(stmt)
+                await session.commit()
+        except Exception as e:
+            print(e)
 
     async def _executar_diario(self, session: AsyncSession) -> Decimal:
 
@@ -130,6 +138,11 @@ class ContabilidadeDB:
         stmt = select(func.coalesce(func.sum(Caixa.valor), 0)).where(
             Caixa.data == hoje
         )
+        result = await session.execute(stmt)
+        return Decimal(result.scalar())
+    
+    async def _executar_upmensal(self, session: AsyncSession) -> Decimal:
+        stmt = select(func.coalesce(func.sum(CaixaDiario.valor), 0))
         result = await session.execute(stmt)
         return Decimal(result.scalar())
     

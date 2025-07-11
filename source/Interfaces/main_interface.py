@@ -66,7 +66,14 @@ class Main_interface:
             if documents == []:
                 documents.append("""Nenhum Documento encontrado.\nGere os exames na aba Gerar Documento!""")
             return documents
-    
+   
+    def barra_aviso(self,mensagem:str ,cor:str):
+        snack_bar = ft.SnackBar(
+            content=ft.Text(mensagem),
+            bgcolor=cor
+        )
+        self.page.open(snack_bar)
+   
     def buildtableE(self, linhas):
         self.empresastb = ft.Column([
             ft.Row([
@@ -281,3 +288,7 @@ class Main_interface:
                 height=self.page.height,
                 alignment=ft.MainAxisAlignment.START
             )
+
+    
+        
+        
