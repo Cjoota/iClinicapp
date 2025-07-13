@@ -18,14 +18,16 @@ class Main():
 		page.run_task(inicializar_db)
 		page.on_route_change = self.router.route_change
 		page.on_disconnect = self.disconnect()
-		page.run_task(self.verfy.verify)
 		page.run_task(self.verfy.uptable)
+		page.run_task(self.verfy.verify)
 		page.go("/login")
 	def disconnect(self):
 		self.page.client_storage.clear()
 @atexit.register
 def limpar_todos_pycache():
 	print("Limpando Cache")
+	verify = Verificacoes()
+	verify.close()
 	import shutil
 	from pathlib import Path
 	for d in Path(".").rglob("__pycache__"):

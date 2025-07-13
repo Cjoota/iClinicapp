@@ -15,7 +15,7 @@ class Router:
         }
         self.page.on_route_change = self.route_change
         self.page.go(self.page.route)
-        self.page.on_connect = self.auth
+        self.page.on_connect = self.auth()
 
             
 
@@ -26,7 +26,7 @@ class Router:
             else:
                 self.page.go("/login")
         elif not self.page.client_storage.contains_key("logado"):
-            self.go("/home")
+            self.go("/login")
                 
 
 

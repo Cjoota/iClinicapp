@@ -263,7 +263,12 @@ class Gerardoc:
                 "ESPIROMETRIA",
                 "RAIO-X (TORAX)",
                 "RAIO-X (LOMBO)",
-                "ACUIDADE VISUAL" 
+                "ACUIDADE VISUAL",
+                "TESTE ROMBERG",
+                "TGO (Aspartato Aminotransferase)",
+                "TGP (Alanina Aminotransferase)",
+                "CREATININA",
+                "URÉIA"
             ]
             for modelo in self.modelos_excel:
                 self.listview.controls.append(

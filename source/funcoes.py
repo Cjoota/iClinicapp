@@ -13,6 +13,8 @@ from database.datacreator import connectlocal,commitlocal
 from database.databasecache import ContabilidadeDB
 from database.models import CaixaDiario, CaixaMensal
 from sqlalchemy.sql import insert
+from pathlib import Path
+import json
 locale.setlocale(locale.LC_ALL, 'pt_BR.UTF-8')
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -181,22 +183,81 @@ def puxardados(razao):
 class Verificacoes:
     def __init__(self):
         self.db = ContabilidadeDB()
+        self.init_config()
         self.executado_hoje = False
 
+
+    def init_config(self):
+        dados_iniciais = {
+            "verificado_hoje": False,
+            "executado_hoje_mensal": False,
+            "executado_hoje_diario": False
+        }
+        verify = Path("verify.json")
+        if not verify.exists():
+            with open("verify.json", "w", encoding="utf-8") as f:
+                json.dump(dados_iniciais, f, ensure_ascii=False, indent=4)
+        del dados_iniciais
+
+    def close(self):
+        dados = {
+            "verificado_hoje": False,
+            "executado_hoje_mensal": False,
+            "executado_hoje_diario": False
+        }
+        with open("verify.json", "w", encoding="utf-8") as f:
+                json.dump(dados, f, ensure_ascii=False, indent=4)
+
+    def set_config(self,config:str, set:bool):
+        verify = Path("verify.json")
+        if verify.exists():
+            with open("verify.json", "r", encoding="utf-8") as f:
+                dados = json.load(f)
+            match config:
+                case "v":
+                    dados["verificado_hoje"] = set
+                case "m":
+                    dados["executado_hoje_mensal"] = set
+                case "d":
+                    dados["executado_hoje_diario"] = set
+                case None:
+                    pass
+            with open("verify.json", "w", encoding="utf-8") as f:
+                json.dump(dados, f, ensure_ascii=False, indent=4)
+
+    def get_config(self,config:str) -> bool:
+        verify = Path("verify.json")
+        if verify.exists():
+            with open("verify.json", "r", encoding="utf-8") as f:
+                dados = json.load(f)
+            match config:
+                case "v":
+                    return dados["verificado_hoje"]
+                case "m":
+                    return dados["executado_hoje_mensal"]
+                case "d":
+                    return dados["executado_hoje_diario"]
+        return True
+    
     async def uptable(self):
-        hoje = datetime.datetime.now().strftime("%d")
-        if hoje == "01":
-            date = datetime.datetime.now()
-            valores = await self.db._executar_upmensal(self.db.async_session())
-            async with self.db.async_session() as session:
-                _isrt_ = insert(CaixaMensal).values(datarefence=datetime.datetime.date(date),descricao='Fecha de mensal automatico',valor=valores)
-                await session.execute(_isrt_)
-                await session.commit() 
-                await session.close()
-            logging.info("Renda Mensal Disponível!")
-        else:
-            logging.info("O Mês não terminou!")
-            del hoje
+        if not self.get_config("v"):
+            hoje = datetime.datetime.now().strftime("%d")
+            if hoje == "01":
+                if not self.get_config("e"):
+                    date = datetime.datetime.now()
+                    valores = await self.db._executar_upmensal(self.db.async_session())
+                    async with self.db.async_session() as session:
+                        _isrt_ = insert(CaixaMensal).values(datarefence=datetime.datetime.date(date),descricao='Fecha de mensal automatico',valor=valores)
+                        await session.execute(_isrt_)
+                        await session.commit() 
+                        await session.close()
+                    logging.info("Renda Mensal Disponível!")
+                    self.set_config("v",True)
+                    self.set_config("m",True)
+            else:
+                self.set_config("v",True)
+                logging.info("O Mês não terminou!")
+                del hoje
             
 
 
@@ -227,10 +288,10 @@ class Verificacoes:
             hora_atual = agora.time()
 
             
-            if datetime.time(18, 0) <= hora_atual <= datetime.time(18, 1) and not self.executado_hoje:
+            if datetime.time(18, 0) <= hora_atual <= datetime.time(18, 1) and not self.get_config("d"):
                 logging.info(f"São 18h! Executando upload para DB... {agora}")
                 await self.updiario()
-                self.executado_hoje = True
+                self.set_config("d",True)
 
             
 

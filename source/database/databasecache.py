@@ -23,7 +23,6 @@ class CacheConfig:
     auto_refresh: bool = True
 
 class SmartCache:
-    
     def __init__(self, config: CacheConfig):
         self.config = config
         self._cache: Dict[str, Dict[str, Any]] = {}
@@ -159,7 +158,6 @@ class ContabilidadeDB:
         return Decimal(result.scalar())
     
     async def buscar_dados(self, force_update: bool = False) -> Optional[Dict]:
-
         cache_key = "dados_contabilidade"
         
         # Tenta cache primeiro
