@@ -13,6 +13,7 @@ class Empresa(Base):
     cnpj = Column(String(18), nullable=False)
     contato = Column(Text)
     endereco = Column(Text)
+    municipio = Column(Text)
     criado_em = Column(TIMESTAMP, default=func.now())
 
 class ContaAPagar(Base):

@@ -63,11 +63,12 @@ class Empresas:
                         heading_text_style=ft.TextStyle(size=15, weight=ft.FontWeight.BOLD),                     
                         border_radius=25,
                         columns=[
-                            ft.DataColumn(ft.Text("Razão Social",text_align=ft.TextAlign.CENTER)),
-                            ft.DataColumn(ft.Text("CNPJ",text_align=ft.TextAlign.CENTER)),
-                            ft.DataColumn(ft.Text("Contato",text_align=ft.TextAlign.CENTER)),
-                            ft.DataColumn(ft.Text("Endereço",text_align=ft.TextAlign.CENTER)),
-                            ft.DataColumn(ft.Text("Ações",text_align=ft.TextAlign.CENTER)),
+                            ft.DataColumn(ft.Text("Razão Social",text_align=ft.TextAlign.CENTER),heading_row_alignment=ft.MainAxisAlignment.CENTER),
+                            ft.DataColumn(ft.Text("CNPJ",text_align=ft.TextAlign.CENTER),heading_row_alignment=ft.MainAxisAlignment.CENTER),
+                            ft.DataColumn(ft.Text("Contato",text_align=ft.TextAlign.CENTER),heading_row_alignment=ft.MainAxisAlignment.CENTER),
+                            ft.DataColumn(ft.Text("Endereço",text_align=ft.TextAlign.CENTER),heading_row_alignment=ft.MainAxisAlignment.CENTER),
+                            ft.DataColumn(ft.Text("Município",text_align=ft.TextAlign.CENTER),heading_row_alignment=ft.MainAxisAlignment.CENTER),
+                            ft.DataColumn(ft.Text("Ações",text_align=ft.TextAlign.CENTER),heading_row_alignment=ft.MainAxisAlignment.CENTER),
                         ],
                         rows=linhas
                         )
@@ -91,17 +92,18 @@ class Empresas:
                 return [
                 ft.DataRow(
                     cells=[
-                        ft.DataCell(ft.Text(linhas[0])),
-                        ft.DataCell(ft.Text(linhas[1])),
-                        ft.DataCell(ft.Text(linhas[2])),
-                        ft.DataCell(ft.Text(linhas[3])),
-                        ft.DataCell(ft.IconButton(icon=ft.Icons.DELETE,icon_color=ft.Colors.RED,on_click=lambda e, idx=i: self.apagaremp(idx)))
+                        ft.DataCell(ft.Container(content=ft.Text(linhas[0]), alignment=ft.alignment.center)),
+                        ft.DataCell(ft.Container(content=ft.Text(linhas[1]), alignment=ft.alignment.center)),
+                        ft.DataCell(ft.Container(content=ft.Text(linhas[2]), alignment=ft.alignment.center)),
+                        ft.DataCell(ft.Container(content=ft.Text(linhas[3]), alignment=ft.alignment.center)),
+                        ft.DataCell(ft.Container(content=ft.Text(linhas[4]), alignment=ft.alignment.center)),
+                        ft.DataCell(ft.Container(content=ft.IconButton(icon=ft.Icons.DELETE,icon_color=ft.Colors.RED,on_click=lambda e, idx=i: self.apagaremp(idx)), alignment=ft.alignment.center))
                     ]
                 ) for i, linhas in enumerate(data)
                 ]
         
         def cadastro(self):
-            cadasempresa(self.razao.value,self.cnpj.value,self.contato.value, self.endereco.value)
+            cadasempresa(self.razao.value,self.cnpj.value,self.contato.value, self.endereco.value, self.municipio.value)
             self.dados = verempresa()
             self.tabempresas.content = self.buildtableE(self.gerarlinhas(self.dados))
             self.tabempresas.update()
@@ -145,6 +147,7 @@ class Empresas:
                 self.cnpj = ft.TextField(label="CNPJ",border_radius=10,focused_border_color="#74FE4E",label_style=ft.TextStyle(color=ft.Colors.GREY_800))
                 self.contato = ft.TextField(label="Contato",border_radius=10,width=300,focused_border_color="#74FE4E",label_style=ft.TextStyle(color=ft.Colors.GREY_800))
                 self.endereco = ft.TextField(label="Endereço",border_radius=10,width=300,focused_border_color="#74FE4E",label_style=ft.TextStyle(color=ft.Colors.GREY_800))
+                self.municipio = ft.TextField(label="Município",border_radius=10,width=300,focused_border_color="#74FE4E",label_style=ft.TextStyle(color=ft.Colors.GREY_800))
                 self.tabempresas = ft.Container(
                     content=self.buildtableE(self.gerarlinhas(self.dados)),
                     border=ft.Border(top=ft.BorderSide(width=1)),
@@ -170,6 +173,11 @@ class Empresas:
                     ),
                     ft.Row([
                         self.endereco,self.contato
+                    ],alignment=ft.MainAxisAlignment.CENTER, vertical_alignment=ft.CrossAxisAlignment.CENTER,spacing=30,
+                    expand=True
+                    ),
+                    ft.Row([
+                        self.municipio
                     ],alignment=ft.MainAxisAlignment.CENTER, vertical_alignment=ft.CrossAxisAlignment.CENTER,spacing=30,
                     expand=True
                     ),

@@ -155,19 +155,19 @@ def excluirconta(desc):
     except psycopg2.DatabaseError as e:
         return False, print(f"Erro ao deletar: {e}")
 
-def cadasempresa(razao, cnpj, contato, endereco):
+def cadasempresa(razao, cnpj, contato, endereco, municipio):
     try:
-        commitlocal(f"INSERT INTO empresas (razao, cnpj, contato, endereco) VALUES ('{razao}', '{cnpj}', '{contato}', '{endereco}')")
+        commitlocal(f"INSERT INTO empresas (razao, cnpj, contato, endereco, municipio) VALUES ('{razao}', '{cnpj}', '{contato}', '{endereco}','{municipio}')")
     except psycopg2.DatabaseError as e:
         print(f"Erro ao cadastrar: {str(e)}")
 
 def verempresa():
     try:
-        dados = connectlocal("SELECT razao, cnpj, contato, endereco FROM empresas")
+        dados = connectlocal("SELECT razao, cnpj, contato, endereco, municipio FROM empresas")
         return dados
     except psycopg2.DatabaseError as e:
         print(e)
-        return ["sem conexão","sem conexão","sem conexão","sem conexão"]
+        return ["sem conexão","sem conexão","sem conexão","sem conexão","sem conexão"]
     
 def excluiremp(cnpj):
     try:

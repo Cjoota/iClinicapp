@@ -17,7 +17,11 @@ class Gerardoc:
             self.modelos_excel = self.carregar_modelos_excel()
             self.empresas = verempresa()
             self.dataselect = None
-            self.risks = []
+            self.risk = []
+            self.risk_quimico = []
+            self.risk_fisico = []
+            self.risk_biologico = []
+            self.risk_ergonomico = []
             self.page.on_resized = self.on_resize
 
         def on_resize(self,e):
@@ -100,7 +104,7 @@ class Gerardoc:
                             ),
                         ],alignment=ft.MainAxisAlignment.CENTER,vertical_alignment=ft.CrossAxisAlignment.CENTER,spacing=5),
                         margin=ft.margin.only(top=-20)
-                )])
+                )],scroll=ft.ScrollMode.ADAPTIVE)
                 self.listview.controls.append(ft.Text("Modelos disponiveis: ",text_align=ft.TextAlign.START))
                 self.listviewtypes.controls.append(ft.Text("Qual tipo do documento: ",text_align=ft.TextAlign.START))
                 self.listviewexam.controls.append(ft.Text("Quais exames elencar: ",text_align=ft.TextAlign.START))
@@ -366,12 +370,30 @@ class Gerardoc:
             def close(e):
                 self.page.close(modal)
             def catch_risk(e):
-                if not e.control.data in self.risks:
-                    self.risks.append(e.control.data)
+                if not e.control.label in self.risk:
+                    self.risk.append(e.control.label)
+                    match e.control.data:
+                        case "f":
+                            self.risk_fisico.append(e.control.label)
+                        case "q":
+                            self.risk_quimico.append(e.control.label)
+                        case "b":
+                            self.risk_biologico.append(e.control.label)
+                        case "e":
+                            self.risk_ergonomico.append(e.control.label)
                 if e.control.value is False:
-                    self.risks.remove(e.control.data)
-            def criar_risco(risco):
-                rsk = ft.Checkbox(label=risco,data=risco,on_change=catch_risk)
+                    self.risk.remove(e.control.label)
+                    match e.control.data:
+                        case "f":
+                            self.risk_fisico.remove(e.control.label)
+                        case "q":
+                            self.risk_quimico.remove(e.control.label)
+                        case "b":
+                            self.risk_biologico.remove(e.control.label)
+                        case "e":
+                            self.risk_ergonomico.remove(e.control.label)
+            def criar_risco(risco,tipo):
+                rsk = ft.Checkbox(label=risco,data=tipo,on_change=catch_risk)
                 return rsk
             riscos_fisicos = [
                 "Calor",
@@ -380,7 +402,6 @@ class Gerardoc:
                 "Radiações-Não-ION",
                 "Ruidos",
                 "Vibrações",
-                "Outros"
             ]
             riscos_quimicos = [
                 "Fumos Metálicos",
@@ -391,8 +412,7 @@ class Gerardoc:
                 "Névoas",
                 "Solventes",
                 "Vapores Orgânicos",
-                "Poeiras Minerais",
-                "Outros"]
+                "Poeiras Minerais",]
             riscos_biologicos = [
                 "Bactérias",
                 "Fungos",
@@ -400,8 +420,7 @@ class Gerardoc:
                 "Vírus",
                 "Bacilos",
                 "Protozoarios",
-                "Micoses",
-                "Outros"]
+                "Micoses",]
             riscos_ergonomicos = [
                 "Esforço Fisícos",
                 "Levantamento de carga",
@@ -410,8 +429,7 @@ class Gerardoc:
                 "Trabalho em Turno",
                 "Postura Inadequada",
                 "Objetos Perfurocortantes",
-                "Deslocamento em Ambiente Industrial",
-                "Outros"]
+                "Deslocamento em Ambiente Industrial",]
             modal = ft.AlertDialog(
                 modal=True,
                 bgcolor="#FFFFFF",
@@ -423,50 +441,46 @@ class Gerardoc:
                         ft.Row([
                             ft.Column([
                                 ft.Text("FISÍCOS",weight=ft.FontWeight.BOLD,size=20),
-                                criar_risco(riscos_fisicos[0]),
-                                criar_risco(riscos_fisicos[1]),
-                                criar_risco(riscos_fisicos[2]),
-                                criar_risco(riscos_fisicos[3]),
-                                criar_risco(riscos_fisicos[4]),
-                                criar_risco(riscos_fisicos[5]),
-                                criar_risco(riscos_fisicos[6]),
+                                criar_risco(riscos_fisicos[0],"f"),
+                                criar_risco(riscos_fisicos[1],"f"),
+                                criar_risco(riscos_fisicos[2],"f"),
+                                criar_risco(riscos_fisicos[3],"f"),
+                                criar_risco(riscos_fisicos[4],"f"),
+                                criar_risco(riscos_fisicos[5],"f"),
                                 ],alignment=ft.MainAxisAlignment.CENTER,horizontal_alignment=ft.CrossAxisAlignment.START),
                             ft.Column([
                                 ft.Text("QUÍMICOS",weight=ft.FontWeight.BOLD,size=20),
-                                criar_risco(riscos_quimicos[0]),
-                                criar_risco(riscos_quimicos[1]),
-                                criar_risco(riscos_quimicos[2]),
-                                criar_risco(riscos_quimicos[3]),
-                                criar_risco(riscos_quimicos[4]),
-                                criar_risco(riscos_quimicos[5]),
-                                criar_risco(riscos_quimicos[6]),
-                                criar_risco(riscos_quimicos[7]),
-                                criar_risco(riscos_quimicos[8]),
-                                criar_risco(riscos_quimicos[9]),
+                                criar_risco(riscos_quimicos[0],"q"),
+                                criar_risco(riscos_quimicos[1],"q"),
+                                criar_risco(riscos_quimicos[2],"q"),
+                                criar_risco(riscos_quimicos[3],"q"),
+                                criar_risco(riscos_quimicos[4],"q"),
+                                criar_risco(riscos_quimicos[5],"q"),
+                                criar_risco(riscos_quimicos[6],"q"),
+                                criar_risco(riscos_quimicos[7],"q"),
+                                criar_risco(riscos_quimicos[8],"q"),
 
                             ],horizontal_alignment=ft.CrossAxisAlignment.START),
                             ft.Column([
                                 ft.Text("BIOLÓGICOS",weight=ft.FontWeight.BOLD,size=20),
-                                criar_risco(riscos_biologicos[0]),
-                                criar_risco(riscos_biologicos[1]),
-                                criar_risco(riscos_biologicos[2]),
-                                criar_risco(riscos_biologicos[3]),
-                                criar_risco(riscos_biologicos[4]),
-                                criar_risco(riscos_biologicos[5]),
-                                criar_risco(riscos_biologicos[6]),
-                                criar_risco(riscos_biologicos[7]),
+                                criar_risco(riscos_biologicos[0],"b"),
+                                criar_risco(riscos_biologicos[1],"b"),
+                                criar_risco(riscos_biologicos[2],"b"),
+                                criar_risco(riscos_biologicos[3],"b"),
+                                criar_risco(riscos_biologicos[4],"b"),
+                                criar_risco(riscos_biologicos[5],"b"),
+                                criar_risco(riscos_biologicos[6],"b"),
                             ],horizontal_alignment=ft.CrossAxisAlignment.START),
                             ft.Column([
                                 ft.Text("ERGONÔMICOS",weight=ft.FontWeight.BOLD,size=20),
-                                criar_risco(riscos_ergonomicos[0]),
-                                criar_risco(riscos_ergonomicos[1]),
-                                criar_risco(riscos_ergonomicos[2]),
-                                criar_risco(riscos_ergonomicos[3]),
-                                criar_risco(riscos_ergonomicos[4]),
-                                criar_risco(riscos_ergonomicos[5]),
-                                criar_risco(riscos_ergonomicos[6]),
-                                criar_risco(riscos_ergonomicos[7]),
-                                criar_risco(riscos_ergonomicos[8]),
+                                criar_risco(riscos_ergonomicos[0],"e"),
+                                criar_risco(riscos_ergonomicos[1],"e"),
+                                criar_risco(riscos_ergonomicos[2],"e"),
+                                criar_risco(riscos_ergonomicos[3],"e"),
+                                criar_risco(riscos_ergonomicos[4],"e"),
+                                criar_risco(riscos_ergonomicos[5],"e"),
+                                criar_risco(riscos_ergonomicos[6],"e"),
+                                criar_risco(riscos_ergonomicos[7],"e"),
                             ],horizontal_alignment=ft.CrossAxisAlignment.START),
                         ],alignment=ft.MainAxisAlignment.CENTER,vertical_alignment=ft.CrossAxisAlignment.START,spacing=100)
                         
@@ -474,6 +488,13 @@ class Gerardoc:
                 ),
             )
             self.page.open(modal)
+
+        def clean_risks(self):
+            self.risk = []
+            self.risk_fisico = []
+            self.risk_quimico = []
+            self.risk_biologico = []
+            self.risk_ergonomico = []
 
         def selectdate(self, e):
             if self.date.disabled == False:
@@ -488,13 +509,18 @@ class Gerardoc:
         def gerar_documento(self, e):
             if not self.checkdate.value:
                 self.dataselect = self.date.value
+            empresa = []
+            for i in self.empresas:
+                if i[0] == self.drop.value:
+                    empresa.append(i[0])
+                    empresa.append(i[1])
+                    empresa.append(i[3])
+                    empresa.append(i[4])
             nome = self.nomeclb.value or ""
             cpf = self.cpfclb.value or ""
             nascimento = self.datanascimentoclb.value or ""
             funcao = self.funcaoclb.value or ""
             setor = self.setorclb.value or ""
-            empresa = self.drop.value or ""
-            cnpj = puxardados(empresa)
             modelos_selecionados = [
                 control.title.value # type: ignore
                 for control in self.listview.controls 
@@ -532,43 +558,50 @@ class Gerardoc:
                     ws["B10"] = tipo_exame[0]
                     saida = Path(r"documentos_gerados")
                     saida.mkdir(exist_ok=True)
-                    self.nome_arquivo = f"{modelo} {empresa.replace(' ', '-')} {nome.replace(' ', '-')} {dt.datetime.now().strftime('%d-%m-%Y %H-%M')} .xlsx"
+                    self.nome_arquivo = f"{modelo} {empresa[0].replace(' ', '-')} {nome.replace(' ', '-')} {dt.datetime.now().strftime('%d-%m-%Y %H-%M')} .xlsx"
                     wb.save(saida / self.nome_arquivo)
                 elif modelo == "ASO":
                     wb = load_workbook(caminho_modelo)
                     ws = wb.active
-                    ws["B2"] = nome# type: ignore
-                    ws["B3"] = cpf # type: ignore
-                    ws["B4"] = nascimento # type: ignore
-                    ws["B5"] = funcao # type: ignore
-                    ws["B6"] = setor # type: ignore
-                    ws["B7"] = empresa # type: ignore
-                    ws["B8"] = self.dataselect # type: ignore
-                    ws["B9"] = cnpj[0][0] # type: ignore
+                    ws["D13"] = nome# type: ignore
+                    ws["J14"] = cpf # type: ignore
+                    ws["D14"] = nascimento # type: ignore
+                    ws["D15"] = funcao # type: ignore
+                    ws["J15"] = setor # type: ignore
+                    ws["D9"] = empresa[0] # type: ignore
+                    ws["L6"] = self.dataselect # type: ignore
+                    ws["J9"] = empresa[1] # type: ignore
+                    ws["D10"] = empresa[2]
+                    ws["J10"] = empresa[3]
                     for i, valor in enumerate(exames_selecionados):
-                        ws[f"B{10+i}"] = valor
-                    ws["B22"] = tipo_exame[0]
-                    for i, valor in enumerate(self.risks):
-                        ws[f"B{23+i}"] = valor
+                        ws[f"C{31+i}"] = valor
+                    ws["G6"] = tipo_exame[0]
+                    for i, valor in enumerate(self.risk_fisico):
+                        ws[f"D{19+i}"] = valor
+                    for i, valor in enumerate(self.risk_quimico):
+                        ws[f"E{19+i}"] = valor
+                    for i, valor in enumerate(self.risk_biologico):
+                        ws[f"G{19+i}"] = valor
+                    for i, valor in enumerate(self.risk_ergonomico):
+                        ws[f"I{19+i}"] = valor
                     saida = Path(r"documentos_gerados")
                     saida.mkdir(exist_ok=True)
-                    self.nome_arquivo = f"{modelo} {empresa.replace(' ', '-')} {nome.replace(' ', '-')} {dt.datetime.now().strftime('%d-%m-%Y %H-%M')} .xlsx"
+                    self.nome_arquivo = f"{modelo} {empresa[0].replace(' ', '-')} {nome.replace(' ', '-')} {dt.datetime.now().strftime('%d-%m-%Y %H-%M')} .xlsx"
                     wb.save(saida / self.nome_arquivo)
                 elif modelo == "AUDIOMETRIA":
                     wb = load_workbook(caminho_modelo)
                     ws = wb.active
-                    ws["B2"] = nome# type: ignore
-                    ws["B3"] = cpf # type: ignore
-                    ws["B4"] = nascimento # type: ignore
-                    ws["B5"] = funcao # type: ignore
-                    ws["B6"] = setor # type: ignore
-                    ws["B7"] = empresa # type: ignore
-                    ws["B8"] = self.dataselect # type: ignore
-                    ws["B9"] = cnpj[0][0] # type: ignore
-                    ws["B10"] = tipo_exame[0]
+                    ws["G19"] = nome# type: ignore
+                    ws["N19"] = cpf # type: ignore
+                    ws["R20"] = nascimento # type: ignore
+                    ws["G20"] = funcao # type: ignore
+                    ws["G18"] = empresa[0] # type: ignore
+                    ws["P21"] = self.dataselect # type: ignore
+                    ws["O18"] = empresa[1] # type: ignore
+                    ws["J14"] = tipo_exame[0]
                     saida = Path(r"documentos_gerados")
                     saida.mkdir(exist_ok=True)
-                    self.nome_arquivo = f"{modelo} {empresa.replace(' ', '-')} {nome.replace(' ', '-')} {dt.datetime.now().strftime('%d-%m-%Y %H-%M')} .xlsx"
+                    self.nome_arquivo = f"{modelo} {empresa[0].replace(' ', '-')} {nome.replace(' ', '-')} {dt.datetime.now().strftime('%d-%m-%Y %H-%M')} .xlsx"
                     wb.save(saida / self.nome_arquivo)
             self.nomeclb.value = None
             self.cpfclb.value = None
@@ -583,6 +616,7 @@ class Gerardoc:
             self.modal = ft.SnackBar(content=ft.Text("Documentos Gerados"),bgcolor=ft.Colors.GREEN)
             self.page.snack_bar = self.modal
             self.modal.open = True
+            self.clean_risks()
             self.page.add(self.modal)      
         
         def show_loading(self,page, show=True):
