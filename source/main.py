@@ -35,7 +35,7 @@ def limpar_todos_pycache():
 	for doc in Path("pdf_temp").glob("*.pdf"):
 		doc.unlink()
 	
-ft.app(target=Main,view=ft.AppView.WEB_BROWSER, host="192.168.0.245",port=53712,assets_dir="assets")
+ft.app(target=Main,view=ft.AppView.WEB_BROWSER, host="192.168.3.23",port=53712,assets_dir="assets")
 
 
 

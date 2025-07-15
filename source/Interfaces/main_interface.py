@@ -1,7 +1,6 @@
 import flet as ft 
 import asyncio
 import datetime as dt
-from database.databasecache import diccreate
 import locale
 import asyncio
 from pathlib import Path
@@ -17,15 +16,13 @@ class Main_interface:
         self.responsive = Responsive(self.page)
         self.sidebar = Sidebar(self.page)
         self.parar_evento = asyncio.Event()
-        self.diario = 0.0
-        self.mensal = 0.0
-        self.contas = 0.0
+        self.gerados = self.get_gerados()
         self.documentospr = self.documentosgerados()
         self.saud = ft.Text(size=self.responsive.font_size(), color=ft.Colors.GREY_800, weight=ft.FontWeight.BOLD, font_family="Inter")
         self.icone = ft.Icon(ft.Icons.SUNNY if self.saudacao() == 1 or self.saudacao() == 2 else ft.Icons.DARK_MODE, color=ft.Colors.YELLOW,size=self.responsive.font_size()+20)
         self.tabct = ft.Container(content=self.buildtableE(self.gerarlinhas(self.documentospr)),border_radius=10
                                   ,border=ft.Border(left=ft.BorderSide(2,ft.Colors.GREY_200),top=ft.BorderSide(2,ft.Colors.GREY_200),right=ft.BorderSide(2,ft.Colors.GREY_200),bottom=ft.BorderSide(2,ft.Colors.GREY_200)))
-        self.cardcontainer = ft.Container(content=self.buildcards(self.diario, self.mensal, self.contas)
+        self.cardcontainer = ft.Container(content=self.buildcards(self.gerados[0], self.gerados[0], self.gerados[0])
                                           ,margin=ft.Margin(left=0,top=-150,right=0,bottom=0) if self.responsive.is_desktop() else None , padding=0
                                           )
         self.page.run_task(self.clock)
@@ -41,6 +38,18 @@ class Main_interface:
             self.saud.value = "BOA NOITE"
             return 3
     
+    def get_gerados(self):
+        documentosdir = Path("documentos_gerados")
+        try:
+            if not documentosdir.exists():
+                return [0]
+            gerados = len([doc.name for doc in documentosdir.glob("*.xlsx")])
+            
+            return [gerados]
+        except Exception as e:
+            print(f"Erro ao listar documentos gerados: {e}")
+            return [0]
+
     def on_resize(self,e):
         if self.responsive.is_desktop():
             self.responsive = Responsive(self.page)
@@ -104,13 +113,13 @@ class Main_interface:
             ) for linhas in data
         ]
 
-    def buildcards(self, diario, mensal, contas):
-        self.card_diario_home = self.cardfloat(icon=ft.Icons.MONETIZATION_ON_OUTLINED, title="Entrada", value=locale.currency(diario, grouping=True),
-                                  barra="Entrada de hoje", iconbarra=ft.Icons.ARROW_UPWARD, corbarra=ft.Colors.GREEN, larg=None, color=ft.Colors.BLACK)
-        self.card_mensal_home = self.cardfloat(icon=ft.Icons.MONEY, title="Mensal", value=locale.currency(mensal, grouping=True),
-                                  barra="Receita do mês", iconbarra=ft.Icons.ARROW_UPWARD, corbarra=ft.Colors.GREEN, larg=None, color=ft.Colors.BLACK)
-        self.card_contas_home = self.cardfloat(icon=ft.Icons.MONEY_OFF, title="A Pagar", value=locale.currency(contas, grouping=True),
-                                  barra="Saida de caixa", iconbarra=ft.Icons.ARROW_DOWNWARD, corbarra=ft.Colors.RED, larg=None, color=ft.Colors.RED)
+    def buildcards(self, gerados, agendados, prontos):
+        self.card_diario_home = self.cardfloat(icon=ft.Icons.DOMAIN_VERIFICATION_OUTLINED, title="Exames", value=gerados,
+                                  barra="Gerados Hoje", iconbarra=ft.Icons.DOMAIN_VERIFICATION, corbarra=ft.Colors.GREEN, larg=None, color=ft.Colors.BLACK)
+        self.card_mensal_home = self.cardfloat(icon=ft.Icons.PERM_CONTACT_CALENDAR_OUTLINED, title="Agendados", value=agendados,
+                                  barra="Agendados Hoje", iconbarra=ft.Icons.CALENDAR_MONTH_ROUNDED, corbarra=ft.Colors.GREEN, larg=None, color=ft.Colors.BLACK)
+        self.card_contas_home = self.cardfloat(icon=ft.Icons.VERIFIED_OUTLINED, title="Exames Prontos", value=prontos,
+                                  barra="Prontos Hoje", iconbarra=ft.Icons.VERIFIED, corbarra=ft.Colors.GREEN, larg=None, color=ft.Colors.BLACK)
         for card in [self.card_diario_home, self.card_mensal_home, self.card_contas_home]:
             card.col = {"xs": 4, "md": 2 if self.responsive.is_mobile() else 2.3, "sm": 3}
 
@@ -126,17 +135,6 @@ class Main_interface:
             spacing=self.responsive.spacing()
             
         )
-    
-    async def diccreate_force(self):
-        return await diccreate(force_update=True)
-
-    def on_diccreate_done(self, future):
-        dadosapi = future.result()
-        self.diario = dadosapi['diario'] if dadosapi else 0.0
-        self.mensal = dadosapi['mensal'] if dadosapi else 0.0
-        self.contas = dadosapi['contas'] if dadosapi else 0.0
-        self.cardcontainer.content = self.buildcards(self.diario, self.mensal, self.contas)
-        self.page.update()
 
     def cardfloat(self, icon, title, value, barra, iconbarra, corbarra, larg, color):
         text_widget = ft.Text(value, size=25 if self.responsive.is_desktop() or self.responsive.is_tablet() else 20, weight=ft.FontWeight.BOLD, color=color)
@@ -261,8 +259,6 @@ class Main_interface:
                         content=self.cardmain("Documentos Gerados", None ,None, self.tabct,True)
                     ),
                 ],alignment=ft.MainAxisAlignment.START, horizontal_alignment=ft.CrossAxisAlignment.START)
-        self.future = self.page.run_task(self.diccreate_force)
-        self.future.add_done_callback(self.on_diccreate_done)
         self.page.run_task(self.clock)
         if self.responsive.is_mobile():
             return ft.Column(

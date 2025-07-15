@@ -82,6 +82,9 @@ class Gerardoc:
                         ft.Column([self.risk_selector])
                     ])
                 )
+                self.view_exames = ft.Container(content=ft.Column([
+                    self.listviewexam
+                ],scroll=ft.ScrollMode.ALWAYS,expand=True),adaptive=True,expand=True)
                 self.doccontent = ft.Column([
                     ft.Row([ft.Text("Gerar documento", size=30)],alignment=ft.MainAxisAlignment.CENTER,vertical_alignment=ft.CrossAxisAlignment.CENTER),
                     ft.Container(
@@ -99,7 +102,7 @@ class Gerardoc:
                             ],alignment=ft.MainAxisAlignment.CENTER,horizontal_alignment=ft.CrossAxisAlignment.CENTER
                             ),
                             ft.Column([
-                                self.main.cardmain("Exames a elencar",self.page.width*0.20,None,self.listviewexam,False)
+                                self.main.cardmain("Exames a elencar",self.page.width*0.20,self.page.height*0.70,self.view_exames,False)
                             ],alignment=ft.MainAxisAlignment.CENTER,horizontal_alignment=ft.CrossAxisAlignment.CENTER
                             ),
                         ],alignment=ft.MainAxisAlignment.CENTER,vertical_alignment=ft.CrossAxisAlignment.CENTER,spacing=5),
@@ -269,8 +272,8 @@ class Gerardoc:
                 "RAIO-X (LOMBO)",
                 "ACUIDADE VISUAL",
                 "TESTE ROMBERG",
-                "TGO (Aspartato Aminotransferase)",
-                "TGP (Alanina Aminotransferase)",
+                "TGO (Aspartato)",
+                "TGP (Alanina)",
                 "CREATININA",
                 "URÉIA"
             ]
