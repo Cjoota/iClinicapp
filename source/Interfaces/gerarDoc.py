@@ -594,14 +594,14 @@ class Gerardoc:
                 elif modelo == "AUDIOMETRIA":
                     wb = load_workbook(caminho_modelo)
                     ws = wb.active
-                    ws["G19"] = nome# type: ignore
-                    ws["N19"] = cpf # type: ignore
-                    ws["R20"] = nascimento # type: ignore
-                    ws["G20"] = funcao # type: ignore
-                    ws["G18"] = empresa[0] # type: ignore
-                    ws["P21"] = self.dataselect # type: ignore
-                    ws["O18"] = empresa[1] # type: ignore
-                    ws["J14"] = tipo_exame[0]
+                    ws["E15"] = nome# type: ignore
+                    ws["L15"] = cpf # type: ignore
+                    ws["P16"] = nascimento # type: ignore
+                    ws["E16"] = funcao # type: ignore
+                    ws["E14"] = empresa[0] # type: ignore
+                    ws["N17"] = self.dataselect # type: ignore
+                    ws["M14"] = empresa[1] # type: ignore
+                    ws["H11"] = tipo_exame[0]
                     saida = Path(r"documentos_gerados")
                     saida.mkdir(exist_ok=True)
                     self.nome_arquivo = f"{modelo} {empresa[0].replace(' ', '-')} {nome.replace(' ', '-')} {dt.datetime.now().strftime('%d-%m-%Y %H-%M')} .xlsx"

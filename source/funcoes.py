@@ -317,7 +317,7 @@ def converter_xlsx_para_pdf(caminho_xlsx, caminho_pdf):
         workbook.ExportAsFixedFormat(
             Type=0,  
             Filename=caminho_pdf_abs,
-            Quality=1,  
+            Quality=0,  
             IgnorePrintAreas=False,
             OpenAfterPublish=False
         )
