@@ -555,7 +555,7 @@ class Gerardoc:
                     ws["E12"] = nascimento # type: ignore
                     ws["D13"] = funcao # type: ignore
                     ws["I13"] = setor # type: ignore
-                    ws["H11"] = empresa[0] # type: ignore
+                    ws["G11"] = empresa[0] # type: ignore
                     ws["G48"] = self.dataselect # type: ignore
                     ws["E9"] = tipo_exame[0]
                     saida = Path(r"documentos_gerados")

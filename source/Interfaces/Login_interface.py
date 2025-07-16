@@ -19,7 +19,6 @@ class Login:
                         color=ft.Colors.BLACK if not self.is_dark else ft.Colors.WHITE)
         self.usuario = self.user.value
     def build_view(self):
-        self.bypass = ft.Button(text="Bypass", icon=ft.Icons.BACKUP, tooltip="Bypass", on_click=self.bypass)
         self.title = ft.Text("iClínica", size=50, weight=ft.FontWeight.BOLD, color=self.GlobalColor)
         self.subtitle = ft.Text('Faça seu login', size=20, weight=ft.FontWeight.BOLD, color=ft.Colors.BLACK, font_family='Semibold')
         self.subtitleInstruction = ft.Text('Entre com seu usuário e senha', size=13, weight=ft.FontWeight.W_400, color=ft.Colors.BLACK, font_family='Semibold')
@@ -37,7 +36,6 @@ class Login:
                             bgcolor=ft.Colors.with_opacity(0.7, '#26BD00' if not self.is_dark else ft.Colors.BLACK), on_click=self.on_cadastro_click)
         return ft.Column(
             [
-                self.bypass,
                 self.title,
                 self.subtitle,
                 self.subtitleInstruction,
@@ -116,7 +114,7 @@ class Login:
                 self.page.update()
                 self.page.client_storage.set("logado", "sim")
                 self.page.client_storage.set("nome_usuario",f"{usuario}")
-                if usuario == "claudiodev2481":
+                if usuario == "claudiodev2481" or usuario == "adrielebrito":
                     self.page.client_storage.set("perm", "all")
                 else:
                     self.page.client_storage.set("perm", "restrict")
@@ -152,8 +150,3 @@ class Login:
             self.user.value = ""
             self.passw.value = ""
             self.page.update()
-
-    def bypass(self,e):
-        self.page.client_storage.set("logado", "sim")
-        self.page.client_storage.set("perm","all")
-        self.page.go("/home")
