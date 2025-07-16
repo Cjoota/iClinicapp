@@ -550,15 +550,14 @@ class Gerardoc:
                 if modelo == "ANAMNESE":
                     wb = load_workbook(caminho_modelo)
                     ws = wb.active
-                    ws["B2"] = nome# type: ignore
-                    ws["B3"] = cpf # type: ignore
-                    ws["B4"] = nascimento # type: ignore
-                    ws["B5"] = funcao # type: ignore
-                    ws["B6"] = setor # type: ignore
-                    ws["B7"] = empresa # type: ignore
-                    ws["B8"] = self.dataselect # type: ignore
-                    ws["B9"] = cnpj[0][0] # type: ignore
-                    ws["B10"] = tipo_exame[0]
+                    ws["C10"] = nome # type: ignore
+                    ws["C11"] = cpf # type: ignore
+                    ws["E12"] = nascimento # type: ignore
+                    ws["D13"] = funcao # type: ignore
+                    ws["I13"] = setor # type: ignore
+                    ws["H11"] = empresa[0] # type: ignore
+                    ws["G48"] = self.dataselect # type: ignore
+                    ws["E9"] = tipo_exame[0]
                     saida = Path(r"documentos_gerados")
                     saida.mkdir(exist_ok=True)
                     self.nome_arquivo = f"{modelo} {empresa[0].replace(' ', '-')} {nome.replace(' ', '-')} {dt.datetime.now().strftime('%d-%m-%Y %H-%M')} .xlsx"
@@ -578,6 +577,7 @@ class Gerardoc:
                     ws["J10"] = empresa[3]
                     for i, valor in enumerate(exames_selecionados):
                         ws[f"C{31+i}"] = valor
+                        ws[f"E{31+i}"] = self.dataselect
                     ws["G6"] = tipo_exame[0]
                     for i, valor in enumerate(self.risk_fisico):
                         ws[f"D{19+i}"] = valor
