@@ -176,8 +176,14 @@ def excluiremp(cnpj):
         logging.info(f"Erro ao deletar {e}")
 
 def puxardados(razao):
-   dt = connectlocal(f"SELECT (cnpj) FROM empresas WHERE razao='{razao}'")
-   return dt
+    dt = connectlocal(f"SELECT razao, cnpj, endereco, municipio FROM empresas WHERE razao='{razao}'")
+    empresa = []
+    for i in dt:
+        empresa.append(i[0])
+        empresa.append(i[1])
+        empresa.append(i[2])
+        empresa.append(i[3])
+    return empresa
 
 
 class Verificacoes:

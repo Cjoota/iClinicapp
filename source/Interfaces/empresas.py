@@ -103,11 +103,16 @@ class Empresas:
                 ]
         
         def cadastro(self):
-            cadasempresa(self.razao.value,self.cnpj.value,self.contato.value, self.endereco.value, self.municipio.value)
-            self.dados = verempresa()
-            self.tabempresas.content = self.buildtableE(self.gerarlinhas(self.dados))
-            self.tabempresas.update()
-            self.limpar()
+            if self.razao.value and self.cnpj.value and self.contato.value and self.endereco.value and self.municipio.value:
+                cadasempresa(self.razao.value,self.cnpj.value,self.contato.value, self.endereco.value, self.municipio.value)
+                self.dados = verempresa()
+                self.tabempresas.content = self.buildtableE(self.gerarlinhas(self.dados))
+                self.tabempresas.update()
+                self.limpar()
+                return
+            self.main.barra_aviso("Preencha todos os campos!", ft.Colors.YELLOW, ft.Colors.BLACK)
+
+            
         
         def apagaremp(self,index):
             try:

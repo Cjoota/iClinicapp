@@ -1,5 +1,5 @@
 from openpyxl import load_workbook
-from funcoes import (verempresa,puxardados,converter_xlsx_para_pdf)
+from funcoes import puxardados, verempresa
 import flet as ft
 import datetime as dt
 from pathlib import Path
@@ -15,8 +15,8 @@ class Gerardoc:
             self.main = Main_interface(self.page)
             self.page.clean()
             self.modelos_excel = self.carregar_modelos_excel()
-            self.empresas = verempresa()
             self.dataselect = None
+            self.empresas_drop = verempresa()
             self.risk = []
             self.risk_quimico = []
             self.risk_fisico = []
@@ -262,6 +262,7 @@ class Gerardoc:
                 "AUDIOMETRIA",
                 "HEMOGRAMA",
                 "PARASITOLOGICO",
+                "BRUCELOSE",
                 "ELETROCARDIOGRAMA",
                 "ELETROENCEFALOGRAMA",
                 "GLICEMIA",
@@ -354,8 +355,8 @@ class Gerardoc:
         
         async def carregardrop(self):
             self.drop.options.clear() #type: ignore
-            if self.empresas:
-                for empresa in self.empresas:
+            if self.empresas_drop:
+                for empresa in self.empresas_drop:
                     self.drop.options.append( #type: ignore
                         ft.DropdownOption(
                             text=f"{empresa[0]}",
@@ -512,18 +513,12 @@ class Gerardoc:
         def gerar_documento(self, e):
             if not self.checkdate.value:
                 self.dataselect = self.date.value
-            empresa = []
-            for i in self.empresas:
-                if i[0] == self.drop.value:
-                    empresa.append(i[0])
-                    empresa.append(i[1])
-                    empresa.append(i[3])
-                    empresa.append(i[4])
-            nome = self.nomeclb.value or ""
-            cpf = self.cpfclb.value or ""
-            nascimento = self.datanascimentoclb.value or ""
-            funcao = self.funcaoclb.value or ""
-            setor = self.setorclb.value or ""
+            self.empresas = puxardados(self.drop.value)
+            nome = self.nomeclb.value if self.nomeclb.value else None
+            cpf = self.cpfclb.value if self.cpfclb.value else None
+            nascimento = self.datanascimentoclb.value if self.datanascimentoclb.value else None
+            funcao = self.funcaoclb.value if self.funcaoclb.value else None
+            setor = self.setorclb.value if self.setorclb.value else None
             modelos_selecionados = [
                 control.title.value # type: ignore
                 for control in self.listview.controls 
@@ -536,92 +531,107 @@ class Gerardoc:
                 control.title.value # type: ignore
                 for control in self.listviewtypes.controls 
                 if isinstance(control, ft.ListTile) and getattr(control, "selected", False)]
+            if not self.empresas:
+                self.main.barra_aviso("Selecione pelo menos uma empresa!",ft.Colors.YELLOW,text_color=ft.Colors.BLACK)
+                return
             if not modelos_selecionados:
-                self.modal = ft.SnackBar(content=ft.Text("Selecione pelo menos um modelo!"),bgcolor=ft.Colors.RED)
+                self.main.barra_aviso("Selecione pelo menos um modelo!",ft.Colors.YELLOW,text_color=ft.Colors.BLACK)
+                return
+            if not tipo_exame:
+                self.main.barra_aviso("Selecione o tipo do exame!",ft.Colors.YELLOW,text_color=ft.Colors.BLACK)
+                return
+            if nome == None or cpf == None or nascimento == None:
+                self.main.barra_aviso("Preencha todos os campos obrigatórios!",ft.Colors.YELLOW,text_color=ft.Colors.BLACK)
+                return
+            if not self.dataselect:
+                self.main.barra_aviso("Selecione a data do exame!",ft.Colors.YELLOW,text_color=ft.Colors.BLACK)
+            if nome and cpf and nascimento:
+                if setor == None or funcao == None:
+                    self.main.barra_aviso("AVISO: Exame sendo gerado sem função ou setor!",ft.Colors.YELLOW,text_color=ft.Colors.BLACK)
+                for modelo in modelos_selecionados:
+                    caminho_modelo = Path(r"modelos_excel") / f"{modelo}.xlsx"
+                    if not caminho_modelo.exists():
+                        continue  
+                    if modelo == "ANAMNESE":
+                        wb = load_workbook(caminho_modelo)
+                        ws = wb.active
+                        ws["C10"] = nome # type: ignore
+                        ws["C11"] = cpf # type: ignore
+                        ws["E12"] = nascimento # type: ignore
+                        ws["D13"] = funcao # type: ignore
+                        ws["I13"] = setor # type: ignore
+                        ws["G11"] = self.empresas[0] # type: ignore
+                        ws["G48"] = self.dataselect # type: ignore
+                        ws["E9"] = tipo_exame[0]
+                        saida = Path(r"documentos_gerados")
+                        saida.mkdir(exist_ok=True)
+                        self.nome_arquivo = f"{modelo} {self.empresas[0].replace(' ', '-')} {nome.replace(' ', '-')} {dt.datetime.now().strftime('%d-%m-%Y %H-%M')} .xlsx"
+                        wb.save(saida / self.nome_arquivo)
+                    elif modelo == "ASO":
+                        if not self.risk:
+                            self.main.barra_aviso("Selecione os riscos ocupacionais!", ft.Colors.YELLOW, text_color=ft.Colors.BLACK)
+                            return
+                        if not exames_selecionados:
+                            self.main.modal("Aviso","Exame será gerado sem exames complementares!")
+                        wb = load_workbook(caminho_modelo)
+                        ws = wb.active
+                        ws["D13"] = nome# type: ignore
+                        ws["J14"] = cpf # type: ignore
+                        ws["D14"] = nascimento # type: ignore
+                        ws["D15"] = funcao # type: ignore
+                        ws["J15"] = setor # type: ignore
+                        ws["D9"] = self.empresas[0] # type: ignore
+                        ws["L6"] = self.dataselect # type: ignore
+                        ws["J9"] = self.empresas[1] # type: ignore
+                        ws["D10"] = self.empresas[2]
+                        ws["J10"] = self.empresas[3]
+                        for i, valor in enumerate(exames_selecionados):
+                            ws[f"C{31+i}"] = valor
+                            ws[f"E{31+i}"] = self.dataselect
+                        ws["G6"] = tipo_exame[0]
+                        for i, valor in enumerate(self.risk_fisico):
+                            ws[f"D{19+i}"] = valor
+                        for i, valor in enumerate(self.risk_quimico):
+                            ws[f"E{19+i}"] = valor
+                        for i, valor in enumerate(self.risk_biologico):
+                            ws[f"G{19+i}"] = valor
+                        for i, valor in enumerate(self.risk_ergonomico):
+                            ws[f"I{19+i}"] = valor
+                        saida = Path(r"documentos_gerados")
+                        saida.mkdir(exist_ok=True)
+                        self.nome_arquivo = f"{modelo} {self.empresas[0].replace(' ', '-')} {nome.replace(' ', '-')} {dt.datetime.now().strftime('%d-%m-%Y %H-%M')} .xlsx"
+                        wb.save(saida / self.nome_arquivo)
+                    elif modelo == "AUDIOMETRIA":
+                        wb = load_workbook(caminho_modelo)
+                        ws = wb.active
+                        ws["E15"] = nome# type: ignore
+                        ws["L15"] = cpf # type: ignore
+                        ws["P16"] = nascimento # type: ignore
+                        ws["E16"] = funcao # type: ignore
+                        ws["E14"] = self.empresas[0] # type: ignore
+                        ws["N17"] = self.dataselect # type: ignore
+                        ws["M14"] = self.empresas[1] # type: ignore
+                        ws["H11"] = tipo_exame[0]
+                        saida = Path(r"documentos_gerados")
+                        saida.mkdir(exist_ok=True)
+                        self.nome_arquivo = f"{modelo} {self.empresas[0].replace(' ', '-')} {nome.replace(' ', '-')} {dt.datetime.now().strftime('%d-%m-%Y %H-%M')} .xlsx"
+                        wb.save(saida / self.nome_arquivo)
+                self.nomeclb.value = None
+                self.cpfclb.value = None
+                self.datanascimentoclb.value = None
+                self.funcaoclb.value = None
+                self.setorclb.value = None
+                self.nomeclb.update()
+                self.cpfclb.update()
+                self.datanascimentoclb.update()
+                self.funcaoclb.update()
+                self.setorclb.update()
+                self.modal = ft.SnackBar(content=ft.Text("Documentos Gerados"),bgcolor=ft.Colors.GREEN)
                 self.page.snack_bar = self.modal
                 self.modal.open = True
-                self.page.add(self.modal)
-                return
-            
-            for modelo in modelos_selecionados:
-                caminho_modelo = Path(r"modelos_excel") / f"{modelo}.xlsx"
-                if not caminho_modelo.exists():
-                    continue  
-                if modelo == "ANAMNESE":
-                    wb = load_workbook(caminho_modelo)
-                    ws = wb.active
-                    ws["C10"] = nome # type: ignore
-                    ws["C11"] = cpf # type: ignore
-                    ws["E12"] = nascimento # type: ignore
-                    ws["D13"] = funcao # type: ignore
-                    ws["I13"] = setor # type: ignore
-                    ws["G11"] = empresa[0] # type: ignore
-                    ws["G48"] = self.dataselect # type: ignore
-                    ws["E9"] = tipo_exame[0]
-                    saida = Path(r"documentos_gerados")
-                    saida.mkdir(exist_ok=True)
-                    self.nome_arquivo = f"{modelo} {empresa[0].replace(' ', '-')} {nome.replace(' ', '-')} {dt.datetime.now().strftime('%d-%m-%Y %H-%M')} .xlsx"
-                    wb.save(saida / self.nome_arquivo)
-                elif modelo == "ASO":
-                    wb = load_workbook(caminho_modelo)
-                    ws = wb.active
-                    ws["D13"] = nome# type: ignore
-                    ws["J14"] = cpf # type: ignore
-                    ws["D14"] = nascimento # type: ignore
-                    ws["D15"] = funcao # type: ignore
-                    ws["J15"] = setor # type: ignore
-                    ws["D9"] = empresa[0] # type: ignore
-                    ws["L6"] = self.dataselect # type: ignore
-                    ws["J9"] = empresa[1] # type: ignore
-                    ws["D10"] = empresa[2]
-                    ws["J10"] = empresa[3]
-                    for i, valor in enumerate(exames_selecionados):
-                        ws[f"C{31+i}"] = valor
-                        ws[f"E{31+i}"] = self.dataselect
-                    ws["G6"] = tipo_exame[0]
-                    for i, valor in enumerate(self.risk_fisico):
-                        ws[f"D{19+i}"] = valor
-                    for i, valor in enumerate(self.risk_quimico):
-                        ws[f"E{19+i}"] = valor
-                    for i, valor in enumerate(self.risk_biologico):
-                        ws[f"G{19+i}"] = valor
-                    for i, valor in enumerate(self.risk_ergonomico):
-                        ws[f"I{19+i}"] = valor
-                    saida = Path(r"documentos_gerados")
-                    saida.mkdir(exist_ok=True)
-                    self.nome_arquivo = f"{modelo} {empresa[0].replace(' ', '-')} {nome.replace(' ', '-')} {dt.datetime.now().strftime('%d-%m-%Y %H-%M')} .xlsx"
-                    wb.save(saida / self.nome_arquivo)
-                elif modelo == "AUDIOMETRIA":
-                    wb = load_workbook(caminho_modelo)
-                    ws = wb.active
-                    ws["E15"] = nome# type: ignore
-                    ws["L15"] = cpf # type: ignore
-                    ws["P16"] = nascimento # type: ignore
-                    ws["E16"] = funcao # type: ignore
-                    ws["E14"] = empresa[0] # type: ignore
-                    ws["N17"] = self.dataselect # type: ignore
-                    ws["M14"] = empresa[1] # type: ignore
-                    ws["H11"] = tipo_exame[0]
-                    saida = Path(r"documentos_gerados")
-                    saida.mkdir(exist_ok=True)
-                    self.nome_arquivo = f"{modelo} {empresa[0].replace(' ', '-')} {nome.replace(' ', '-')} {dt.datetime.now().strftime('%d-%m-%Y %H-%M')} .xlsx"
-                    wb.save(saida / self.nome_arquivo)
-            self.nomeclb.value = None
-            self.cpfclb.value = None
-            self.datanascimentoclb.value = None
-            self.funcaoclb.value = None
-            self.setorclb.value = None
-            self.nomeclb.update()
-            self.cpfclb.update()
-            self.datanascimentoclb.update()
-            self.funcaoclb.update()
-            self.setorclb.update()
-            self.modal = ft.SnackBar(content=ft.Text("Documentos Gerados"),bgcolor=ft.Colors.GREEN)
-            self.page.snack_bar = self.modal
-            self.modal.open = True
-            self.clean_risks()
-            self.page.add(self.modal)      
-        
+                self.clean_risks()
+                self.page.add(self.modal)      
+                
         def show_loading(self,page, show=True):
             loading = ft.Container(
                 content=ft.Column(

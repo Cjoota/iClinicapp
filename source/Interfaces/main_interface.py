@@ -22,7 +22,7 @@ class Main_interface:
         self.icone = ft.Icon(ft.Icons.SUNNY if self.saudacao() == 1 or self.saudacao() == 2 else ft.Icons.DARK_MODE, color=ft.Colors.YELLOW,size=self.responsive.font_size()+20)
         self.tabct = ft.Container(content=self.buildtableE(self.gerarlinhas(self.documentospr)),border_radius=10
                                   ,border=ft.Border(left=ft.BorderSide(2,ft.Colors.GREY_200),top=ft.BorderSide(2,ft.Colors.GREY_200),right=ft.BorderSide(2,ft.Colors.GREY_200),bottom=ft.BorderSide(2,ft.Colors.GREY_200)))
-        self.cardcontainer = ft.Container(content=self.buildcards(self.gerados[0], self.gerados[0], self.gerados[0])
+        self.cardcontainer = ft.Container(content=self.buildcards(self.gerados[0], 0, 0)
                                           ,margin=ft.Margin(left=0,top=-150,right=0,bottom=0) if self.responsive.is_desktop() else None , padding=0
                                           )
         self.page.run_task(self.clock)
@@ -76,12 +76,28 @@ class Main_interface:
                 documents.append("""Nenhum Documento encontrado.\nGere os exames na aba Gerar Documento!""")
             return documents
    
-    def barra_aviso(self,mensagem:str ,cor:str):
+    def barra_aviso(self,mensagem:str ,cor:str, text_color=ft.Colors.WHITE, icone=ft.Icon(ft.Icons.WARNING,color=ft.Colors.YELLOW_900 )):
         snack_bar = ft.SnackBar(
-            content=ft.Text(mensagem),
-            bgcolor=cor
+            content=ft.Row([icone,ft.Text(mensagem,color=text_color)]),
+            bgcolor=cor,
         )
         self.page.open(snack_bar)
+
+    def modal(self,titulo:str, mensagem:str):
+        def close(e):
+            self.page.close(modal)
+            return
+        modal = ft.AlertDialog(
+            modal=True,
+            title=titulo,
+            content=ft.Text(mensagem),
+            actions=[
+                ft.Row([
+                    ft.ElevatedButton("Confirmar",on_click=lambda e: close(e),color=ft.Colors.BLACK,icon=ft.Icons.WARNING,icon_color=ft.Colors.YELLOW_800),
+                ],alignment=ft.MainAxisAlignment.CENTER, vertical_alignment=ft.CrossAxisAlignment.CENTER)
+            ]
+        )
+        self.page.open(modal)
    
     def buildtableE(self, linhas):
         self.empresastb = ft.Column([

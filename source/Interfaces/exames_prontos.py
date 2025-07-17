@@ -224,8 +224,8 @@ class Documentos:
                 content=ft.Text("Realmente deseja excluir esses arquivos?"),
                 elevation=5,
                 actions=[
-                     ft.TextButton("Yes", on_click=excluir),
-                     ft.TextButton("No", on_click=close),
+                     ft.ElevatedButton("Excluir", on_click=excluir,color=ft.Colors.BLACK),
+                     ft.ElevatedButton("Voltar", on_click=close,color=ft.Colors.BLACK),
                 ]
             )
             self.page.overlay.append(alert_dialog)
