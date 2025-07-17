@@ -13,12 +13,12 @@ from database.models import Base, Caixa, CaixaMensal, ContaAPagar, CaixaDiario
 
 load_dotenv()
 logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger(__name__)
+logger = logging.getLogger("Banco de Dados")
 
 @dataclass
 class CacheConfig:
     """Configuração do cache"""
-    timeout: int = 300  
+    timeout: int = 1000  
     max_size: int = 100
     auto_refresh: bool = True
 

@@ -3,26 +3,37 @@ from api import iniciar_servidor_fastapi
 from database.databasecache import inicializar_db
 from routes import Router
 from funcoes import Verificacoes
+import logging
 import atexit
+logging.basicConfig(level=logging.DEBUG)
+logger = logging.getLogger("CORE")
+initialize = False
 class Main():
-	def __init__(self,page: ft.Page) -> None:
+	def __init__(self, page: ft.Page) -> None:
 		self.page = page
 		self.router = Router(page)
 		self.verfy = Verificacoes()
-		iniciar_servidor_fastapi()
-		page.bgcolor = ft.Colors.WHITE
-		page.scroll = ft.ScrollMode.AUTO
-		page.title = "Clinica São Lucas"
-		page.adaptive = True
-		page.theme_mode = ft.ThemeMode.LIGHT
-		page.run_task(inicializar_db)
-		page.on_route_change = self.router.route_change
-		page.on_disconnect = self.disconnect()
-		page.run_task(self.verfy.uptable)
-		page.run_task(self.verfy.verify)
-		page.go("/login")
-	def disconnect(self):
-		self.page.client_storage.clear()
+		self.VerificacoesIniciais()
+		self.page.bgcolor = ft.Colors.WHITE
+		self.page.title = "Clinica São Lucas"
+		self.page.theme_mode = ft.ThemeMode.LIGHT
+		self.page.on_route_change = self.router.route_change
+		self.page.on_disconnect = lambda _: self.Disconnect()
+		self.page.go("/login")
+
+	def Disconnect(self):
+		self.page.session.clear()
+		logger.info("Sessão Limpa")
+
+	def VerificacoesIniciais(self):
+		global initialize
+		if not initialize:
+			iniciar_servidor_fastapi()
+			self.page.run_task(inicializar_db)
+			self.page.run_task(self.verfy.uptable)
+			self.page.run_task(self.verfy.verify)
+			initialize = True
+			
 @atexit.register
 def limpar_todos_pycache():
 	print("Limpando Cache")
