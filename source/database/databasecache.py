@@ -45,9 +45,6 @@ class SmartCache:
         self._cache[key] = value
         self._timestamps[key] = time.time()
         
-        # Limpa cache se muito grande
-        if len(self._cache) > self.config.max_size:
-            self._cleanup_old_entries()
     
     def invalidate(self, key: str) -> None:
         """Remove item do cache"""
@@ -157,9 +154,9 @@ class ContabilidadeDB:
         result = await session.execute(stmt)
         return Decimal(result.scalar())
     
-    async def buscar_dados(self, force_update: bool = False) -> Optional[Dict]:
-        cache_key = "dados_contabilidade"
-        
+    async def buscar_dados(self, force_update: bool = False):
+        cache_key = "contabilidade"
+
         # Tenta cache primeiro
         if not force_update:
             cached_data = self.cache.get(cache_key)
@@ -188,6 +185,9 @@ class ContabilidadeDB:
                         logger.error(f"Erro na query {i}: {resultado}")
                         return None
                 
+                contas = await self.buscar_contas()
+
+
                 dados = {
                     'diario': resultados[0],
                     'mensal': resultados[1],
@@ -197,10 +197,10 @@ class ContabilidadeDB:
                 }
                 
 
+
                 self.cache.set(cache_key, dados)
                 logger.info("Dados atualizados e armazenados no cache")
                 
-                return dados
                 
         except Exception as e:
             logger.error(f'Erro ao buscar dados: {e}')
@@ -220,6 +220,7 @@ class ContabilidadeDB:
     async def invalidar_cache(self) -> None:
 
         self.cache.clear()
+        await self.buscar_dados(force_update=True)
         logger.info("Cache invalidado manualmente")
     
     async def close(self) -> None:

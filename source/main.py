@@ -1,6 +1,6 @@
 import flet as ft
 from api import iniciar_servidor_fastapi
-from database.databasecache import inicializar_db
+from database.databasecache import inicializar_db,contabilidade_db
 from routes import Router
 from funcoes import Verificacoes
 import logging
@@ -25,6 +25,9 @@ class Main():
 		self.page.session.clear()
 		logger.info("Sessão Limpa")
 
+	async def init_cache(self):
+		await contabilidade_db.buscar_dados(force_update=True)
+
 	def VerificacoesIniciais(self):
 		global initialize
 		if not initialize:
@@ -32,6 +35,7 @@ class Main():
 			self.page.run_task(inicializar_db)
 			self.page.run_task(self.verfy.uptable)
 			self.page.run_task(self.verfy.verify)
+			self.page.run_task(self.init_cache)
 			initialize = True
 			
 @atexit.register
@@ -46,7 +50,7 @@ def limpar_todos_pycache():
 	for doc in Path("pdf_temp").glob("*.pdf"):
 		doc.unlink()
 	
-ft.app(target=Main,view=ft.AppView.WEB_BROWSER, host="192.168.0.245",port=53712,assets_dir="assets",)
+ft.app(target=Main,view=ft.AppView.WEB_BROWSER, host="localhost",port=53712,assets_dir="assets")
 
 
 

@@ -1,7 +1,7 @@
 from funcoes import vercontas
 from decimal import Decimal
 from database.models import ContaAPagar,Caixa
-from database.databasecache import diccreate,ContabilidadeDB
+from database.databasecache import ContabilidadeDB,contabilidade_db
 from Interfaces.main_interface import Main_interface
 import locale
 import flet as ft
@@ -16,28 +16,33 @@ class ContabilidadePage:
         self.sidebar = Sidebar(self.page)
         self.db = ContabilidadeDB()
         self.main_interface_instance = Main_interface(page)
-        self.diario = 0.0
-        self.mensal = 0.0
-        self.contas = 0.0
+        self.card_dados = contabilidade_db.cache.get("contabilidade")
+        self.contas_tabela = self.page.run_task(self.get_contas).result()
         self.selected_chip = None
         self.data_conta = ""
         self.dados = vercontas()
-        self.page.run_task(self.atualizar_cards)
         self.page.on_resized = self.on_resize
     
     def on_resize(self,e):
         if self.page.route == "/contabilidade":
             self.responsive = Responsive(self.page)
             self.responsive.atualizar_widgets(self.build_view())
+
+    async def get_contas(self):
+        contas = await contabilidade_db.buscar_contas()
+        return contas
     
+
     async def atualizar_cards(self):
-        dados_novos = await diccreate(force_update=True)
-        self.diario = dados_novos['diario'] if dados_novos else 0.0
-        self.mensal = dados_novos['mensal'] if dados_novos else 0.0
-        self.contas = dados_novos['contas'] if dados_novos else 0.0
+        await contabilidade_db.invalidar_cache()
+        self.card_dados = contabilidade_db.cache.get("contabilidade")
+        self.diario = self.card_dados['diario'] if self.card_dados else 0.0
+        self.mensal = self.card_dados['mensal'] if self.card_dados else 0.0
+        self.contas = self.card_dados['contas'] if self.card_dados else 0.0
         if self.cardcontainer.page is not None:
             self.cardcontainer.content = self.buildcards(self.diario,self.mensal,self.contas)
             self.cardcontainer.update()
+
     async def atualizar_tabela(self): 
         self.dados_tabela = await self.db.buscar_contas()
         if self.tablecontent.page is not None:
@@ -46,13 +51,6 @@ class ContabilidadePage:
 
     def build_view(self):
         async def retirar_valores(e):
-            async def atualizar_cards():
-                dados_novos = await diccreate(force_update=True)
-                self.diario = dados_novos['diario'] if dados_novos else 0.0
-                self.mensal = dados_novos['mensal'] if dados_novos else 0.0
-                self.contas = dados_novos['contas'] if dados_novos else 0.0
-                self.cardcontainer.content = self.buildcards(self.diario,self.mensal,self.contas)
-                self.cardcontainer.update()
             saida = str(self.valoresRetiro.value).replace(",",".")
             saida = Decimal(saida)
             forma_pagamento = self.selected_chip.label.value if self.selected_chip else "Nenhuma"
@@ -62,7 +60,7 @@ class ContabilidadePage:
                     _retiro_ = Caixa(valor=-saida,descricao=motivoSaida,type="Saída")
                     session.add(_retiro_)
                     await session.commit()
-                self.page.run_task(atualizar_cards)
+                await self.atualizar_cards()
                 self.valoresRetiro.value = ""
                 self.motivo.value = ""
                 self.valoresRetiro.update()
@@ -72,13 +70,6 @@ class ContabilidadePage:
                 snack.open = True
                 self.page.open(snack)
         async def registrar_pagamento(e):
-            async def atualizar_cards():
-                dados_novos = await diccreate(force_update=True)
-                self.diario = dados_novos['diario'] if dados_novos else 0.0
-                self.mensal = dados_novos['mensal'] if dados_novos else 0.0
-                self.contas = dados_novos['contas'] if dados_novos else 0.0
-                self.cardcontainer.content = self.buildcards(self.diario,self.mensal,self.contas)
-                self.cardcontainer.update()
             entrada = str(self.valores.value).replace(",",".")
             entrada = Decimal(entrada)
             forma_pagamento = self.selected_chip.label.value if self.selected_chip else "Nenhuma"
@@ -92,7 +83,7 @@ class ContabilidadePage:
                 self.servico.value = ""
                 self.valores.update()
                 self.servico.update()
-                self.page.run_task(atualizar_cards)
+                await self.atualizar_cards()
             else:
                 self.barra_aviso("Preencha todos os campos!","#FF0000")
         if self.responsive.is_desktop():
@@ -118,9 +109,9 @@ class ContabilidadePage:
             self.motivo = ft.TextField(label="Motivo e Quem",width=200, height=35, border_radius=10
                                 ,bgcolor=ft.Colors.WHITE,prefix_icon=ft.Icons.TEXT_SNIPPET)
             self.cardcontainer = ft.Container(
-                content=self.buildcards(self.diario,self.mensal,self.contas)
+                content=self.buildcards(self.card_dados["diario"],self.card_dados["mensal"],self.card_dados["contas"])
             )
-            self.tablecontent = ft.Container(expand=True,border_radius=10) 
+            self.tablecontent = ft.Container(content=self.buildtable(self.gerar_linhas(self.contas_tabela)),expand=True,border_radius=10) 
             self.caixainterface = ft.Column([
                 ft.Row([
                     self.valores,self.servico
@@ -183,7 +174,6 @@ class ContabilidadePage:
                         content=self.main_interface_instance.cardmain("Contabilidade de contas",None,None,self.tablecontent,True)
                     ),
             ],alignment=ft.MainAxisAlignment.START,horizontal_alignment=ft.CrossAxisAlignment.START)
-            self.page.run_task(self.atualizar_tabela)
             return ft.Row(
                 [
                     ft.Column([self.sidebar.build()],alignment=ft.MainAxisAlignment.START,horizontal_alignment=ft.CrossAxisAlignment.START),
@@ -469,13 +459,8 @@ class ContabilidadePage:
             if idx==i:
                 await self.db.deletar_contas(conta.descricao)
         await self.atualizar_tabela()
-        dados_novos = await diccreate(force_update=True)
-        self.diario_ = dados_novos['diario'] if dados_novos else 0.0
-        self.mensal_ = dados_novos['mensal'] if dados_novos else 0.0
-        self.contas_ = dados_novos['contas'] if dados_novos else 0.0
-        self.cardcontainer.content = self.buildcards(self.diario_,self.mensal_,self.contas_)
-        self.cardcontainer.update()
-        
+        await self.atualizar_cards()
+            
     def registrar_conta(self,e):
         import datetime
         def date_picker(e):
@@ -496,13 +481,15 @@ class ContabilidadePage:
                 session.add(_insrt_)
                 await session.commit()   
             self.barra_aviso("Conta Registrada","#00FF15")
-            self.page.run_task(self.atualizar_tabela)
-            dados_novos = await diccreate(force_update=True)
-            self.diario_ = dados_novos['diario'] if dados_novos else 0.0
-            self.mensal_ = dados_novos['mensal'] if dados_novos else 0.0
-            self.contas_ = dados_novos['contas'] if dados_novos else 0.0
-            self.cardcontainer.content = self.buildcards(self.diario_,self.mensal_,self.contas_)
-            self.cardcontainer.update()
+            await self.atualizar_tabela()
+            await self.db.invalidar_cache()
+            self.card_dados = self.cache.get("dados_contabilidade")
+            self.diario = self.card_dados['diario'] if self.card_dados else 0.0
+            self.mensal = self.card_dados['mensal'] if self.card_dados else 0.0
+            self.contas = self.card_dados['contas'] if self.card_dados else 0.0
+            if self.cardcontainer.page is not None:
+                self.cardcontainer.content = self.buildcards(self.diario,self.mensal,self.contas)
+                self.cardcontainer.update()
         
        
         date = ft.DatePicker(current_date=datetime.datetime.now(),on_change=lambda e: date_picker(e))
