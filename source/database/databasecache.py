@@ -8,6 +8,8 @@ from dataclasses import dataclass
 from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession, async_sessionmaker
 from sqlalchemy import select, func, delete
 from dotenv import load_dotenv
+from sqlalchemy.engine import create_engine
+from sqlalchemy.orm import sessionmaker,Session
 import os
 from database.models import Base, Caixa, CaixaMensal, ContaAPagar, CaixaDiario
 
@@ -72,15 +74,32 @@ class ContabilidadeDB:
                 f"{os.getenv('DB_PASSWORD')}@{os.getenv('DB_HOST')}:"
                 f"{os.getenv('DB_PORT')}/{os.getenv('DB_NAME')}"
             )
-        self.engine = create_async_engine(
-                _database_url, 
-                echo=False,
-                future=True
+        _database_sinc = (
+                f"postgresql+psycopg2://{os.getenv('DB_USER')}:"
+                f"{os.getenv('DB_PASSWORD')}@{os.getenv('DB_HOST')}:"
+                f"{os.getenv('DB_PORT')}/{os.getenv('DB_NAME')}"
             )
+        self.engine = create_async_engine(
+            _database_url, 
+            echo=False,
+            future=True
+        )
+        self.engine_sinc = create_engine(
+            _database_sinc,
+            echo=False,
+            future=True
+        )
         self.async_session = async_sessionmaker(
             self.engine,
             class_=AsyncSession,
             expire_on_commit=False
+        )
+
+        self.session = sessionmaker(
+            self.engine_sinc,
+            class_=Session,
+            expire_on_commit=False
+
         )
         self.cache = SmartCache(cache_config or CacheConfig())
         self._initialized = False
@@ -89,15 +108,9 @@ class ContabilidadeDB:
     async def initialize(self) -> None:
 
         try:
-            self.async_session = async_sessionmaker(
-                self.engine,
-                class_=AsyncSession,
-                expire_on_commit=False
-            )
-            
   
             async with self.engine.begin() as conn:
-                await conn.run_sync(Base.metadata.create_all)
+                await conn.run_sync(lambda sync_conn: Base.metadata.create_all(sync_conn, checkfirst=True))
             
             self._initialized = True
             logger.info("Banco inicializado com sucesso")
@@ -157,15 +170,12 @@ class ContabilidadeDB:
     async def buscar_dados(self, force_update: bool = False):
         cache_key = "contabilidade"
 
-        # Tenta cache primeiro
         if not force_update:
             cached_data = self.cache.get(cache_key)
             if cached_data:
                 logger.info("Dados recuperados do cache")
                 return cached_data
         
-        if not self._initialized:
-            await self.initialize()
         
         try:
             async with self.async_session() as session1, \

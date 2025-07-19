@@ -1,5 +1,6 @@
 import flet as ft 
-from funcoes import Auth
+from funcoes import Auth, Verificacoes
+
 
 class Login:
     def __init__(self, page: ft.Page):
@@ -97,6 +98,15 @@ class Login:
                 pass
         self.page.update()
 
+    def auth_session(self,user):
+        vr = Verificacoes()
+        cargo = vr.get_cargo(user)
+        self.page.session.set("user",f"{user}")
+        self.page.session.set("logado",True)
+        if cargo == "secretaria" or cargo == "developer":
+            self.page.session.set("perm", "all")
+
+
     def on_login_click(self, e):
         auth = Auth()
         usuario = self.user.value
@@ -112,13 +122,8 @@ class Login:
                 self.show_loading(True)
                 self.page.overlay.clear()
                 self.page.update()
-                self.page.client_storage.set("logado", "sim")
-                self.page.client_storage.set("nome_usuario",f"{usuario}")
-                if usuario == "claudiodev2481" or usuario == "adrielebrito":
-                    self.page.client_storage.set("perm", "all")
-                else:
-                    self.page.client_storage.set("perm", "restrict")
-                self.page.go("/home") # Navigate to main interface
+                self.auth_session(usuario)
+                self.page.go("/home") 
             else:
                 self.GlobalModal.content = ft.Text("Usuário ou senha inválidos")
                 self.GlobalModal.bgcolor = ft.Colors.RED

@@ -52,7 +52,8 @@ class User(Base):
     usuario = Column(String(255), unique=True)
     passw = Column(Text, nullable=False)
     salt = Column(Text)
-    criado_em = Column(TIMESTAMP, default=func.now())
+    cargo = Column(String(50), server_default="funcionario")
+    criado_em = Column(TIMESTAMP, server_default=func.now())
 
 class Caixa(Base):
     __tablename__ = 'caixa'

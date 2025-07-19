@@ -1,37 +1,38 @@
 import flet as ft
 from Interfaces.Login_interface import Login
 
+
 class Router:
     def __init__(self, page: ft.Page):
         self.page = page
         self.routes = {
             "/": self.login_view,
             "/login": self.login_view,
-            "/home": self.main_interface_view,
-            "/contabilidade": self.contabilidade_view,
-            "/documentos": self.documentos_view,
-            "/empresas": self.empresas_view,
-            "/gerardoc": self.gerardoc_view,
+            "/home": self.require_login(self.main_interface_view),
+            "/contabilidade": self.require_login(self.contabilidade_view),
+            "/documentos": self.require_login(self.documentos_view),
+            "/empresas": self.require_login(self.empresas_view),
+            "/gerardoc": self.require_login(self.gerardoc_view),
         }
         self.page.on_route_change = self.route_change
-        self.page.go(self.page.route)
-        self.page.on_connect = self.auth()
+        self.page.on_connect = self.page.go("/")
 
-            
-
-    def auth(self):
-        if self.page.client_storage.contains_key("logado"):
-            if self.page.client_storage.get("logado") == "sim":
-                return
-            else:
+    def require_login(self, view_func):
+        def wrapper():
+            if not self.page.session.get("logado"):
                 self.page.go("/login")
-        elif not self.page.client_storage.contains_key("logado"):
-            self.go("/login")
-                
-
+                return
+            view_func()
+        return wrapper
 
     def route_change(self, route):
         self.page.views.clear()
+        rota = route.route
+        rotas_protegidas = ["/home", "/contabilidade", "/documentos", "/empresas", "/gerardoc"]
+        if rota in rotas_protegidas and not self.page.session.get("logado"):
+            self.page.go("/login")
+            return
+
         if route.route in self.routes:
             self.routes[route.route]()
         else:
@@ -48,9 +49,6 @@ class Router:
 
     def main_interface_view(self):
         from Interfaces.main_interface import Main_interface
-        if self.page.client_storage.get("logado") != "sim":
-            self.page.go("/login")
-            return
         main_view = Main_interface(self.page)
         self.page.views.append(
             ft.View(
@@ -75,11 +73,8 @@ class Router:
 
     def contabilidade_view(self):
         from Interfaces.contab import ContabilidadePage
-        if self.page.client_storage.get("logado") != "sim":
-            self.page.go("/login")
-            return
-        if self.page.client_storage.get("perm") == "all":
-            contab_view = ContabilidadePage(self.page)
+        contab_view = ContabilidadePage(self.page)
+        if self.page.session.get("perm") == "all":
             self.page.views.append(
                 ft.View(
                     "/contabilidade",
@@ -99,9 +94,6 @@ class Router:
             )
     def documentos_view(self):
         from Interfaces.exames_prontos import Documentos
-        if self.page.client_storage.get("logado") != "sim":
-            self.page.go("/login")
-            return
         documentos_view = Documentos(self.page)
         self.page.views.append(
             ft.View(
@@ -113,9 +105,6 @@ class Router:
         )
     def empresas_view(self):
         from Interfaces.empresas import Empresas
-        if self.page.client_storage.get("logado") != "sim":
-            self.page.go("/login")
-            return
         Empresas_view = Empresas(self.page)
         self.page.views.append(
             ft.View(
@@ -127,9 +116,6 @@ class Router:
         )
     def gerardoc_view(self):
         from Interfaces.gerarDoc import Gerardoc
-        if self.page.client_storage.get("logado") != "sim":
-            self.page.go("/login")
-            return
         gerardoc_view = Gerardoc(self.page)
         self.page.views.append(
             ft.View(

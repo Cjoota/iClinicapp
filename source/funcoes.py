@@ -11,8 +11,8 @@ import locale
 import logging
 from database.datacreator import connectlocal,commitlocal
 from database.databasecache import ContabilidadeDB
-from database.models import CaixaDiario, CaixaMensal
-from sqlalchemy.sql import insert
+from database.models import CaixaDiario, CaixaMensal,User
+from sqlalchemy.sql import insert, select
 from pathlib import Path
 import json
 locale.setlocale(locale.LC_ALL, 'pt_BR.UTF-8')
@@ -39,7 +39,7 @@ class Auth:
         
         return False
         
-    def cadastro(self,user,passw):
+    def cadastro(self,user,passw,):
         if len(passw) < 8 or not re.search(r'[A-Z]', passw) or not re.search(r'[0-9]', passw):
             return "Senha deve ter pelo menos 8 caracteres, uma letra maiúscula e um número.", 150
         senhahash, salt = self.hashsenha(passw)
@@ -70,6 +70,10 @@ def inserirmensal(valor,desc):
         conn.close()
         cursor.close()
         return False, f"Erro ao Introduzir: {str(e)}"
+    
+
+
+
 
 def consultamensal():
     try:
@@ -300,9 +304,13 @@ class Verificacoes:
                 self.set_config("d",True)
 
             
-
-            
             await asyncio.sleep(30)
+    def get_cargo(self,user):
+        with self.db.session() as session:
+            slec = select(User).where(User.usuario == user)
+            result = session.execute(slec).scalar_one_or_none()
+            return result.cargo
+
 
 def converter_xlsx_para_pdf(caminho_xlsx, caminho_pdf):
     excel = None

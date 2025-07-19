@@ -19,7 +19,7 @@ class Main():
 		self.page.theme_mode = ft.ThemeMode.LIGHT
 		self.page.on_route_change = self.router.route_change
 		self.page.on_disconnect = lambda _: self.Disconnect()
-		self.page.go("/login")
+		self.page.on_connect = self.page.go("/login")
 
 	def Disconnect(self):
 		self.page.session.clear()
@@ -50,7 +50,7 @@ def limpar_todos_pycache():
 	for doc in Path("pdf_temp").glob("*.pdf"):
 		doc.unlink()
 	
-ft.app(target=Main,view=ft.AppView.WEB_BROWSER, host="localhost",port=53712,assets_dir="assets")
+ft.app(target=Main,view=ft.AppView.WEB_BROWSER, host="192.168.0.245",port=53712,assets_dir="assets")
 
 
 
