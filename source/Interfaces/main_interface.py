@@ -1,7 +1,6 @@
 import flet as ft 
 import asyncio
 import datetime as dt
-import locale
 import asyncio
 from pathlib import Path
 from Interfaces.sidebar import Sidebar
@@ -9,7 +8,6 @@ from Interfaces.telaresize import Resize, Responsive
 
 class Main_interface:
     def __init__(self, page: ft.Page):
-        locale.setlocale(locale.LC_ALL, 'pt_BR.UTF-8')
         self.page = page
         self.page.on_resized = self.on_resize
         self.resize = Resize(self.page)
