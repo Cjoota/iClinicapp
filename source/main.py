@@ -29,8 +29,10 @@ class Main():
 
 	def Disconnect(self):
 		""" Limpa os dados salvos durante a sessão do usuário ao sair do sistema. """
-		self.page.session.clear()
-		self.page.client_storage.clear()
+		if self.page.session.contains_key("user"):
+			self.page.session.clear()
+		if self.page.client_storage.contains_key("nick"):
+			self.page.client_storage.clear()
 		logger.info("Sessão Limpa")
 
 	async def init_cache(self):
@@ -61,7 +63,7 @@ def limpar_cache():
 	for doc in Path("pdf_temp").glob("*.pdf"):
 		doc.unlink()
 	
-ft.app(target=Main,view=ft.AppView.WEB_BROWSER, host="192.168.0.245",port=53712,assets_dir="assets")
+ft.app(target=Main,view=ft.AppView.WEB_BROWSER, host="192.168.3.59",port=53712,assets_dir="assets")
 
 
 

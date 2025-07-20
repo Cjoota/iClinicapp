@@ -599,7 +599,7 @@ class Gerardoc:
                             ws[f"I{19+i}"] = valor
                         saida = Path(r"documentos_gerados")
                         saida.mkdir(exist_ok=True)
-                        self.nome_arquivo = f"{modelo} {self.empresas[0].replace(' ', '-')} {nome.replace(' ', '-')} {dt.datetime.now().strftime('%d-%m-%Y %H-%M')} .xlsx"
+                        self.nome_arquivo = f"{modelo} {self.empresas[0].replace(' ', '-')} {nome.replace(' ', '-')} {dt.datetime.now().strftime('%d-%m-%Y %H-%M')}.xlsx"
                         wb.save(saida / self.nome_arquivo)
                     elif modelo == "AUDIOMETRIA":
                         wb = load_workbook(caminho_modelo)

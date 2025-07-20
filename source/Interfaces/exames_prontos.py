@@ -6,7 +6,7 @@ from Interfaces.main_interface import Main_interface
 from Interfaces.sidebar import Sidebar
 from Interfaces.telaresize import Responsive
 from funcoes import converter_xlsx_para_pdf
-
+import time
 class Documentos:
         def __init__(self,page:ft.Page) -> None:
             page.clean()
@@ -180,7 +180,7 @@ class Documentos:
                 documents.append("A Pasta de saída não existe!")
                 return documents
             for doc in documentosdir.glob("*.xlsx"):
-                exame,empresa,colab,data,hora = doc.name.replace(".xlsx","").split()
+                exame,empresa,colab,data,hora = doc.name.replace(".xlsx","").replace("_"," ").split()
                 documents.append([exame,empresa.replace("-"," "),colab.replace("-"," "),data.replace("-","/"),hora.replace("-",":")])
             return documents
         
@@ -232,18 +232,35 @@ class Documentos:
             alert_dialog.open = True
             self.page.update()
         
-        def abrirdoc(self,idx)-> None:
+        def abrirdoc(self, idx) -> None:
             try:
-                documentosdir = Path(r"documentos_gerados")
+                documentosdir = Path("documentos_gerados")
                 documento = documentosdir.glob("*.xlsx")
-                for i,doc in enumerate(documento):
+
+                for i, doc in enumerate(documento):
                     if idx == i:
-                        os.makedirs(rf"pdf_temp", exist_ok=True)
-                        if not os.path.exists(rf"pdf_temp\{doc.name.replace(".xlsx",".pdf")}"):
+                        os.makedirs("pdf_temp", exist_ok=True)
+                        pdf_path = Path("pdf_temp") / doc.name.replace(".xlsx", ".pdf")
+                        if not pdf_path.exists():
                             self.loading_(True)
-                            converter_xlsx_para_pdf(f"{doc.absolute()}",f"pdf_temp/{doc.name.replace(".xlsx",".pdf")}")
+                            converter_xlsx_para_pdf(str(doc.absolute()), "pdf_temp")
+                            # Aguarda o PDF ser realmente salvo (até 5 segundos)
+                            for _ in range(10):
+                                if pdf_path.exists():
+                                    break
+
+                            time.sleep(0.5)
+
                             self.loading_(False)
-                        self.page.launch_url(rf"http://192.168.3.24:8001/pdf/{doc.name.replace(".xlsx",".pdf")}")
+
+                        if pdf_path.exists():
+                            self.page.launch_url(f"http://192.168.3.59:8001/pdf/{pdf_path.name}")
+                        else:
+                            self.main.barra_aviso("PDF não foi gerado a tempo.", ft.Colors.RED)
+
+                        break
+
             except Exception as e:
-                self.main.barra_aviso(f"Erro ao gerar visualização: {str(e)}",ft.Colors.RED)
+                self.main.barra_aviso(f"Erro ao gerar visualização: {str(e)}", ft.Colors.RED)
+                print(str(e))
                 

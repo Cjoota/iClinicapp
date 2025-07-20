@@ -2,8 +2,6 @@ import asyncio
 import hashlib
 import secrets
 import re
-import comtypes.client
-import os
 from database.datacreator import keys
 import psycopg2
 import datetime
@@ -14,6 +12,8 @@ from database.models import CaixaDiario, CaixaMensal,User
 from sqlalchemy.sql import insert, select
 from pathlib import Path
 import json
+import subprocess
+import platform
 
 # Habilitando o sistema de log de erros.
 logging.basicConfig(level=logging.INFO)
@@ -125,44 +125,24 @@ def puxardados(razao):
 
 def converter_xlsx_para_pdf(caminho_xlsx, caminho_pdf):
     """ Converte arquivos ( .xlsx ) para ( .pdf )."""
-    excel = None
-    workbook = None
-    try:
-        caminho_xlsx_abs = os.path.abspath(caminho_xlsx)
-        caminho_pdf_abs = os.path.abspath(caminho_pdf)
-        if not os.path.exists(caminho_xlsx_abs):
-            print(f"Arquivo não encontrado: {caminho_xlsx_abs}")
-            return False
-        os.makedirs(os.path.dirname(caminho_pdf_abs), exist_ok=True)
-        if os.path.exists(caminho_pdf_abs):
-            os.remove(caminho_pdf_abs)
-        excel = comtypes.client.CreateObject("Excel.Application")
-        excel.Visible = False
-        excel.DisplayAlerts = False  
-        workbook = excel.Workbooks.Open(caminho_xlsx_abs)
-        workbook.ExportAsFixedFormat(
-            Type=0,  
-            Filename=caminho_pdf_abs,
-            Quality=0,  
-            IgnorePrintAreas=False,
-            OpenAfterPublish=False
-        )
-        print("Conversão concluída!")
-        return True
-    except Exception as e:
-        print(f"Erro ao converter para PDF: {e}")
-        return False
-    finally:
-        try:
-            if workbook:
-                workbook.Close(SaveChanges=False)
-        except:
-            pass
-        try:
-            if excel:
-                excel.Quit()
-        except:
-            pass
+    if platform.system() == "Windows":
+        # Caminho completo para o executável soffice.exe
+        libreoffice_path = r"C:\Program Files\LibreOffice\program\soffice.exe"
+    else:
+        # No Linux geralmente está no PATH
+        libreoffice_path = "libreoffice"
+
+    caminho_arquivo = caminho_xlsx
+    pasta_saida = caminho_pdf
+
+    subprocess.run([
+        libreoffice_path,
+        "--headless",
+        "--convert-to", "pdf",
+        str(caminho_arquivo),
+        "--outdir", str(pasta_saida)
+    ], check=True)
+
 
 def get_cargo(user):
     """ Seleciona o cargo do usuario inserido, no banco de dados. """

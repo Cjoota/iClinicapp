@@ -1,9 +1,10 @@
 from fastapi import FastAPI
-from fastapi.responses import FileResponse
+from fastapi.responses import FileResponse,JSONResponse
 from fastapi.staticfiles import StaticFiles
 import subprocess
 import threading
 import os
+from pathlib import Path
 servidor_iniciado = False
 """ Gerando as pastas de armazenamento """
 os.makedirs("pdf_temp",exist_ok=True)
@@ -20,9 +21,12 @@ def iniciar_servidor_fastapi():
         thread.start()
         servidor_iniciado = True
 
-""" Instancia o FastAPI e direciona a pasta de arquivos """
+
+
+PDF_DIR = Path().resolve() / "pdf_temp"  # Aponta para a raiz do projeto
+
 app = FastAPI()
-app.mount("/files", StaticFiles(directory=rf"pdf_temp"), name="files")
+app.mount("/files", StaticFiles(directory=PDF_DIR), name="files")
 
 @app.get("/")
 def read_root():
@@ -30,9 +34,18 @@ def read_root():
 
 @app.get("/pdf/{filename}")
 def get_pdf(filename: str):
-    """Endpoint para servir arquivos PDF"""
-    file_path = rf"pdf_temp\{filename}"
-    if os.path.exists(file_path):
-        return FileResponse(file_path, media_type="application/pdf")
+    file_path = PDF_DIR / filename
+    print("Requisição para:", filename)
+    print("Buscando:", file_path)
+
+    if file_path.exists():
+        return FileResponse(str(file_path), media_type="application/pdf")
     else:
-        return {"error": "Arquivo não encontrado"}
+        return JSONResponse(
+            status_code=404,
+            content={
+                "erro": "Arquivo não encontrado",
+                "tentado_em": str(file_path),
+                "existe": file_path.exists()
+            }
+        )
