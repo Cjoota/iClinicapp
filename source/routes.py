@@ -1,8 +1,22 @@
 import flet as ft
 from Interfaces.Login_interface import Login
-
+from Interfaces.cadastro import Cadastro
 
 class Router:
+    """SISTEMA DE ROTAS E ENDEREÇAMENTO DE ABAS.\n-
+    - route_change:\n 
+        Gerenciamento de rotas chamado atráves do evento de troca de pagina.\n
+        
+    - require_login:\n
+        Verificação do login, verifica se o usuário ja se logou e se está permitido o acesso.\n
+        
+    - <Nome da aba>_view:\n
+        Geração das paginas.\n
+    
+    - Go:\n
+        Função de troca unica de paginas.
+
+    """
     def __init__(self, page: ft.Page):
         self.page = page
         self.routes = {
@@ -13,19 +27,22 @@ class Router:
             "/documentos": self.require_login(self.documentos_view),
             "/empresas": self.require_login(self.empresas_view),
             "/gerardoc": self.require_login(self.gerardoc_view),
+            "/cadastro": self.cadastro_view,
         }
         self.page.on_route_change = self.route_change
         self.page.on_connect = self.page.go("/")
 
     def require_login(self, view_func):
+        """ Verifica se o usuario está logado. """
         def wrapper():
             if not self.page.session.get("logado"):
                 self.page.go("/login")
                 return
             view_func()
         return wrapper
-
+    
     def route_change(self, route):
+        """ Função de troca de paginas, recebe o chamado do capturador de evento ao trocar de pagina. """
         self.page.views.clear()
         rota = route.route
         rotas_protegidas = ["/home", "/contabilidade", "/documentos", "/empresas", "/gerardoc"]
@@ -46,7 +63,7 @@ class Router:
                 )
             )
         self.page.update()
-
+    
     def main_interface_view(self):
         from Interfaces.main_interface import Main_interface
         main_view = Main_interface(self.page)
@@ -59,7 +76,7 @@ class Router:
                 ],scroll=ft.ScrollMode.ADAPTIVE
             )
         )
-
+    
     def login_view(self):
         login_view = Login(self.page)
         self.page.views.append(
@@ -70,7 +87,7 @@ class Router:
                 ]
             )
         )
-
+    
     def contabilidade_view(self):
         from Interfaces.contab import ContabilidadePage
         contab_view = ContabilidadePage(self.page)
@@ -92,6 +109,7 @@ class Router:
                     ]
                 )
             )
+    
     def documentos_view(self):
         from Interfaces.exames_prontos import Documentos
         documentos_view = Documentos(self.page)
@@ -103,6 +121,7 @@ class Router:
                 ]
             )
         )
+    
     def empresas_view(self):
         from Interfaces.empresas import Empresas
         Empresas_view = Empresas(self.page)
@@ -114,6 +133,7 @@ class Router:
                 ]
             )
         )
+    
     def gerardoc_view(self):
         from Interfaces.gerarDoc import Gerardoc
         gerardoc_view = Gerardoc(self.page)
@@ -125,5 +145,17 @@ class Router:
                 ]
             )
         )
+    
+    def cadastro_view(self):
+        cadastro = Cadastro(self.page)
+        self.page.views.append(
+            ft.View(
+                "/cadastro",
+                [
+                    cadastro.build_view()
+                ] 
+            )
+        )
+    
     def go(self, route):
         self.page.go(route)

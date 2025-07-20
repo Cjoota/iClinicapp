@@ -7,7 +7,6 @@ import os
 from database.datacreator import keys
 import psycopg2
 import datetime
-import locale
 import logging
 from database.datacreator import connectlocal,commitlocal
 from database.databasecache import ContabilidadeDB
@@ -15,31 +14,58 @@ from database.models import CaixaDiario, CaixaMensal,User
 from sqlalchemy.sql import insert, select
 from pathlib import Path
 import json
-locale.setlocale(locale.LC_ALL, 'pt_BR.UTF-8')
+
+# Habilitando o sistema de log de erros.
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
+db = ContabilidadeDB()
 
 class Auth:
-    def __init__(self):
-        pass
+    """ 
+        AUTENTICAÇÃO DE LOGIN E CADASTRO.
+        --------------------------------
+        Cadastro: Recebe as credênciais, criptografa a senha em hash e armazena a senha em hash e o salt para descriptografar. \n
+        Login: Recebe as credênciais, verifica o hash da senha informada e compara com o hash armazenado, verificando tambem se o usuário existe e contem a mesma senha.
+    """
 
-    def hashsenha(self,senha,salt=None):
+    def hashsenha(self,senha:str,salt=None):
+        """ 
+            Senha para Hash - sha256
+            -
+            Transforma a senha em hash gerado em SHA256, retornando a senha criptografada e o salt de descriptografia. \n
+            senha: Podendo receber uma string ou objeto. \n
+            salt: (OPCIONAL), o salt pode ser gerado pela função ou informado um proprio.
+        """
         if salt is None:
-            salt = secrets.token_hex(16)
+            salt = secrets.token_hex(16) 
         senhahash = hashlib.pbkdf2_hmac('sha256', senha.encode('utf-8'), salt.encode('utf-8'), 100000).hex()
         return senhahash, salt
 
     def login(self,usuario,password):
+        """ 
+            Login
+            -
+            Recebe as credênciais (user,password).\n
+            Transforma a senha em hash e comparada com a senha armazenada no usuário informado 
+        """
         result= connectlocal(f"SELECT passw, salt FROM users WHERE usuario= ('{usuario}')")
         if result:
             senhasalva, salt = result[0]
             senhacalculada, _ = self.hashsenha(password, salt)
-            
             return secrets.compare_digest(senhasalva, senhacalculada)
         
         return False
-        
+    
+    
     def cadastro(self,user,passw,):
+        """ 
+            Cadastro
+            -
+            Recebe as credênciais (user,password).\n
+            Analisa a senha para identificar senhas fracas e fora de padrão. \n
+            Trabsforma a senha em hash e armazena a senha, o salt para descriptografia e o usuario informado.
+            
+        """
         if len(passw) < 8 or not re.search(r'[A-Z]', passw) or not re.search(r'[0-9]', passw):
             return "Senha deve ter pelo menos 8 caracteres, uma letra maiúscula e um número.", 150
         senhahash, salt = self.hashsenha(passw)
@@ -50,98 +76,9 @@ class Auth:
             return "Usuário Invalido.", 150
         except Exception as e:
             return f"Erro ao cadastrar: {str(e)}", 150
-        
-def inserirmensal(valor,desc):
-    data = datetime.datetime.now().strftime("%d-%m-%Y")
-    try:
-        conn = psycopg2.connect(
-            host=keys[0],
-            database=keys[1],
-            user=keys[2],
-            password=keys[3],
-            port=keys[4])
-        cursor = conn.cursor()
-        cursor.execute("INSERT INTO caixa_mensal (data, valor, descricao) VALUES (%s, %s, %s)", (data, valor, desc))
-        conn.commit()
-        cursor.close()
-        conn.close()
-        return True
-    except psycopg2.DatabaseError as e:
-        conn.close()
-        cursor.close()
-        return False, f"Erro ao Introduzir: {str(e)}"
-    
-
-
-
-
-def consultamensal():
-    try:
-        valmensal = connectlocal("SELECT SUM(valor) FROM caixa_mensal")
-        valores = re.findall(r"'(.*?)'", str(valmensal[0]))
-        if valores == []:
-            return "R$ 0,00"
-        else:
-            valores = float(valores[0])
-            valores = locale.currency(valores, grouping=True)
-            return valores
-    except psycopg2.Error:
-        return "Falha ao conectar"
-
-def inserirdiario(valor,desc):
-    try:    
-        ms =  commitlocal(F"INSERT INTO caixa (valor, descricao) VALUES ('{valor}','{desc}')")
-        return ms
-    except Exception as e:
-        print(str(e))
-   
-
-def retirardiario(valor,desc):
-   ms =  commitlocal(F"INSERT INTO caixa (valor, descricao, type) VALUES ('{-valor}','{desc}','Saida')")
-   return ms
-
-def consultadiaria():
-    try:
-        data = datetime.datetime.now().strftime("%Y-%m-%d")
-        condiaria = connectlocal(f"SELECT SUM(valor) FROM caixa WHERE data='{data}'")
-        condiaria = re.findall(r"'(.*?)'", str(condiaria[0]))
-        if condiaria:
-            valor = condiaria
-            if valor == []:
-                valor = "R$ 0,00"
-                return valor
-            else:
-                valor = float(valor[0])
-                valor = locale.currency(valor, grouping=True)
-                return valor
-        else:
-            return "R$ 0,00"
-    except Exception as e:
-        print(str(e))
-        return "Falha na conexão"
-
-def inserircontas(desc,valor,venc,status, datapg):
-    try:
-        commitlocal(f"INSERT INTO contas_a_pagar (descricao, valor, vencimento, status, data_pagamento) VALUES ('{desc}', '{valor}', '{venc}', '{status}', '{datapg}')")
-    except psycopg2.Error as e:
-        return False, print(f"Erro ao Introduzir: {e}")
-
-def consultacontas():
-    try:
-        valapagar = connectlocal("SELECT SUM(valor) FROM contas_a_pagar")
-        valapagar = re.findall(r"'(.*?)'", str(valapagar[0]))
-        if valapagar == []:
-            valor_total = 0.0
-            valores = locale.currency(valor_total, grouping=True)
-            return valores
-        else:
-            valor_total = float(valapagar[0]) if valapagar and valapagar[0] is not None else 0.0
-            valores = locale.currency(valor_total, grouping=True)
-            return valores
-    except psycopg2.DatabaseError as e:
-        return "Falha de DB!"
 
 def vercontas() :
+    """ Seleciona no Banco de dados as informações sobre contas registradas e as retorna. """
     try:
         dados = connectlocal("SELECT descricao,valor,vencimento, data_pagamento, status FROM contas_a_pagar")
         if dados == []:
@@ -152,20 +89,15 @@ def vercontas() :
         print(f"Erro: {str(e)}")
         return [("SEM CONEXÃO","-","-","-","-")]
 
-def excluirconta(desc):
-    try:
-        commitlocal(f"DELETE FROM contas_a_pagar WHERE descricao='{desc}'")
-        return True
-    except psycopg2.DatabaseError as e:
-        return False, print(f"Erro ao deletar: {e}")
-
 def cadasempresa(razao, cnpj, contato, endereco, municipio):
+    """ Cadastra uma nova empresa no banco de dados empresarial. """
     try:
         commitlocal(f"INSERT INTO empresas (razao, cnpj, contato, endereco, municipio) VALUES ('{razao}', '{cnpj}', '{contato}', '{endereco}','{municipio}')")
     except psycopg2.DatabaseError as e:
         print(f"Erro ao cadastrar: {str(e)}")
 
 def verempresa():
+    """ Seleciona no banco de dados todas as empresas encontradas e registradas. """
     try:
         dados = connectlocal("SELECT razao, cnpj, contato, endereco, municipio FROM empresas")
         return dados
@@ -174,12 +106,14 @@ def verempresa():
         return ["sem conexão","sem conexão","sem conexão","sem conexão","sem conexão"]
     
 def excluiremp(cnpj):
+    """ Exclui uma empresas do Banco de dados. """
     try:
         commitlocal(f"DELETE FROM empresas WHERE cnpj='{cnpj}'")
     except psycopg2.DatabaseError as e:
         logging.info(f"Erro ao deletar {e}")
 
 def puxardados(razao):
+    """ Seleciona os dados de uma empresa especifica. """
     dt = connectlocal(f"SELECT razao, cnpj, endereco, municipio FROM empresas WHERE razao='{razao}'")
     empresa = []
     for i in dt:
@@ -189,8 +123,98 @@ def puxardados(razao):
         empresa.append(i[3])
     return empresa
 
+def converter_xlsx_para_pdf(caminho_xlsx, caminho_pdf):
+    """ Converte arquivos ( .xlsx ) para ( .pdf )."""
+    excel = None
+    workbook = None
+    try:
+        caminho_xlsx_abs = os.path.abspath(caminho_xlsx)
+        caminho_pdf_abs = os.path.abspath(caminho_pdf)
+        if not os.path.exists(caminho_xlsx_abs):
+            print(f"Arquivo não encontrado: {caminho_xlsx_abs}")
+            return False
+        os.makedirs(os.path.dirname(caminho_pdf_abs), exist_ok=True)
+        if os.path.exists(caminho_pdf_abs):
+            os.remove(caminho_pdf_abs)
+        excel = comtypes.client.CreateObject("Excel.Application")
+        excel.Visible = False
+        excel.DisplayAlerts = False  
+        workbook = excel.Workbooks.Open(caminho_xlsx_abs)
+        workbook.ExportAsFixedFormat(
+            Type=0,  
+            Filename=caminho_pdf_abs,
+            Quality=0,  
+            IgnorePrintAreas=False,
+            OpenAfterPublish=False
+        )
+        print("Conversão concluída!")
+        return True
+    except Exception as e:
+        print(f"Erro ao converter para PDF: {e}")
+        return False
+    finally:
+        try:
+            if workbook:
+                workbook.Close(SaveChanges=False)
+        except:
+            pass
+        try:
+            if excel:
+                excel.Quit()
+        except:
+            pass
 
+def get_cargo(user):
+    """ Seleciona o cargo do usuario inserido, no banco de dados. """
+    with db.session() as session:
+        slec = select(User).where(User.usuario == user)
+        result = session.execute(slec).scalar_one_or_none()
+        return result.cargo
+def set_cargo(user:str,cargo:str):
+    with db.session() as session:
+        cg = session.query(User).filter_by(usuario=user).first()
+        if cg:
+            cg.cargo = cargo
+            session.commit()
+            session.close()
+        else:
+            logger.info("Usuario não encontrado")
+def set_apelido(user:str, apelido:str):
+    with db.session() as session:
+        ap = session.query(User).filter_by(usuario=user).first()
+        if ap:
+            ap.apelido = apelido
+            session.commit()
+            session.close()
+def get_apelido(user:str):
+    with db.session() as session:
+        slc = session.query(User).filter_by(usuario=user).first()
+        result = slc.apelido
+        session.close()
+        return result
 class Verificacoes:
+    """VERIFICAÇÕES DE ESTADO \n -
+    Verifica o estado do banco de dados e dos uploads do caixa para nuvem.
+    - init_config:\n 
+        Seta as configuraçoes iniciais do sistema.\n
+
+
+    - get_config:\n
+        Puxa os dados armazenados dos estados das verificações.\n
+
+    
+    - set_config:\n
+        Altera os dados armazenados dos estados.\n
+
+    
+    - close:\n
+        Retorna os dados ao padrão.\n
+
+    
+    - Uptable / Updiario:\n  
+        Sobe o registro do mes para o banco de dados / sobe o registro diario para o registro do mês.\n
+
+     """
     def __init__(self):
         self.db = ContabilidadeDB()
         self.init_config()
@@ -219,6 +243,10 @@ class Verificacoes:
                 json.dump(dados, f, ensure_ascii=False, indent=4)
 
     def set_config(self,config:str, set:bool):
+        """ seta os estados para as configurações.\n
+         parametros:\n
+            config: qual verificação quer setar (v: verificado hoje, m: executado o up mensal, d: executado o up diario)\n
+            set: qual o valor salvar. """
         verify = Path("verify.json")
         if verify.exists():
             with open("verify.json", "r", encoding="utf-8") as f:
@@ -236,6 +264,10 @@ class Verificacoes:
                 json.dump(dados, f, ensure_ascii=False, indent=4)
 
     def get_config(self,config:str) -> bool:
+        """ Retorna o valor da configuração informada.\n
+        parametros:\n
+            config: qual verificação quer pegar: (v: verificado hoje, m: executado o up mensal, d: executado o up diario)\n
+        """
         verify = Path("verify.json")
         if verify.exists():
             with open("verify.json", "r", encoding="utf-8") as f:
@@ -305,49 +337,6 @@ class Verificacoes:
 
             
             await asyncio.sleep(30)
-    def get_cargo(self,user):
-        with self.db.session() as session:
-            slec = select(User).where(User.usuario == user)
-            result = session.execute(slec).scalar_one_or_none()
-            return result.cargo
+    
 
 
-def converter_xlsx_para_pdf(caminho_xlsx, caminho_pdf):
-    excel = None
-    workbook = None
-    try:
-        caminho_xlsx_abs = os.path.abspath(caminho_xlsx)
-        caminho_pdf_abs = os.path.abspath(caminho_pdf)
-        if not os.path.exists(caminho_xlsx_abs):
-            print(f"Arquivo não encontrado: {caminho_xlsx_abs}")
-            return False
-        os.makedirs(os.path.dirname(caminho_pdf_abs), exist_ok=True)
-        if os.path.exists(caminho_pdf_abs):
-            os.remove(caminho_pdf_abs)
-        excel = comtypes.client.CreateObject("Excel.Application")
-        excel.Visible = False
-        excel.DisplayAlerts = False  
-        workbook = excel.Workbooks.Open(caminho_xlsx_abs)
-        workbook.ExportAsFixedFormat(
-            Type=0,  
-            Filename=caminho_pdf_abs,
-            Quality=0,  
-            IgnorePrintAreas=False,
-            OpenAfterPublish=False
-        )
-        print("Conversão concluída!")
-        return True
-    except Exception as e:
-        print(f"Erro ao converter para PDF: {e}")
-        return False
-    finally:
-        try:
-            if workbook:
-                workbook.Close(SaveChanges=False)
-        except:
-            pass
-        try:
-            if excel:
-                excel.Quit()
-        except:
-            pass

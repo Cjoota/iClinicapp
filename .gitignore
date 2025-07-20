@@ -12,5 +12,4 @@ test.py
 *.xlsx
 *.pdf
 *.vscode
-
 verify.json

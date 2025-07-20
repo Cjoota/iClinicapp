@@ -1,40 +1,38 @@
 import flet as ft 
-from funcoes import Auth, Verificacoes
+from funcoes import Auth, get_cargo
+
 
 
 class Login:
+    """SISTEMA DE LOGIN\n-
+- Gerencia o login e gera a pagina de login.\n
+
+    """
     def __init__(self, page: ft.Page):
-        self.page = page
-        self.page.theme_mode = ft.ThemeMode.LIGHT
-        self.page.bgcolor = ft.Colors.WHITE
+        self.page = page 
         self.GlobalColor = '#26BD00'
         self.GlobalModal = ft.SnackBar(content=ft.Text(""), bgcolor=ft.Colors.GREEN)
-        self.is_dark = self.page.theme_mode == ft.ThemeMode.DARK
-        self.appbar = ft.AppBar(
-            leading=ft.IconButton(icon=ft.Icons.DARK_MODE, tooltip="Alternar tema", on_click=lambda e: self.change_theme(e)),
-            leading_width=50,
-            bgcolor=ft.Colors.WHITE)
-        self.user = ft.TextField(label="Usuário",
-                        width=350, height=35, border_radius=10,
-                        bgcolor=ft.Colors.with_opacity(0.7, ft.Colors.WHITE if not self.is_dark else ft.Colors.BLACK),
-                        color=ft.Colors.BLACK if not self.is_dark else ft.Colors.WHITE)
-        self.usuario = self.user.value
+
     def build_view(self):
         self.title = ft.Text("iClínica", size=50, weight=ft.FontWeight.BOLD, color=self.GlobalColor)
         self.subtitle = ft.Text('Faça seu login', size=20, weight=ft.FontWeight.BOLD, color=ft.Colors.BLACK, font_family='Semibold')
         self.subtitleInstruction = ft.Text('Entre com seu usuário e senha', size=13, weight=ft.FontWeight.W_400, color=ft.Colors.BLACK, font_family='Semibold')
+        self.user = ft.TextField(label="Usuário",
+                        width=350, height=35, border_radius=10,
+                        bgcolor=ft.Colors.with_opacity(0.7, ft.Colors.WHITE),
+                        color=ft.Colors.BLACK)
         self.passw = ft.TextField(label="Senha",
                             password=True, can_reveal_password=True,
                             width=350, height=35, border_radius=10,
-                            bgcolor=ft.Colors.with_opacity(0.7, ft.Colors.WHITE if not self.is_dark else ft.Colors.BLACK),
-                            color=ft.Colors.BLACK if not self.is_dark else ft.Colors.WHITE)
+                            bgcolor=ft.Colors.with_opacity(0.7, ft.Colors.WHITE),
+                            color=ft.Colors.BLACK )
         self.entryButton = ft.ElevatedButton("Entrar", color=ft.Colors.WHITE,
                             width=340, height=35,
-                            bgcolor=ft.Colors.with_opacity(0.7, '#26BD00' if not self.is_dark else ft.Colors.BLACK),
+                            bgcolor=ft.Colors.with_opacity(0.7, '#26BD00'),
                             on_click=self.on_login_click)
         self.cadastroButton = ft.ElevatedButton("Cadastrar", color=ft.Colors.WHITE,
                             width=340, height=35,
-                            bgcolor=ft.Colors.with_opacity(0.7, '#26BD00' if not self.is_dark else ft.Colors.BLACK), on_click=self.on_cadastro_click)
+                            bgcolor=ft.Colors.with_opacity(0.7, '#26BD00'), on_click=lambda e: self.page.go("/cadastro"))
         return ft.Column(
             [
                 self.title,
@@ -52,25 +50,6 @@ class Login:
             horizontal_alignment=ft.CrossAxisAlignment.CENTER
         )
 
-    def change_theme(self, e):
-        if self.page.theme_mode == ft.ThemeMode.LIGHT:
-            self.page.theme_mode = ft.ThemeMode.DARK
-            self.page.bgcolor = ft.Colors.BLACK
-        else:
-            self.page.theme_mode = ft.ThemeMode.LIGHT
-            self.page.bgcolor = ft.Colors.WHITE
-        self.update_component_colors()
-        self.page.update()
-
-    def update_component_colors(self):
-        """Atualiza as cores dos componentes quando o tema muda"""
-        self.is_dark = self.page.theme_mode == ft.ThemeMode.DARK
-        self.user.bgcolor = ft.Colors.with_opacity(0.7, ft.Colors.WHITE if not self.is_dark else ft.Colors.BLACK)
-        self.user.color = ft.Colors.BLACK if not self.is_dark else ft.Colors.WHITE
-        self.passw.bgcolor = ft.Colors.with_opacity(0.7, ft.Colors.WHITE if not self.is_dark else ft.Colors.BLACK)
-        self.passw.color = ft.Colors.BLACK if not self.is_dark else ft.Colors.WHITE
-        self.appbar.bgcolor = ft.Colors.WHITE if not self.is_dark else ft.Colors.GREY_900
-        self.page.bgcolor = ft.Colors.WHITE if not self.is_dark else ft.Colors.GREY_900
 
     def show_loading(self, show=True):
         loading = ft.Container(
@@ -99,8 +78,9 @@ class Login:
         self.page.update()
 
     def auth_session(self,user):
-        vr = Verificacoes()
-        cargo = vr.get_cargo(user)
+        cargo = get_cargo(user)
+        if not self.page.client_storage.contains_key("nick"):
+            self.page.client_storage.set("nick",f"{user}")
         self.page.session.set("user",f"{user}")
         self.page.session.set("logado",True)
         if cargo == "secretaria" or cargo == "developer":
@@ -118,7 +98,6 @@ class Login:
             self.GlobalModal.update()
         else:
             if auth.login(usuario=usuario, password=senha):
-                self.appbar.visible = False
                 self.show_loading(True)
                 self.page.overlay.clear()
                 self.page.update()
@@ -155,3 +134,7 @@ class Login:
             self.user.value = ""
             self.passw.value = ""
             self.page.update()
+
+
+
+    

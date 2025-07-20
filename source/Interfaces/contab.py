@@ -32,7 +32,6 @@ class ContabilidadePage:
         contas = await contabilidade_db.buscar_contas()
         return contas
     
-
     async def atualizar_cards(self):
         await contabilidade_db.invalidar_cache()
         self.card_dados = contabilidade_db.cache.get("contabilidade")
@@ -215,15 +214,14 @@ class ContabilidadePage:
                             ft.DataCell(ft.Text(conta[4])),
                             ft.DataCell(ft.IconButton(icon=ft.Icons.CHECK, icon_color=ft.Colors.BLACK,bgcolor=ft.Colors.GREEN_100)),
                             ft.DataCell(ft.IconButton(icon=ft.Icons.DELETE, icon_color=ft.Colors.BLACK,bgcolor=ft.Colors.RED_100))
-
                         ]
                     ) for i, conta in enumerate(self.dados)
                 ]
             self.cardcontainer = ft.Container(
-                content=self.buildcards(self.diario,self.mensal,self.contas)
+                content=self.buildcards(self.card_dados["diario"],self.card_dados["mensal"],self.card_dados["contas"])
             )
             self.tablecontent =ft.Container(
-                content=self.buildtable(self.linhas)
+                content=self.buildtable(self.gerar_linhas(self.contas_tabela))
             ) 
             self.caixainterface = ft.Column([
                 ft.Row([
@@ -305,7 +303,7 @@ class ContabilidadePage:
                                 ft.DataColumn(ft.Text("Conta"),heading_row_alignment=ft.MainAxisAlignment.START),
                                 ft.DataColumn(ft.Text("Valor"),heading_row_alignment=ft.MainAxisAlignment.START),
                                 ft.DataColumn(ft.Text("Vencimento"),heading_row_alignment=ft.MainAxisAlignment.START),
-                                ft.DataColumn(ft.Text("Ações"),heading_row_alignment=ft.MainAxisAlignment.START),
+                                ft.DataColumn(ft.Text("Status"),heading_row_alignment=ft.MainAxisAlignment.START),
                             ],
                             rows=linhas
                         )
@@ -340,13 +338,13 @@ class ContabilidadePage:
             self.linhas = [
                     ft.DataRow(
                         cells=[
-                            ft.DataCell(ft.Text(conta[0]),),
-                            ft.DataCell(ft.Text(f"R${conta[1]}")),
-                            ft.DataCell(ft.Text(conta[2])),
-                            ft.DataCell(ft.IconButton(icon=ft.Icons.DELETE, icon_color=ft.Colors.BLACK,bgcolor=ft.Colors.RED_100))
+                            ft.DataCell(ft.Container(content=ft.Text(conta.descricao),alignment=ft.alignment.center_left)),
+                            ft.DataCell(ft.Container(content=ft.Text(f"R${conta.valor}"),alignment=ft.alignment.center)),
+                            ft.DataCell(ft.Container(content=ft.Text(conta.vencimento),alignment=ft.alignment.center)),
+                            ft.DataCell(ft.Container(content=ft.Text(conta.status),alignment=ft.alignment.center)),
 
                         ]
-                    ) for i, conta in enumerate(self.dados)
+                    ) for conta in self.contas_tabela
                 ]
             self.cardcontainer = ft.Container(
                 content=self.buildcards(self.diario,self.mensal,self.contas)

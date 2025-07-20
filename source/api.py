@@ -5,11 +5,13 @@ import subprocess
 import threading
 import os
 servidor_iniciado = False
+""" Gerando as pastas de armazenamento """
 os.makedirs("pdf_temp",exist_ok=True)
 os.makedirs("documentos_gerados",exist_ok=True)
-os.makedirs("documentos_gerados/doc_info",exist_ok=True)
 os.makedirs("modelos_excel",exist_ok=True)
+
 def iniciar_servidor_fastapi():
+    """ Inicia o servidor de exames gerados """
     global servidor_iniciado
     if not servidor_iniciado:
         def rodar_servidor():
@@ -17,11 +19,15 @@ def iniciar_servidor_fastapi():
         thread = threading.Thread(target=rodar_servidor, daemon=True)
         thread.start()
         servidor_iniciado = True
+
+""" Instancia o FastAPI e direciona a pasta de arquivos """
 app = FastAPI()
 app.mount("/files", StaticFiles(directory=rf"pdf_temp"), name="files")
+
 @app.get("/")
 def read_root():
-    return {"message": "Servidor FastAPI rodando!"}
+    return {"message": "Sem Permissão!"}
+
 @app.get("/pdf/{filename}")
 def get_pdf(filename: str):
     """Endpoint para servir arquivos PDF"""

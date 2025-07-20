@@ -53,6 +53,7 @@ class User(Base):
     passw = Column(Text, nullable=False)
     salt = Column(Text)
     cargo = Column(String(50), server_default="funcionario")
+    apelido = Column(String(50))
     criado_em = Column(TIMESTAMP, server_default=func.now())
 
 class Caixa(Base):

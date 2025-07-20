@@ -3,7 +3,8 @@ import flet as ft
 import datetime as dt
 from Interfaces.telaresize import Responsive
 from Interfaces.Login_interface import Login
-from funcoes import Verificacoes
+from funcoes import Verificacoes,get_cargo,get_apelido
+import gender_guesser.detector as gender
 class Sidebar:
     def __init__(self, page: ft.Page):
         self.page = page
@@ -14,6 +15,7 @@ class Sidebar:
         self.item_selecionado = self.page.route
         self.avatar = None
         self.usuario = str(self.page.session.get("user"))
+        self.genero = gender.Detector()
     async def fechar_app(self, e):
         if e.data == "close":
             print("Janela foi fechada.")
@@ -26,9 +28,11 @@ class Sidebar:
             self.page.window_destroy()
     def logout(self):
         def sair(e):
+            if self.page.session.contains_key("perm"):
+                self.page.session.remove("perm")
             self.page.session.remove("logado")
             self.page.session.remove("user")
-            self.page.session.remove("perm")
+            self.page.client_storage.remove("nick")
             self.page.go("/login")
         alert = ft.AlertDialog(
             modal=True,
@@ -147,11 +151,11 @@ class Sidebar:
                         margin=ft.Margin(left=0,top=0,right=0,bottom=-10)
                     ),
                     ft.Row([
-                        ft.CircleAvatar(foreground_image_src="mano.png" if "o" in self.usuario else "female.png",radius=25,bgcolor="#83ff58"),
-                        ft.Text(f"{str(self.page.session.get("user")).capitalize()}",color=ft.Colors.BLACK,weight=ft.FontWeight.BOLD,size=16)
+                        ft.CircleAvatar(foreground_image_src="mano.png" if self.genero.get_gender(get_apelido(self.usuario)) == "male" else "female.png",radius=25,bgcolor="#83ff58"),
+                        ft.Text(f"{str(get_apelido(self.usuario)).capitalize()}",color=ft.Colors.BLACK,weight=ft.FontWeight.BOLD,size=16)
                     ],spacing=15),
                     ft.Container(
-                        content=ft.Column([ft.Text(f"{str(self.vr.get_cargo(self.usuario)).capitalize()}",size=12,color='#26BD00')],alignment=ft.MainAxisAlignment.CENTER,horizontal_alignment=ft.CrossAxisAlignment.CENTER),
+                        content=ft.Column([ft.Text(f"{str(get_cargo(self.usuario)).capitalize()}",size=12,color='#26BD00')],alignment=ft.MainAxisAlignment.CENTER,horizontal_alignment=ft.CrossAxisAlignment.CENTER),
                         margin=ft.Margin(bottom=0, top=-35, right=0, left=65),
                     ),
                     ft.Container(
@@ -168,10 +172,10 @@ class Sidebar:
             self.avatar = ft.Container(
                 content=ft.Column([
                     ft.Row([
-                        ft.Text(f"{str(self.page.session.get("user")).capitalize()}",color=ft.Colors.BLACK,weight=ft.FontWeight.BOLD,size=16)
+                        ft.Text(f"{str(get_apelido(self.usuario)).capitalize()}",color=ft.Colors.BLACK,weight=ft.FontWeight.BOLD,size=16)
                     ],spacing=15),
                     ft.Container(
-                        content=ft.Column([ft.Text(f"{str(self.vr.get_cargo(self.usuario)).capitalize()}",size=12,color='#26BD00')],alignment=ft.MainAxisAlignment.CENTER,horizontal_alignment=ft.CrossAxisAlignment.CENTER),
+                        content=ft.Column([ft.Text(f"{str(get_cargo(self.usuario)).capitalize()}",size=12,color='#26BD00')],alignment=ft.MainAxisAlignment.CENTER,horizontal_alignment=ft.CrossAxisAlignment.CENTER),
                         margin=ft.Margin(bottom=0, top=-35, right=0, left=65),
                     ),
                     ft.Container(

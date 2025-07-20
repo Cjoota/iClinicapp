@@ -5,10 +5,16 @@ from routes import Router
 from funcoes import Verificacoes
 import logging
 import atexit
+#Habilida o sistema de log.
 logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger("CORE")
+# Flag para identificar se as verificações iniciais aconteceram
 initialize = False
+
 class Main():
+	"""SISTEMA PRINCIPAL\n - 
+	- Função responsável pelo orquestramento do sistema e controle central do sistema.
+	"""
 	def __init__(self, page: ft.Page) -> None:
 		self.page = page
 		self.router = Router(page)
@@ -22,13 +28,17 @@ class Main():
 		self.page.on_connect = self.page.go("/login")
 
 	def Disconnect(self):
+		""" Limpa os dados salvos durante a sessão do usuário ao sair do sistema. """
 		self.page.session.clear()
+		self.page.client_storage.clear()
 		logger.info("Sessão Limpa")
 
 	async def init_cache(self):
+		""" Inicia o cache inteligente e preenche com as informações do DB """
 		await contabilidade_db.buscar_dados(force_update=True)
 
 	def VerificacoesIniciais(self):
+		""" Inicializa todas os sistemas principais (BANCO DE DADOS, VERIFICAÇÕS DE CAIXA, E CACHE) """
 		global initialize
 		if not initialize:
 			iniciar_servidor_fastapi()
@@ -39,7 +49,8 @@ class Main():
 			initialize = True
 			
 @atexit.register
-def limpar_todos_pycache():
+def limpar_cache():
+	""" Limpa o cache do banco de dados e o que o sistema gerou. """
 	print("Limpando Cache")
 	verify = Verificacoes()
 	verify.close()
