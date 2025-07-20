@@ -180,7 +180,7 @@ class Documentos:
                 documents.append("A Pasta de saída não existe!")
                 return documents
             for doc in documentosdir.glob("*.xlsx"):
-                exame,empresa,colab,data,hora = doc.name.replace(".xlsx","").replace("_"," ").split()
+                exame,empresa,colab,data,hora = doc.name.replace(".xlsx","").split()
                 documents.append([exame,empresa.replace("-"," "),colab.replace("-"," "),data.replace("-","/"),hora.replace("-",":")])
             return documents
         
@@ -256,7 +256,6 @@ class Documentos:
                             self.page.launch_url(f"http://192.168.3.59:8001/pdf/{pdf_path.name}")
                         else:
                             self.main.barra_aviso("PDF não foi gerado a tempo.", ft.Colors.RED)
-
                         break
 
             except Exception as e:
