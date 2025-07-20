@@ -236,14 +236,13 @@ class Documentos:
             try:
                 documentosdir = Path("documentos_gerados")
                 documento = documentosdir.glob("*.xlsx")
-
                 for i, doc in enumerate(documento):
                     if idx == i:
                         os.makedirs("pdf_temp", exist_ok=True)
                         pdf_path = Path("pdf_temp") / doc.name.replace(".xlsx", ".pdf")
                         if not pdf_path.exists():
                             self.loading_(True)
-                            converter_xlsx_para_pdf(str(doc.absolute()), "pdf_temp")
+                            converter_xlsx_para_pdf(doc.absolute(), "pdf_temp")
                             # Aguarda o PDF ser realmente salvo (até 5 segundos)
                             for _ in range(10):
                                 if pdf_path.exists():
@@ -262,5 +261,5 @@ class Documentos:
 
             except Exception as e:
                 self.main.barra_aviso(f"Erro ao gerar visualização: {str(e)}", ft.Colors.RED)
-                print(str(e))
+                print("Erro na função",str(e))
                 
