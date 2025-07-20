@@ -3,6 +3,8 @@ from funcoes import Auth,set_cargo,set_apelido
 
 
 class Cadastro:
+    """ SISTEMA DE CADASTRO E INTERFACE \n -
+    """
     def __init__(self,page:ft.Page):
         self.page = page 
         self.GlobalColor = '#26BD00'

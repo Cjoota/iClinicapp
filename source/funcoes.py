@@ -171,6 +171,7 @@ def get_cargo(user):
         result = session.execute(slec).scalar_one_or_none()
         return result.cargo
 def set_cargo(user:str,cargo:str):
+    """ Altera o Cargo do usuario inserido, no banco de dados. """
     with db.session() as session:
         cg = session.query(User).filter_by(usuario=user).first()
         if cg:
@@ -180,6 +181,7 @@ def set_cargo(user:str,cargo:str):
         else:
             logger.info("Usuario não encontrado")
 def set_apelido(user:str, apelido:str):
+    """ Altera o Apelido inserido no cadastro do usuario. """
     with db.session() as session:
         ap = session.query(User).filter_by(usuario=user).first()
         if ap:
@@ -187,6 +189,7 @@ def set_apelido(user:str, apelido:str):
             session.commit()
             session.close()
 def get_apelido(user:str):
+    """ Seleciona o apelido do usuario registrado no bando de dados. """
     with db.session() as session:
         slc = session.query(User).filter_by(usuario=user).first()
         result = slc.apelido
