@@ -500,7 +500,7 @@ class Gerardoc:
             self.risk_biologico = []
             self.risk_ergonomico = []
 
-        def calcular_idade(nascimento: date) -> int:
+        def calcular_idade(self,nascimento: date) -> int:
             hoje = date.today()
             idade = hoje.year - nascimento.year
             if (hoje.month, hoje.day) < (nascimento.month, nascimento.day):
