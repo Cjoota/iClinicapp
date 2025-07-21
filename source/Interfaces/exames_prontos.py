@@ -6,7 +6,6 @@ from Interfaces.main_interface import Main_interface
 from Interfaces.sidebar import Sidebar
 from Interfaces.telaresize import Responsive
 from funcoes import converter_xlsx_para_pdf
-import time
 class Documentos:
         def __init__(self,page:ft.Page) -> None:
             page.clean()
@@ -247,8 +246,6 @@ class Documentos:
                             for _ in range(10):
                                 if pdf_path.exists():
                                     break
-
-                            time.sleep(0.5)
 
                             self.loading_(False)
 

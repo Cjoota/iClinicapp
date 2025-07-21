@@ -6,7 +6,7 @@ from pathlib import Path
 from Interfaces.telaresize import Responsive
 from Interfaces.main_interface import Main_interface
 from Interfaces.sidebar import Sidebar
-
+from datetime import date
 class Gerardoc:
         def __init__(self,page:ft.Page) -> None:
             self.page = page
@@ -500,6 +500,13 @@ class Gerardoc:
             self.risk_biologico = []
             self.risk_ergonomico = []
 
+        def calcular_idade(nascimento: date) -> int:
+            hoje = date.today()
+            idade = hoje.year - nascimento.year
+            if (hoje.month, hoje.day) < (nascimento.month, nascimento.day):
+                idade -= 1
+            return idade
+
         def selectdate(self, e):
             if self.date.disabled == False:
                 self.date.disabled = True
@@ -531,6 +538,9 @@ class Gerardoc:
                 control.title.value # type: ignore
                 for control in self.listviewtypes.controls 
                 if isinstance(control, ft.ListTile) and getattr(control, "selected", False)]
+            dtn = nascimento.replace("/","-")
+            idade = dt.datetime.strptime(dtn, "%Y-%m-%d").date()
+            idade = self.calcular_idade(idade)
             if not self.empresas:
                 self.main.barra_aviso("Selecione pelo menos uma empresa!",ft.Colors.YELLOW,text_color=ft.Colors.BLACK)
                 return
@@ -560,6 +570,7 @@ class Gerardoc:
                         ws["E12"] = nascimento # type: ignore
                         ws["D13"] = funcao # type: ignore
                         ws["I13"] = setor # type: ignore
+                        ws["I12"] = f"{idade} Anos"
                         ws["G11"] = self.empresas[0] # type: ignore
                         ws["G48"] = self.dataselect # type: ignore
                         ws["E9"] = tipo_exame[0]
@@ -580,6 +591,7 @@ class Gerardoc:
                         ws["D14"] = nascimento # type: ignore
                         ws["D15"] = funcao # type: ignore
                         ws["J15"] = setor # type: ignore
+                        ws["J13"] = f"{idade} Anos"
                         ws["D9"] = self.empresas[0] # type: ignore
                         ws["L6"] = self.dataselect # type: ignore
                         ws["J9"] = self.empresas[1] # type: ignore
@@ -611,6 +623,7 @@ class Gerardoc:
                         ws["E14"] = self.empresas[0] # type: ignore
                         ws["N17"] = self.dataselect # type: ignore
                         ws["M14"] = self.empresas[1] # type: ignore
+                        ws["L16"] = f"{idade} Anos"
                         ws["H11"] = tipo_exame[0]
                         saida = Path(r"documentos_gerados")
                         saida.mkdir(exist_ok=True)
