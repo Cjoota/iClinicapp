@@ -539,7 +539,7 @@ class Gerardoc:
                 for control in self.listviewtypes.controls 
                 if isinstance(control, ft.ListTile) and getattr(control, "selected", False)]
             dtn = nascimento.replace("/","-")
-            idade = dt.datetime.strptime(dtn, "%Y-%m-%d").date()
+            idade = dt.datetime.strptime(dtn, "%d-%m-%Y").date()
             idade = self.calcular_idade(idade)
             if not self.empresas:
                 self.main.barra_aviso("Selecione pelo menos uma empresa!",ft.Colors.YELLOW,text_color=ft.Colors.BLACK)
