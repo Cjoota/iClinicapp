@@ -29,12 +29,14 @@ class Main():
 
 	def Disconnect(self):
 		""" Limpa os dados salvos durante a sessão do usuário ao sair do sistema. """
-		if self.page.session.contains_key("user"):
-			self.page.session.clear()
-		if self.page.client_storage.contains_key("nick"):
-			self.page.client_storage.clear()
-		logger.info("Sessão Limpa")
-
+		try:
+			if self.page.session.contains_key("user"):
+				self.page.session.clear()
+			if self.page.client_storage.contains_key("nick"):
+				self.page.client_storage.clear()
+			logger.info("Sessão Limpa")
+		except:
+			logger.info("Usuário desconctado antes de fazer o login!")
 	async def init_cache(self):
 		""" Inicia o cache inteligente e preenche com as informações do DB """
 		await contabilidade_db.buscar_dados(force_update=True)
