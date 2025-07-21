@@ -276,7 +276,8 @@ class Gerardoc:
                 "TGO (Aspartato)",
                 "TGP (Alanina)",
                 "CREATININA",
-                "URÉIA"
+                "URÉIA",
+                "TOXICOLOGICO"
             ]
             for modelo in self.modelos_excel:
                 self.listview.controls.append(
