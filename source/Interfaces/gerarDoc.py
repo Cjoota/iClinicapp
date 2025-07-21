@@ -24,29 +24,27 @@ class Gerardoc:
             self.risk_ergonomico = []
             self.page.on_resized = self.on_resize
 
+        def limitar_cpf(self, e):
+            cpf = ''.join(filter(str.isdigit, self.cpfclb.value))[:11]
+            self.cpfclb.value = cpf
+            self.cpfclb.update()
+
         def formatar_cpf(self, e):
             cpf = ''.join(filter(str.isdigit, self.cpfclb.value))[:11]
-            resultado = ""
-            if len(cpf) >= 3:
-                resultado += cpf[:3] + "."
-            if len(cpf) >= 6:
-                resultado += cpf[3:6] + "."
-            if len(cpf) >= 9:
-                resultado += cpf[6:9] + "-"
-                resultado += cpf[9:]
-            self.cpfclb.value = resultado
-            self.cpfclb.update()
+            if len(cpf) == 11:
+                self.cpfclb.value = f"{cpf[:3]}.{cpf[3:6]}.{cpf[6:9]}-{cpf[9:]}"
+                self.cpfclb.update()
+
+        def limitar_data(self, e):
+            data = ''.join(filter(str.isdigit, self.datanascimentoclb.value))[:8]
+            self.datanascimentoclb.value = data
+            self.datanascimentoclb.update()
 
         def formatar_data(self, e):
             data = ''.join(filter(str.isdigit, self.datanascimentoclb.value))[:8]
-            resultado = ""
-            if len(data) >= 2:
-                resultado += data[:2] + "/"
-            if len(data) >= 4:
-                resultado += data[2:4] + "/"
-            resultado += data[4:]
-            self.datanascimentoclb.value = resultado
-            self.datanascimentoclb.update()
+            if len(data) == 8:
+                self.datanascimentoclb.value = f"{data[:2]}/{data[2:4]}/{data[4:]}"
+                self.datanascimentoclb.update()
                 
         def on_resize(self,e):            
             if self.page.route == "/gerardoc":
@@ -63,8 +61,8 @@ class Gerardoc:
                 self.drop = ft.Dropdown(label="Empresas",autofocus=True,options=[],width=200)
                 self.date = ft.TextField(label="Data do exame",border_radius=16,width=140)
                 self.nomeclb = ft.TextField(label="Nome Completo",border_radius=16,width=250)
-                self.cpfclb = ft.TextField(label="CPF",border_radius=16,width=250, on_change=self.formatar_cpf)
-                self.datanascimentoclb = ft.TextField(label="Data de nascimento",border_radius=16,width=250, on_change=self.formatar_data)
+                self.cpfclb = ft.TextField(label="CPF",border_radius=16,width=250, on_change=self.limitar_cpf, on_blur=self.formatar_cpf)
+                self.datanascimentoclb = ft.TextField(label="Data de nascimento",border_radius=16,width=250, on_change=self.limitar_data, on_blur=self.formatar_data)
                 self.funcaoclb = ft.TextField(label="Função",border_radius=16,width=250)
                 self.setorclb = ft.TextField(label="Setor",border_radius=16,width=250)
                 self.clbinterface =ft.Column([
