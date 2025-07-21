@@ -36,7 +36,7 @@ class Main():
 				self.page.client_storage.clear()
 			logger.info("Sessão Limpa")
 		except:
-			logger.info("Usuário desconctado antes de fazer o login!")
+			logger.info("Usuário desconectado antes de fazer o login!")
 	async def init_cache(self):
 		""" Inicia o cache inteligente e preenche com as informações do DB """
 		await contabilidade_db.buscar_dados(force_update=True)
