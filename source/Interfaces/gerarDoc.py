@@ -58,7 +58,11 @@ class Gerardoc:
                 self.listviewexam = ft.ListView(expand=True)
                 self.checkbox = ft.Checkbox(label=ft.Text("Gerar em todos os modelos"),on_change=self.selecionar_todos,
                                             label_position=ft.LabelPosition.LEFT,check_color="#26BD00",active_color="#D3FACA")
-                self.drop = ft.Dropdown(label="Empresas",autofocus=True,options=[],width=200)
+                self.drop = ft.Dropdown(label="Empresas",width=200)
+
+                
+
+            
                 self.date = ft.TextField(label="Data do exame",border_radius=16,width=140)
                 self.nomeclb = ft.TextField(label="Nome Completo",border_radius=16,width=250)
                 self.cpfclb = ft.TextField(label="CPF",border_radius=16,width=250, on_change=self.limitar_cpf, on_blur=self.formatar_cpf)
@@ -382,9 +386,9 @@ class Gerardoc:
                 for empresa in self.empresas_drop:
                     self.drop.options.append( #type: ignore
                         ft.DropdownOption(
-                            text=f"{empresa[0]}",
+                            text=f"• {empresa[0]}", style=ft.TextStyle(size=10)
                         )
-                    )    
+                    ) 
             else:
                 self.drop.options.append( #type: ignore
                     ft.DropdownOption(
@@ -419,6 +423,7 @@ class Gerardoc:
                             self.risk_biologico.remove(e.control.label)
                         case "e":
                             self.risk_ergonomico.remove(e.control.label)
+            self.drop.update()
             def criar_risco(risco,tipo):
                 rsk = ft.Checkbox(label=risco,data=tipo,on_change=catch_risk)
                 return rsk
@@ -694,4 +699,3 @@ class Gerardoc:
                     page.update()
                 else:
                     pass    
-        
