@@ -58,7 +58,7 @@ class Gerardoc:
                 self.listviewexam = ft.ListView(expand=True)
                 self.checkbox = ft.Checkbox(label=ft.Text("Gerar em todos os modelos"),on_change=self.selecionar_todos,
                                             label_position=ft.LabelPosition.LEFT,check_color="#26BD00",active_color="#D3FACA")
-                self.drop = ft.Dropdown(label="Empresas",width=200)
+                self.drop = ft.Dropdown(label="Empresas",width=200,max_menu_height=100,menu_height=300,enable_filter=True,editable=True)
 
                 
 
@@ -386,7 +386,7 @@ class Gerardoc:
                 for empresa in self.empresas_drop:
                     self.drop.options.append( #type: ignore
                         ft.DropdownOption(
-                            text=f"• {empresa[0]}", style=ft.TextStyle(size=10)
+                            text=f"{empresa[0]}", style=ft.ButtonStyle(text_style=ft.TextStyle(size=12))
                         )
                     ) 
             else:

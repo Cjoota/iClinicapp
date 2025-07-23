@@ -20,7 +20,6 @@ class Sidebar:
 
     async def fechar_app(self, e):
         if e.data == "close":
-            print("Janela foi fechada.")
             self.parar_evento.set()
             self.relogio_task.cancel()
             try:

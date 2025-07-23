@@ -146,10 +146,14 @@ def converter_xlsx_para_pdf(caminho_xlsx, caminho_pdf):
 
 def get_cargo(user):
     """ Seleciona o cargo do usuario inserido, no banco de dados. """
-    with db.session() as session:
-        slec = select(User).where(User.usuario == user)
-        result = session.execute(slec).scalar_one_or_none()
-        return result.cargo
+    try:
+        with db.session() as session:
+            slec = select(User).where(User.usuario == user)
+            result = session.execute(slec).scalar_one_or_none()
+            return result.cargo
+    except:
+        """  RETIRAR NA MASTER   """
+        return "Bypass"
 def set_cargo(user:str,cargo:str):
     """ Altera o Cargo do usuario inserido, no banco de dados. """
     with db.session() as session:
@@ -170,11 +174,15 @@ def set_apelido(user:str, apelido:str):
             session.close()
 def get_apelido(user:str):
     """ Seleciona o apelido do usuario registrado no bando de dados. """
-    with db.session() as session:
-        slc = session.query(User).filter_by(usuario=user).first()
-        result = slc.apelido
-        session.close()
-        return result
+    try:
+        with db.session() as session:
+            slc = session.query(User).filter_by(usuario=user).first()
+            result = slc.apelido 
+            session.close()
+            return result
+    except:
+        """  RETIRAR NA MASTER   """
+        return "Bypass"
 class Verificacoes:
     """VERIFICAÇÕES DE ESTADO \n -
     Verifica o estado do banco de dados e dos uploads do caixa para nuvem.
