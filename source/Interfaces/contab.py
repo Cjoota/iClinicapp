@@ -25,28 +25,36 @@ class ContabilidadePage:
     
     def formatar_valor_caixa(self, e: ft.ControlEvent):
         valor_bruto = ''.join(filter(str.isdigit, self.valores.value))
-        if len(valor_bruto) > 6:
-            valor_bruto = valor_bruto[-6:]
 
         if valor_bruto == "":
-            self.valores.value = "0"
+            self.valores.value = "0.00"
         else:
-            self.valores.value = f"{int(valor_bruto):,}".replace(",", ".")
+            if len(valor_bruto) > 8:
+                valor_bruto = valor_bruto[-8:]  # limite de 999999.99
+
+            valor_float = int(valor_bruto) / 100
+            valor_formatado = f"{valor_float:.2f}"  # ponto como separador decimal
+            self.valores.value = valor_formatado
 
         self.valores.update()
 
 
+
     def formatar_valor_retiro(self, e: ft.ControlEvent):
         valor_bruto = ''.join(filter(str.isdigit, self.valoresRetiro.value))
-        if len(valor_bruto) > 6:
-            valor_bruto = valor_bruto[-6:]
 
         if valor_bruto == "":
-            self.valoresRetiro.value = "0"
+            self.valoresRetiro.value = "0.00"
         else:
-            self.valoresRetiro.value = f"{int(valor_bruto):,}".replace(",", ".")
+            if len(valor_bruto) > 8:
+                valor_bruto = valor_bruto[-8:]
+
+            valor_float = int(valor_bruto) / 100
+            valor_formatado = f"{valor_float:.2f}"
+            self.valoresRetiro.value = valor_formatado
 
         self.valoresRetiro.update()
+
     
     def on_resize(self,e):
         if self.page.route == "/contabilidade":

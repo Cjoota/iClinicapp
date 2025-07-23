@@ -7,9 +7,11 @@ from Interfaces.telaresize import Responsive
 from Interfaces.main_interface import Main_interface
 from Interfaces.sidebar import Sidebar
 from datetime import date
+from controleexames import ControleExames
 class Gerardoc:
         def __init__(self,page:ft.Page) -> None:
             self.page = page
+            self.controle = ControleExames()
             self.responsive = Responsive(self.page)
             self.sidebar = Sidebar(self.page)
             self.main = Main_interface(self.page)
@@ -671,6 +673,7 @@ class Gerardoc:
                 self.page.snack_bar = self.modal
                 self.modal.open = True
                 self.clean_risks()
+                self.controle.registrar_exames(self.empresas[0], nome, exames_selecionados, self.dataselect)
                 self.page.add(self.modal)      
                 
         def show_loading(self,page, show=True):
