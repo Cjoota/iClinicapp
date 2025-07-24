@@ -61,10 +61,6 @@ class Gerardoc:
                 self.checkbox = ft.Checkbox(label=ft.Text("Gerar em todos os modelos"),on_change=self.selecionar_todos,
                                             label_position=ft.LabelPosition.LEFT,check_color="#26BD00",active_color="#D3FACA")
                 self.drop = ft.Dropdown(label="Empresas",width=200,max_menu_height=100,menu_height=300,enable_filter=True,editable=True)
-
-                
-
-            
                 self.date = ft.TextField(label="Data do exame",border_radius=16,width=140)
                 self.nomeclb = ft.TextField(label="Nome Completo",border_radius=16,width=250)
                 self.cpfclb = ft.TextField(label="CPF",border_radius=16,width=250, on_change=self.limitar_cpf, on_blur=self.formatar_cpf)
@@ -436,6 +432,7 @@ class Gerardoc:
                 "Radiações-Não-ION",
                 "Ruidos",
                 "Vibrações",
+                "Umidade"
             ]
             riscos_quimicos = [
                 "Fumos Metálicos",
@@ -481,6 +478,7 @@ class Gerardoc:
                                 criar_risco(riscos_fisicos[3],"f"),
                                 criar_risco(riscos_fisicos[4],"f"),
                                 criar_risco(riscos_fisicos[5],"f"),
+                                criar_risco(riscos_fisicos[6],"f"),
                                 ],alignment=ft.MainAxisAlignment.CENTER,horizontal_alignment=ft.CrossAxisAlignment.START),
                             ft.Column([
                                 ft.Text("QUÍMICOS",weight=ft.FontWeight.BOLD,size=20),
@@ -518,7 +516,7 @@ class Gerardoc:
                             ],horizontal_alignment=ft.CrossAxisAlignment.START),
                         ],alignment=ft.MainAxisAlignment.CENTER,vertical_alignment=ft.CrossAxisAlignment.START,spacing=100)
                         
-                    ],height=500,width=1100
+                    ],height=500,width=1200
                 ),
             )
             self.page.open(modal)
