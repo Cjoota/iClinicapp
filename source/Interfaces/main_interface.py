@@ -190,7 +190,7 @@ class Main_interface:
             content=ft.Container(
                 content=ft.Column([
                     ft.Row([
-                        ft.Text(title, color=ft.Colors.BLACK54, weight=ft.FontWeight.BOLD, size=19,text_align=ft.TextAlign.CENTER),
+                        ft.Text(title, color=ft.Colors.BLACK, weight=ft.FontWeight.BOLD, size=19,text_align=ft.TextAlign.CENTER),
                     ], alignment=ft.MainAxisAlignment.CENTER, vertical_alignment=ft.CrossAxisAlignment.CENTER),
                     value
                 ], alignment=ft.MainAxisAlignment.CENTER, horizontal_alignment=ft.CrossAxisAlignment.CENTER),

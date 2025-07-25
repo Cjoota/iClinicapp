@@ -11,9 +11,14 @@ from database.databasecache import ContabilidadeDB
 from database.models import CaixaDiario, CaixaMensal,User
 from sqlalchemy.sql import insert, select
 from pathlib import Path
+
 import json
 import subprocess
 import platform
+from database.models import Empresa
+from database.datacreator import commitlocal
+from sqlalchemy.orm import Session
+from database.datacreator import connectlocal
 
 # Habilitando o sistema de log de erros.
 logging.basicConfig(level=logging.INFO)
@@ -55,8 +60,7 @@ class Auth:
             return secrets.compare_digest(senhasalva, senhacalculada)
         
         return False
-    
-    
+        
     def cadastro(self,user,passw,):
         """ 
             Cadastro
@@ -122,6 +126,26 @@ def puxardados(razao):
         empresa.append(i[2])
         empresa.append(i[3])
     return empresa
+
+
+
+def atualizarempresa(cnpj, coluna, valor):
+        if coluna:
+            with db.session() as session:
+                empresa = session.query(Empresa).filter_by(cnpj=cnpj).first()
+                if empresa:
+                    match coluna:
+                        case "razao":
+                            empresa.razao = valor
+                        case "contato":
+                            empresa.contato = valor
+                        case "endereco":
+                            empresa.endereco = valor
+                        case "municipio":
+                            empresa.municipio = valor
+                    session.commit()
+                else:
+                    raise ValueError("Empresa não encontrada com esse CNPJ.")
 
 def converter_xlsx_para_pdf(caminho_xlsx, caminho_pdf):
     """ Converte arquivos ( .xlsx ) para ( .pdf )."""
@@ -224,6 +248,7 @@ class Verificacoes:
                 json.dump(dados_iniciais, f, ensure_ascii=False, indent=4)
         del dados_iniciais
 
+    
     def close(self):
         dados = {
             "verificado_hoje": False,

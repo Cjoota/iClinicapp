@@ -1,372 +1,427 @@
 import flet as ft
-from funcoes import (verempresa, cadasempresa,excluiremp)
+from funcoes import verempresa, cadasempresa, excluiremp
 from Interfaces.telaresize import Responsive
-from Interfaces.main_interface import Main_interface
 from Interfaces.sidebar import Sidebar
+from Interfaces.main_interface import Main_interface
+from funcoes import atualizarempresa
 
 class Empresas:
-        def __init__(self,page: ft.Page):
-            self.page = page
+    def __init__(self, page: ft.Page):
+        self.page = page
+        self.responsive = Responsive(self.page)
+        self.page.clean()
+        self.dados = verempresa()
+        self.page.on_resized = self.on_resize
+        
+        # Controles do formulário
+        self.razao = ft.TextField(
+            label="Razão Social",
+            border_radius=30,
+            focused_border_color="#74FE4E",
+            label_style=ft.TextStyle(color=ft.Colors.GREY_800)
+        )
+        self.cnpj = ft.TextField(
+            label="CNPJ",
+            border_radius=10,
+            focused_border_color="#74FE4E",
+            label_style=ft.TextStyle(color=ft.Colors.GREY_800)
+        )
+        self.contato = ft.TextField(
+            label="Contato",
+            border_radius=10,
+            focused_border_color="#74FE4E",
+            label_style=ft.TextStyle(color=ft.Colors.GREY_800)
+        )
+        self.endereco = ft.TextField(
+            label="Endereço",
+            border_radius=10,
+            focused_border_color="#74FE4E",
+            label_style=ft.TextStyle(color=ft.Colors.GREY_800)
+        )
+        self.municipio = ft.TextField(
+            label="Município",
+            border_radius=10,
+            focused_border_color="#74FE4E",
+            label_style=ft.TextStyle(color=ft.Colors.GREY_800)
+        )
+        # Componentes da interface
+        self.caixadebusca = ft.TextField(
+            label="Buscar",
+            prefix_icon=ft.Icons.SEARCH,
+            on_change=self.atualizar_tabela,
+            border_radius=16,
+            width=300
+        )
+        
+        self.tabempresas = ft.Container(
+            content=self.buildtableE(self.gerarlinhas(self.dados)),
+            border=ft.Border(top=ft.BorderSide(width=1)),
+            expand=True,
+            border_radius=16,
+        )
+        
+        # Botão de cadastro flutuante   
+        self.register_button = ft.FloatingActionButton(
+            icon=ft.Icons.ADD,
+            text="Cadastrar Empresa",
+            on_click=self.abrir_dialog_cadastro,
+            bgcolor="#A1FB8B",
+        )
+
+    def on_resize(self, e):
+        if self.page.route == "/empresas":
             self.responsive = Responsive(self.page)
-            self.page.clean()
-            self.dados = verempresa()
-            self.page.on_resized = self.on_resize
+            self.responsive.atualizar_widgets(self.build_view())
 
-        def on_resize(self,e):
-            if self.page.route == "/empresas":
-                self.responsive = Responsive(self.page)
-                self.responsive.atualizar_widgets(self.build_view())
-        
-        def limpar(self):
-            self.razao.value = ""
-            self.cnpj.value = ""
-            self.contato.value = ""
-            self.endereco.value = ""
-            self.razao.update()
-            self.cnpj.update()
-            self.contato.update()
-            self.endereco.update()
-        
-        def buildtableE(self,linhas):
-            if self.responsive.is_mobile():
-                empresastb = ft.Column([
-                    ft.Row([
-                        ft.DataTable(
-                        heading_row_color="#A1FB8B",
-                        horizontal_lines=ft.BorderSide(1),
-                        data_row_color=ft.Colors.WHITE,
-                        divider_thickness=2,
-                        expand=True,
-                        heading_text_style=ft.TextStyle(size=15, weight=ft.FontWeight.BOLD),                     
-                        border_radius=25,
-                        columns=[
-                            ft.DataColumn(ft.Text("Razão Social",text_align=ft.TextAlign.CENTER)),
-                            ft.DataColumn(ft.Text("CNPJ",text_align=ft.TextAlign.CENTER)),
-                            ft.DataColumn(ft.Text("Ações",text_align=ft.TextAlign.CENTER)),
-                        ],
-                        rows=linhas
-                        )
-                    ],alignment=ft.MainAxisAlignment.CENTER,vertical_alignment=ft.CrossAxisAlignment.CENTER,expand=True
-                    )
-                    ],alignment=ft.MainAxisAlignment.CENTER,horizontal_alignment=ft.CrossAxisAlignment.CENTER,scroll=ft.ScrollMode.AUTO,expand=True
-                )
-                return empresastb
-            else:
-                empresastb = ft.Column([
-                    ft.Row([
-                        ft.DataTable(
-                        heading_row_color="#A1FB8B",
-                        horizontal_lines=ft.BorderSide(1),
-                        data_row_color=ft.Colors.WHITE,
-                        divider_thickness=2,
-                        expand=True,
-                        heading_text_style=ft.TextStyle(size=15, weight=ft.FontWeight.BOLD),                     
-                        border_radius=25,
-                        columns=[
-                            ft.DataColumn(ft.Text("Razão Social",text_align=ft.TextAlign.CENTER),heading_row_alignment=ft.MainAxisAlignment.CENTER),
-                            ft.DataColumn(ft.Text("CNPJ",text_align=ft.TextAlign.CENTER),heading_row_alignment=ft.MainAxisAlignment.CENTER),
-                            ft.DataColumn(ft.Text("Contato",text_align=ft.TextAlign.CENTER),heading_row_alignment=ft.MainAxisAlignment.CENTER),
-                            ft.DataColumn(ft.Text("Endereço",text_align=ft.TextAlign.CENTER),heading_row_alignment=ft.MainAxisAlignment.CENTER),
-                            ft.DataColumn(ft.Text("Município",text_align=ft.TextAlign.CENTER),heading_row_alignment=ft.MainAxisAlignment.CENTER),
-                            ft.DataColumn(ft.Text("Ações",text_align=ft.TextAlign.CENTER),heading_row_alignment=ft.MainAxisAlignment.CENTER),
-                        ],
-                        rows=linhas
-                        )
-                    ],alignment=ft.MainAxisAlignment.CENTER,vertical_alignment=ft.CrossAxisAlignment.CENTER,expand=True
-                    )
-                ],alignment=ft.MainAxisAlignment.CENTER,horizontal_alignment=ft.CrossAxisAlignment.CENTER,scroll=ft.ScrollMode.AUTO,expand=True)
-                return empresastb
-        
-        def gerarlinhas(self,data):
-            if self.responsive.is_mobile():
-                return [
-                ft.DataRow(
-                    cells=[
-                        ft.DataCell(ft.Text(linhas[0])),
-                        ft.DataCell(ft.Text(linhas[1])),
-                        ft.DataCell(ft.IconButton(icon=ft.Icons.DELETE,icon_color=ft.Colors.RED,on_click=lambda e, idx=i: self.apagaremp(idx)))
-                    ]
-                ) for i, linhas in enumerate(data)
-                ]
-            else:
-                return [
-                ft.DataRow(
-                    cells=[
-                        ft.DataCell(ft.Container(content=ft.Text(linhas[0]), alignment=ft.alignment.center)),
-                        ft.DataCell(ft.Container(content=ft.Text(linhas[1]), alignment=ft.alignment.center)),
-                        ft.DataCell(ft.Container(content=ft.Text(linhas[2]), alignment=ft.alignment.center)),
-                        ft.DataCell(ft.Container(content=ft.Text(linhas[3]), alignment=ft.alignment.center)),
-                        ft.DataCell(ft.Container(content=ft.Text(linhas[4]), alignment=ft.alignment.center)),
-                        ft.DataCell(ft.Container(content=ft.IconButton(icon=ft.Icons.DELETE,icon_color=ft.Colors.RED,on_click=lambda e, idx=i: self.apagaremp(idx)), alignment=ft.alignment.center))
-                    ]
-                ) for i, linhas in enumerate(data)
-                ]
-        
-        def cadastro(self):
+    def cadastro(self, e):
+        try:
             if self.razao.value and self.cnpj.value and self.contato.value and self.endereco.value and self.municipio.value:
-                cadasempresa(self.razao.value,self.cnpj.value,self.contato.value, self.endereco.value, self.municipio.value)
+                cadasempresa(
+                    self.razao.value,
+                    self.cnpj.value,
+                    self.contato.value,
+                    self.endereco.value,
+                    self.municipio.value
+                )
                 self.dados = verempresa()
                 self.tabempresas.content = self.buildtableE(self.gerarlinhas(self.dados))
                 self.tabempresas.update()
-                self.limpar()
+                self.dialog_cadastro.open = False
+                self.page.update()
+                self.mostrar_snackbar("Empresa cadastrada com sucesso!")
                 return
-            self.main.barra_aviso("Preencha todos os campos!", ft.Colors.YELLOW, ft.Colors.BLACK)
+            self.mostrar_snackbar(f"Preencha todos os campos!", ft.Colors.RED)
+            self.page.close(self.dialog_cadastro)
+            self.page.update()
+        except Exception as e:
+            self.mostrar_snackbar(f"Erro ao cadastrar: {str(e)}", ft.Colors.RED)
 
-            
+    def abrir_dialog_cadastro(self, e):
+        self.razao.value = ""
+        self.cnpj.value = ""
+        self.contato.value = ""
+        self.endereco.value = ""
+        self.municipio.value = ""
+
+
+
+        textfields = [
+            self.razao, self.cnpj, self.contato, self.endereco, self.municipio
+        ]
+
         
-        def apagaremp(self,index):
-            try:
-                ex = self.dados[index]
-                excluiremp(ex[1])
-                self.dados = verempresa()
-                self.tabempresas.content = self.buildtableE(self.gerarlinhas(self.dados))
-                self.tabempresas.update()
-            except Exception as e:
-                print(e)
+        for campo in textfields:
+            campo.height = 50
+            campo.border_radius = 16
+            campo.filled = True
+            campo.fill_color = ft.Colors.GREY_100
+            campo.border_color = ft.Colors.GREY_300
+            campo.focused_border_color = "#74FE4E"
+
+        self.dialog_cadastro = ft.AlertDialog(
+            modal=True,
+            bgcolor=ft.Colors.WHITE,
+            title=ft.Text(
+            "Cadastrar Nova Empresa",
+            size=22,
+            weight=ft.FontWeight.BOLD
+        ),
+        content=ft.Container(
+            content=ft.Column(
+                controls=[
+                    self.razao,
+                    self.cnpj,
+                    self.contato,
+                    self.endereco,
+                    self.municipio,
+                ],
+                tight=True,
+                spacing=12,
+                scroll=ft.ScrollMode.AUTO,
+            ),
+            width=400,  # 👈 aumenta a largura
+            padding=ft.padding.symmetric(horizontal=20, vertical=10),
+        ),
+        actions=[
+            ft.ElevatedButton(
+                "Cancelar",
+                on_click=self.fechar_dialog_cadastro,
+                bgcolor=ft.Colors.RED_100,
+                color=ft.Colors.RED_900
+            ),
+            ft.ElevatedButton(
+                "Salvar",
+                on_click=self.cadastro,
+                bgcolor="#74FE4E",
+                color=ft.Colors.BLACK
+            )
+        ],
+        actions_alignment=ft.MainAxisAlignment.END,
+        shape=ft.RoundedRectangleBorder(radius=20),
+        inset_padding=ft.padding.all(20),
+    )
+
+        self.page.open(self.dialog_cadastro)
+        self.page.update()
+
         
-        def atualizar_tabela(self,e):
-            termo_busca = str(self.caixadebusca.value).lower()
-            if termo_busca == "" or termo_busca == None:
-                self.dados = verempresa()
-                self.tabempresas.content = self.buildtableE(self.gerarlinhas(self.dados))
-                self.tabempresas.update()
+
+
+    def fechar_dialog_cadastro(self, e):
+        self.dialog_cadastro.open = False
+        self.page.update()
+
+    def abrir_dialog_edicao(self, index):
+        empresa = self.dados[index]
+        
+        self.razao.value = empresa[0]
+        self.cnpj.value = empresa[1]    
+        self.contato.value = empresa[2]
+        self.endereco.value = empresa[3]
+        self.municipio.value = empresa[4]
+
+        for campo in [self.razao, self.cnpj, self.contato, self.endereco, self.municipio]:
+            campo.height = 50
+            campo.border_radius = 16
+            campo.filled = True
+            campo.fill_color = ft.Colors.GREY_100
+            campo.border_color = ft.Colors.GREY_300
+            campo.focused_border_color = "#74FE4E"
+        
+        self.dialog_edicao = ft.AlertDialog(
+            modal=True,
+            bgcolor=ft.Colors.WHITE,
+            title=ft.Text(
+                f"Editar Empresa:",
+                size=15,
+                weight=ft.FontWeight.BOLD
+            ),
+            content=ft.Column(
+                controls=[
+                    self.razao,
+                    self.cnpj,
+                    self.contato,
+                    self.endereco,
+                    self.municipio,
+                ],
+                tight=True,
+                spacing=12,
+                scroll=ft.ScrollMode.AUTO,
+            ),
+            actions=[
+                ft.ElevatedButton(
+                    "Cancelar",
+                    on_click=self.fechar_dialog_edicao,
+                    bgcolor=ft.Colors.RED_100,
+                    color=ft.Colors.RED_900
+                ),
+                ft.ElevatedButton(
+                    "Salvar",
+                    on_click=lambda e: self.salvar_edicao(e, index),
+                    bgcolor="#74FE4E",
+                    color=ft.Colors.BLACK
+                )
+            ],
+            actions_alignment=ft.MainAxisAlignment.END,
+            shape=ft.RoundedRectangleBorder(radius=20),
+            inset_padding=20,
+        )
+        self.page.open(self.dialog_edicao)
+        self.page.update()
+
+ 
+    def salvar_edicao(self, e, index):
+        try:
+            cnpj_original = self.dados[index][1]  # CNPJ original da empresa
+
+            atualizarempresa(cnpj_original, "razao", self.razao.value)
+            atualizarempresa(cnpj_original, "contato", self.contato.value)
+            atualizarempresa(cnpj_original, "endereco", self.endereco.value)
+            atualizarempresa(cnpj_original, "municipio", self.municipio.value)
+
+            self.dados = verempresa()
+            self.tabempresas.content = self.buildtableE(self.gerarlinhas(self.dados))
+            self.tabempresas.update()
+            self.fechar_dialog_edicao(None)
+            self.mostrar_snackbar("Empresa atualizada com sucesso!")
+        except Exception as e:
+            self.mostrar_snackbar(f"Erro ao atualizar: {str(e)}", ft.Colors.RED)
+
+
+
+    def fechar_dialog_edicao(self, e):
+        self.dialog_edicao.open = False
+        self.page.update()
+
+    def apagaremp(self, index):
+        try:
+            ex = self.dados[index]
+            excluiremp(ex[1])
+            self.dados = verempresa()
+            self.tabempresas.content = self.buildtableE(self.gerarlinhas(self.dados))
+            self.tabempresas.update()
+            self.mostrar_snackbar("Empresa excluída com sucesso!")
+        except Exception as e:
+            self.mostrar_snackbar(f"Erro ao excluir: {str(e)}", ft.Colors.RED)
+
+    def mostrar_snackbar(self, mensagem, cor=ft.Colors.GREEN):
+        self.snack_bar = ft.SnackBar(ft.Text(mensagem),bgcolor=cor)
+        self.page.open(self.snack_bar)
+
+    def buildtableE(self, linhas):
+        if self.responsive.is_mobile():
+            columns = [
+                ft.DataColumn(ft.Text("Razão Social", text_align=ft.TextAlign.CENTER)),
+                ft.DataColumn(ft.Text("CNPJ", text_align=ft.TextAlign.CENTER)),
+                ft.DataColumn(ft.Text("Ações", text_align=ft.TextAlign.CENTER)),
+            ]
+        else:
+            columns = [
+                ft.DataColumn(ft.Text("Razão Social", text_align=ft.TextAlign.CENTER)),
+                ft.DataColumn(ft.Text("CNPJ", text_align=ft.TextAlign.CENTER)),
+                ft.DataColumn(ft.Text("Contato", text_align=ft.TextAlign.CENTER)),
+                ft.DataColumn(ft.Text("Endereço", text_align=ft.TextAlign.CENTER)),
+                ft.DataColumn(ft.Text("Município", text_align=ft.TextAlign.CENTER)),
+                ft.DataColumn(ft.Text("Ações", text_align=ft.TextAlign.CENTER)),
+            ]
+
+        return ft.DataTable(
+            heading_row_color="#A1FB8B",
+            horizontal_lines=ft.BorderSide(1),
+            data_row_color=ft.Colors.WHITE,
+            divider_thickness=2,
+            expand=True,
+            heading_text_style=ft.TextStyle(
+                size=15 if self.responsive.is_mobile() else 20,
+                weight=ft.FontWeight.BOLD,
+                font_family="Arial"
+            ),
+            border_radius=25,
+            columns=columns,
+            rows=linhas
+        )
+
+    def gerarlinhas(self, data):
+        linhas = []
+        for i, empresa in enumerate(data):
+            if self.responsive.is_mobile():
+                cells = [
+                    ft.DataCell(ft.Text(empresa[0])),
+                    ft.DataCell(ft.Text(empresa[1])),
+                    ft.DataCell(
+                        ft.Row([
+                            ft.IconButton(
+                                icon=ft.Icons.EDIT,
+                                icon_color=ft.Colors.BLUE,
+                                on_click=lambda e, idx=i: self.abrir_dialog_edicao(idx)
+                            ),
+                            ft.IconButton(
+                                icon=ft.Icons.DELETE,
+                                icon_color=ft.Colors.RED,
+                                on_click=lambda e, idx=i: self.apagaremp(idx)
+                            )
+                        ], spacing=5)
+                    )
+                ]
             else:
-                self.dados = verempresa()
-                linhas_filtradas = []
-                for linha in self.dados:
-                    if (
-                        (termo_busca or "") in (linha[0] or "").lower() or
-                        (termo_busca or "") in (linha[1] or "").lower() or
-                        (termo_busca or "") in (linha[2] or "").lower() or
-                        (termo_busca or "") in (linha[3] or "").lower()
-                    ):
-                        linhas_filtradas.append(linha)
-                self.tabempresas.content = self.buildtableE(self.gerarlinhas(linhas_filtradas))
-                self.tabempresas.update()
+                cells = [
+                    ft.DataCell(ft.Text(empresa[0],size=13)),
+                    ft.DataCell(ft.Text(empresa[1],size=13)),
+                    ft.DataCell(ft.Text(empresa[2],size=13)),
+                    ft.DataCell(ft.Text(empresa[3],size=13)),
+                    ft.DataCell(ft.Text(empresa[4],size=13)),
+                    ft.DataCell(
+                        ft.Row([
+                            ft.IconButton(
+                                icon=ft.Icons.EDIT,
+                                icon_color=ft.Colors.BLUE,
+                                on_click=lambda e, idx=i: self.abrir_dialog_edicao(idx)
+                            ),
+                            ft.IconButton(
+                                icon=ft.Icons.DELETE,
+                                icon_color=ft.Colors.RED,
+                                on_click=lambda e, idx=i: self.apagaremp(idx)
+                            )
+                        ], spacing=5)
+                    )
+                ]
+            
+            linhas.append(ft.DataRow(cells=cells))
+        return linhas
+
+    def atualizar_tabela(self, e):
+        termo_busca = str(self.caixadebusca.value).lower()
+        if not termo_busca:
+            self.dados = verempresa()
+        else:
+            self.dados = [
+                emp for emp in verempresa()
+                if (termo_busca in (emp[0] or "").lower()) or
+                   (termo_busca in (emp[1] or "").lower()) or
+                   (termo_busca in (emp[2] or "").lower()) or
+                   (termo_busca in (emp[3] or "").lower())
+            ]
         
-        def build_view(self):
-            if self.responsive.is_desktop():
-                self.main = Main_interface(self.page)
-                self.sidebar = Sidebar(self.page)
-                self.razao = ft.TextField(label="Razão Social",border_radius=10,focused_border_color="#74FE4E",label_style=ft.TextStyle(color=ft.Colors.GREY_800))
-                self.cnpj = ft.TextField(label="CNPJ",border_radius=10,focused_border_color="#74FE4E",label_style=ft.TextStyle(color=ft.Colors.GREY_800))
-                self.contato = ft.TextField(label="Contato",border_radius=10,width=300,focused_border_color="#74FE4E",label_style=ft.TextStyle(color=ft.Colors.GREY_800))
-                self.endereco = ft.TextField(label="Endereço",border_radius=10,width=300,focused_border_color="#74FE4E",label_style=ft.TextStyle(color=ft.Colors.GREY_800))
-                self.municipio = ft.TextField(label="Município",border_radius=10,width=300,focused_border_color="#74FE4E",label_style=ft.TextStyle(color=ft.Colors.GREY_800))
-                self.tabempresas = ft.Container(
-                    content=self.buildtableE(self.gerarlinhas(self.dados)),
-                    border=ft.Border(top=ft.BorderSide(width=1)),
-                    border_radius=16,
+        self.tabempresas.content = self.buildtableE(self.gerarlinhas(self.dados))
+        self.tabempresas.update()
+
+    def build_view(self):
+        self.main = Main_interface(self.page)
+        self.sidebar = Sidebar(self.page)
+        
+        if self.responsive.is_desktop():
+            return ft.Row(
+                [
+                    ft.Column([self.sidebar.build()], alignment=ft.MainAxisAlignment.START),
+                    ft.Column(
+                        [
+                            ft.Row(
+                                [
+                                    ft.Text("Empresas", size=30, color=ft.Colors.GREY_800),
+                                    self.register_button
+                                ],
+                                alignment=ft.MainAxisAlignment.SPACE_BETWEEN
+                            ),
+                            ft.Row([self.caixadebusca], alignment=ft.MainAxisAlignment.END),
+                            ft.Row([self.tabempresas], expand=True)
+                        ],
+                        expand=True,
+                        scroll=ft.ScrollMode.ADAPTIVE
                     )
-                self.caixadebusca = ft.TextField(
-                    label="Buscar",
-                    prefix_icon=ft.Icons.SEARCH,
-                    on_change=self.atualizar_tabela,
-                    border_radius=16,
-                    width=300
-                )
-                self.cadinterface = ft.Column([
-                    ft.Row([
-                        ft.Text("Insira os dados da empresa")
-                    ],alignment=ft.MainAxisAlignment.CENTER,vertical_alignment=ft.CrossAxisAlignment.CENTER,
-                    expand=True
+                ],
+                expand=True
+            )
+        
+        elif self.responsive.is_mobile():
+            return ft.Column(
+                [
+                    self.sidebar.build(),
+                    ft.Row(
+                        [
+                            ft.Text("Empresas", size=25),
+                            self.register_button
+                        ],
+                        alignment=ft.MainAxisAlignment.SPACE_BETWEEN
                     ),
-                    ft.Row([
-                        self.razao, self.cnpj,
-                    ],alignment=ft.MainAxisAlignment.CENTER,vertical_alignment=ft.CrossAxisAlignment.CENTER,spacing=30,
-                    expand=True
+                    self.caixadebusca,
+                    self.tabempresas
+                ],
+                scroll=ft.ScrollMode.ADAPTIVE
+            )
+        
+        elif self.responsive.is_tablet():
+            return ft.Column(
+                [
+                    self.sidebar.build(),
+                    ft.Row(
+                        [
+                            ft.Text("Empresas", size=28),
+                            self.register_button
+                        ],
+                        alignment=ft.MainAxisAlignment.SPACE_BETWEEN
                     ),
-                    ft.Row([
-                        self.endereco,self.contato
-                    ],alignment=ft.MainAxisAlignment.CENTER, vertical_alignment=ft.CrossAxisAlignment.CENTER,spacing=30,
-                    expand=True
-                    ),
-                    ft.Row([
-                        self.municipio
-                    ],alignment=ft.MainAxisAlignment.CENTER, vertical_alignment=ft.CrossAxisAlignment.CENTER,spacing=30,
-                    expand=True
-                    ),
-                    ft.Row([
-                        ft.TextButton(text="Cadastrar",style=ft.ButtonStyle(color=ft.Colors.BLACK,elevation=10,bgcolor="#A1FB8B")
-                                    ,icon=ft.Icons.SEND_AND_ARCHIVE,on_click=lambda _: self.cadastro(),width=120),
-                        ft.TextButton(icon=ft.Icons.DELETE,icon_color=ft.Colors.BLACK,style=ft.ButtonStyle(color=ft.Colors.BLACK,elevation=10,bgcolor=ft.Colors.RED_ACCENT_200)
-                                    ,text="Limpar",width=120,on_click=lambda _: self.limpar())           
-                        ],alignment=ft.MainAxisAlignment.CENTER,vertical_alignment=ft.CrossAxisAlignment.CENTER,spacing=30,)
-                ],alignment=ft.MainAxisAlignment.CENTER,horizontal_alignment=ft.CrossAxisAlignment.CENTER)
-                self.empresascontent = ft.Container(
-                    content=ft.Column([
-                        ft.Row([
-                            ft.Text("Empresas", size=30,color=ft.Colors.GREY_800,weight=ft.FontWeight.W_400)
-                        ],alignment=ft.MainAxisAlignment.CENTER,vertical_alignment=ft.CrossAxisAlignment.CENTER
-                        ),
-                        ft.Row([
-                            self.main.cardmain("Cadastro de Empresas",None,None,self.cadinterface,False)
-                        ],alignment=ft.MainAxisAlignment.CENTER,vertical_alignment=ft.CrossAxisAlignment.CENTER,adaptive=True
-                        ),
-                        ft.Row([
-                            ft.Text("Procure pela Empresa desejada: "),
-                            self.caixadebusca  
-                        ],alignment=ft.MainAxisAlignment.CENTER,vertical_alignment=ft.CrossAxisAlignment.CENTER
-                        ),
-                        ft.Row([
-                            self.main.cardmain("Empresas Cadastradas",self.page.width*0.80,None,self.tabempresas,False)
-                        ],alignment=ft.MainAxisAlignment.CENTER,vertical_alignment=ft.CrossAxisAlignment.CENTER,
-                        )
-                    ],scroll=ft.ScrollMode.ADAPTIVE),
-                )
-                return ft.Row(
-                    [
-                        ft.Column([self.sidebar.build()],alignment=ft.MainAxisAlignment.START,horizontal_alignment=ft.CrossAxisAlignment.START),
-                        ft.Column([ft.Container(content=self.empresascontent,padding=10,width=self.page.width*0.88,)],scroll=ft.ScrollMode.ADAPTIVE,
-                                width=self.page.width*0.88,expand=True,adaptive=True,alignment=ft.MainAxisAlignment.START,horizontal_alignment=ft.CrossAxisAlignment.START)
-                    ],
-                    width=self.page.width,
-                    height=self.page.height,
-                    alignment=ft.MainAxisAlignment.START,
-                    vertical_alignment=ft.CrossAxisAlignment.START
-                )
-            elif self.responsive.is_mobile():
-                self.main = Main_interface(self.page)
-                self.sidebar = Sidebar(self.page)
-                self.razao = ft.TextField(label="Razão Social",border_radius=10,width=150,focused_border_color="#74FE4E",label_style=ft.TextStyle(color=ft.Colors.GREY_800))
-                self.cnpj = ft.TextField(label="CNPJ",border_radius=10,width=150,focused_border_color="#74FE4E",label_style=ft.TextStyle(color=ft.Colors.GREY_800))
-                self.contato = ft.TextField(label="Contato",border_radius=10,width=150,focused_border_color="#74FE4E",label_style=ft.TextStyle(color=ft.Colors.GREY_800))
-                self.endereco = ft.TextField(label="Endereço",border_radius=10,width=150,focused_border_color="#74FE4E",label_style=ft.TextStyle(color=ft.Colors.GREY_800))
-                self.tabempresas = ft.Container(
-                    content=self.buildtableE(self.gerarlinhas(self.dados)),
-                    border=ft.Border(top=ft.BorderSide(width=1)),
-                    border_radius=16,
-                    )
-                self.caixadebusca = ft.TextField(
-                    label="Buscar",
-                    prefix_icon=ft.Icons.SEARCH,
-                    on_change=self.atualizar_tabela,
-                    border_radius=16,
-                    width=300
-                )
-                self.cadinterface = ft.Column([
-                    ft.Row([
-                        ft.Text("Insira os dados da empresa")
-                    ],alignment=ft.MainAxisAlignment.CENTER,vertical_alignment=ft.CrossAxisAlignment.CENTER,
-                    expand=True
-                    ),
-                    ft.Row([
-                        self.razao, self.cnpj,
-                    ],alignment=ft.MainAxisAlignment.CENTER,vertical_alignment=ft.CrossAxisAlignment.CENTER,spacing=30,
-                    expand=True
-                    ),
-                    ft.Row([
-                        self.endereco,self.contato
-                    ],alignment=ft.MainAxisAlignment.CENTER, vertical_alignment=ft.CrossAxisAlignment.CENTER,spacing=30,
-                    expand=True
-                    ),
-                    ft.Row([
-                        ft.TextButton(text="Cadastrar",style=ft.ButtonStyle(color=ft.Colors.BLACK,elevation=10,bgcolor="#A1FB8B")
-                                    ,icon=ft.Icons.SEND_AND_ARCHIVE,on_click=lambda _: self.cadastro(),width=120),
-                        ft.TextButton(icon=ft.Icons.DELETE,icon_color=ft.Colors.BLACK,style=ft.ButtonStyle(color=ft.Colors.BLACK,elevation=10,bgcolor=ft.Colors.RED_ACCENT)
-                                    ,text="Limpar",width=120,on_click=lambda _: self.limpar())           
-                        ],alignment=ft.MainAxisAlignment.CENTER,vertical_alignment=ft.CrossAxisAlignment.CENTER,spacing=30,)
-                ],alignment=ft.MainAxisAlignment.CENTER,horizontal_alignment=ft.CrossAxisAlignment.CENTER)
-                self.empresascontent = ft.Container(
-                    content=ft.Column([
-                        ft.Row([
-                            ft.Icon(ft.Icons.BUSINESS, color=ft.Colors.GREY_700),
-                            ft.Text("Empresas", size=30)
-                        ],alignment=ft.MainAxisAlignment.CENTER,vertical_alignment=ft.CrossAxisAlignment.CENTER
-                        ),
-                        ft.Row([
-                            self.main.cardmain("Cadastro de Empresas",None,None,self.cadinterface,False)
-                        ],alignment=ft.MainAxisAlignment.CENTER,vertical_alignment=ft.CrossAxisAlignment.CENTER,adaptive=True
-                        ),
-                        ft.Column([
-                            ft.Text("Procure pela Empresa desejada: "),
-                            self.caixadebusca  
-                        ],alignment=ft.MainAxisAlignment.CENTER,horizontal_alignment=ft.CrossAxisAlignment.CENTER
-                        ),
-                        ft.Row([
-                            self.main.cardmain("Empresas Cadastradas",None,None,self.tabempresas,True)
-                        ],alignment=ft.MainAxisAlignment.CENTER,vertical_alignment=ft.CrossAxisAlignment.CENTER,
-                        )
-                    ],scroll=ft.ScrollMode.ADAPTIVE,alignment=ft.MainAxisAlignment.CENTER,horizontal_alignment=ft.CrossAxisAlignment.CENTER),
-                )
-                return ft.Column(
-                    [
-                        ft.Row([self.sidebar.build()],alignment=ft.MainAxisAlignment.CENTER,vertical_alignment=ft.CrossAxisAlignment.CENTER),
-                        ft.Column([self.empresascontent],scroll=ft.ScrollMode.ADAPTIVE,expand=True,adaptive=True,alignment=ft.MainAxisAlignment.CENTER,horizontal_alignment=ft.CrossAxisAlignment.CENTER)
-                    ],
-                    width=self.page.width,
-                    height=self.page.height,
-                )
-            elif self.responsive.is_tablet():
-                self.main = Main_interface(self.page)
-                self.sidebar = Sidebar(self.page)
-                self.razao = ft.TextField(label="Razão Social",border_radius=10,focused_border_color="#74FE4E",label_style=ft.TextStyle(color=ft.Colors.GREY_800))
-                self.cnpj = ft.TextField(label="CNPJ",border_radius=10,focused_border_color="#74FE4E",label_style=ft.TextStyle(color=ft.Colors.GREY_800))
-                self.contato = ft.TextField(label="Contato",border_radius=10,width=300,focused_border_color="#74FE4E",label_style=ft.TextStyle(color=ft.Colors.GREY_800))
-                self.endereco = ft.TextField(label="Endereço",border_radius=10,width=300,focused_border_color="#74FE4E",label_style=ft.TextStyle(color=ft.Colors.GREY_800))
-                self.tabempresas = ft.Container(
-                    content=self.buildtableE(self.gerarlinhas(self.dados)),
-                    border=ft.Border(top=ft.BorderSide(width=1)),
-                    border_radius=16,
-                    expand=True
-                    )
-                self.caixadebusca = ft.TextField(
-                    label="Buscar",
-                    prefix_icon=ft.Icons.SEARCH,
-                    on_change=self.atualizar_tabela,
-                    border_radius=16,
-                    width=300
-                )
-                self.cadinterface = ft.Column([
-                    ft.Row([
-                        ft.Text("Insira os dados da empresa")
-                    ],alignment=ft.MainAxisAlignment.CENTER,vertical_alignment=ft.CrossAxisAlignment.CENTER,
-                    expand=True
-                    ),
-                    ft.Row([
-                        self.razao, self.cnpj,
-                    ],alignment=ft.MainAxisAlignment.CENTER,vertical_alignment=ft.CrossAxisAlignment.CENTER,spacing=30,
-                    expand=True
-                    ),
-                    ft.Row([
-                        self.endereco,self.contato
-                    ],alignment=ft.MainAxisAlignment.CENTER, vertical_alignment=ft.CrossAxisAlignment.CENTER,spacing=30,
-                    expand=True
-                    ),
-                    ft.Row([
-                        ft.TextButton(text="Cadastrar",style=ft.ButtonStyle(color=ft.Colors.BLACK,elevation=10,bgcolor="#A1FB8B")
-                                    ,icon=ft.Icons.SEND_AND_ARCHIVE,on_click=lambda _: self.cadastro(),width=120),
-                        ft.TextButton(icon=ft.Icons.DELETE,icon_color=ft.Colors.BLACK,style=ft.ButtonStyle(color=ft.Colors.BLACK,elevation=10,bgcolor=ft.Colors.RED_ACCENT)
-                                    ,text="Limpar",width=120,on_click=lambda _: self.limpar())           
-                        ],alignment=ft.MainAxisAlignment.CENTER,vertical_alignment=ft.CrossAxisAlignment.CENTER,spacing=30,)
-                ],alignment=ft.MainAxisAlignment.CENTER,horizontal_alignment=ft.CrossAxisAlignment.CENTER)
-                self.empresascontent = ft.Container(
-                    content=ft.Column([
-                        ft.Row([
-                            ft.Icon(ft.Icons.BUSINESS, color=ft.Colors.GREY_700),
-                            ft.Text("Empresas", size=30)
-                        ],alignment=ft.MainAxisAlignment.CENTER,vertical_alignment=ft.CrossAxisAlignment.CENTER
-                        ),
-                        ft.Row([
-                            self.main.cardmain("Cadastro de Empresas",None,None,self.cadinterface,False)
-                        ],alignment=ft.MainAxisAlignment.CENTER,vertical_alignment=ft.CrossAxisAlignment.CENTER,adaptive=True
-                        ),
-                        ft.Row([
-                            ft.Text("Procure pela Empresa desejada: "),
-                            self.caixadebusca  
-                        ],alignment=ft.MainAxisAlignment.CENTER,vertical_alignment=ft.CrossAxisAlignment.CENTER
-                        ),
-                        ft.Row([
-                            self.main.cardmain("Empresas Cadastradas",None,None,self.tabempresas,True)
-                        ],alignment=ft.MainAxisAlignment.CENTER,vertical_alignment=ft.CrossAxisAlignment.CENTER,expand=True
-                        )
-                    ],scroll=ft.ScrollMode.ADAPTIVE,expand=True),expand=True
-                )
-                return ft.Column(
-                    [
-                        ft.Row([self.sidebar.build()],alignment=ft.MainAxisAlignment.CENTER,vertical_alignment=ft.CrossAxisAlignment.CENTER),
-                        ft.Column([self.empresascontent],scroll=ft.ScrollMode.ADAPTIVE,adaptive=True,alignment=ft.MainAxisAlignment.CENTER,horizontal_alignment=ft.CrossAxisAlignment.CENTER,expand=True)
-                    ],
-                    width=self.page.width,
-                    height=self.page.height,
-                )
+                    self.caixadebusca,
+                    self.tabempresas
+                ],
+                scroll=ft.ScrollMode.ADAPTIVE
+            )
