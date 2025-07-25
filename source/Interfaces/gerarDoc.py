@@ -277,7 +277,10 @@ class Gerardoc:
                 "TGP (Alanina)",
                 "CREATININA",
                 "URÉIA",
-                "TOXICOLOGICO"
+                "TOXICOLOGICO",
+                "ACIDO METILETILCETONA",
+                "ACIDO HIPURICO"
+
             ]
             for modelo in self.modelos_excel:
                 self.listview.controls.append(
@@ -407,6 +410,7 @@ class Gerardoc:
                 "Radiações-Não-ION",
                 "Ruidos",
                 "Vibrações",
+                "Umidade"
             ]
             riscos_quimicos = [
                 "Fumos Metálicos",
@@ -452,6 +456,7 @@ class Gerardoc:
                                 criar_risco(riscos_fisicos[3],"f"),
                                 criar_risco(riscos_fisicos[4],"f"),
                                 criar_risco(riscos_fisicos[5],"f"),
+                                criar_risco(riscos_fisicos[6],"f"),
                                 ],alignment=ft.MainAxisAlignment.CENTER,horizontal_alignment=ft.CrossAxisAlignment.START),
                             ft.Column([
                                 ft.Text("QUÍMICOS",weight=ft.FontWeight.BOLD,size=20),
@@ -489,7 +494,7 @@ class Gerardoc:
                             ],horizontal_alignment=ft.CrossAxisAlignment.START),
                         ],alignment=ft.MainAxisAlignment.CENTER,vertical_alignment=ft.CrossAxisAlignment.START,spacing=100)
                         
-                    ],height=500,width=1100
+                    ],height=500,width=1200
                 ),
             )
             self.page.open(modal)
