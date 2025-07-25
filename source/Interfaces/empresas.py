@@ -196,6 +196,8 @@ class Empresas:
                 size=15,
                 weight=ft.FontWeight.BOLD
             ),
+            content=ft.Container(  
+            width=400,         
             content=ft.Column(
                 controls=[
                     self.razao,
@@ -207,25 +209,26 @@ class Empresas:
                 tight=True,
                 spacing=12,
                 scroll=ft.ScrollMode.AUTO,
+            )
+        ),
+        actions=[
+            ft.ElevatedButton(
+                "Cancelar",
+                on_click=self.fechar_dialog_edicao,
+                bgcolor=ft.Colors.RED_100,
+                color=ft.Colors.RED_900
             ),
-            actions=[
-                ft.ElevatedButton(
-                    "Cancelar",
-                    on_click=self.fechar_dialog_edicao,
-                    bgcolor=ft.Colors.RED_100,
-                    color=ft.Colors.RED_900
-                ),
-                ft.ElevatedButton(
-                    "Salvar",
-                    on_click=lambda e: self.salvar_edicao(e, index),
-                    bgcolor="#74FE4E",
-                    color=ft.Colors.BLACK
-                )
-            ],
-            actions_alignment=ft.MainAxisAlignment.END,
-            shape=ft.RoundedRectangleBorder(radius=20),
-            inset_padding=20,
-        )
+            ft.ElevatedButton(
+                "Salvar",
+                on_click=lambda e: self.salvar_edicao(e, index),
+                bgcolor="#74FE4E",
+                color=ft.Colors.BLACK
+            )
+        ],
+        actions_alignment=ft.MainAxisAlignment.END,
+        shape=ft.RoundedRectangleBorder(radius=20),
+        inset_padding=20,
+    )
         self.page.open(self.dialog_edicao)
         self.page.update()
 
@@ -325,11 +328,11 @@ class Empresas:
                 ]
             else:
                 cells = [
-                    ft.DataCell(ft.Text(empresa[0],size=13)),
+                    ft.DataCell(ft.Text(empresa[0].upper(),size=13)),
                     ft.DataCell(ft.Text(empresa[1],size=13)),
                     ft.DataCell(ft.Text(empresa[2],size=13)),
-                    ft.DataCell(ft.Text(empresa[3],size=13)),
-                    ft.DataCell(ft.Text(empresa[4],size=13)),
+                    ft.DataCell(ft.Text(empresa[3].upper(),size=13)),
+                    ft.DataCell(ft.Text(empresa[4].upper(),size=13)),
                     ft.DataCell(
                         ft.Row([
                             ft.IconButton(
