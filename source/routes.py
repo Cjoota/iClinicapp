@@ -2,6 +2,7 @@ import flet as ft
 from Interfaces.Login_interface import Login
 from Interfaces.cadastro import Cadastro
 import asyncio
+from Interfaces.agendamento import Agendamento
 class Router:
     """SISTEMA DE ROTAS E ENDEREÇAMENTO DE ABAS.\n-
     - route_change:\n 
@@ -28,6 +29,7 @@ class Router:
             "/empresas": self.require_login(self.empresas_view),
             "/gerardoc": self.require_login(self.gerardoc_view),
             "/cadastro": self.cadastro_view,
+            "/agendamento": self.require_login(self.agendamentos_view),
         }
         self.page.on_route_change = self.route_change
         self.page.on_view_pop = self.view_pop
@@ -67,9 +69,9 @@ class Router:
                         ft.Text("404 - Página não encontrada"),
                     ]
                 )
-            )
+            )        
         self.page.update()
-
+  
     def view_pop(self,view):
         # Captura o evento de voltar
         self.page.views.pop()
@@ -100,6 +102,18 @@ class Router:
             )
         )
     
+
+    def agendamentos_view(self):
+        agendament_view = Agendamento(self.page)
+        self.page.views.append(
+            ft.View(
+                "/agendamento",
+                [
+                    agendament_view.build_view()
+                ]
+            )
+        )
+
     def contabilidade_view(self):
         from Interfaces.contab import ContabilidadePage
         contab_view = ContabilidadePage(self.page)

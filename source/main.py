@@ -1,3 +1,4 @@
+from funcoes import excluir_agendamentos_vencidos
 import flet as ft
 from api import iniciar_servidor_fastapi
 from database.databasecache import inicializar_db,contabilidade_db
@@ -50,6 +51,7 @@ class Main():
 			self.page.run_task(self.verfy.uptable)
 			self.page.run_task(self.verfy.verify)
 			self.page.run_task(self.init_cache)
+			excluir_agendamentos_vencidos()
 			initialize = True
 			
 @atexit.register
@@ -58,6 +60,9 @@ def limpar_cache():
 	print("Limpando Cache")
 	verify = Verificacoes()
 	verify.close()
+	
+	excluir_agendamentos_vencidos()
+	
 	import shutil
 	from pathlib import Path
 	for d in Path(".").rglob("__pycache__"):

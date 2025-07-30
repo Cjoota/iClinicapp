@@ -1,3 +1,4 @@
+from datetime import datetime
 import asyncio
 import hashlib
 import secrets
@@ -8,7 +9,7 @@ import datetime
 import logging
 from database.datacreator import connectlocal,commitlocal
 from database.databasecache import ContabilidadeDB
-from database.models import CaixaDiario, CaixaMensal,User
+from database.models import CaixaDiario, CaixaMensal,User,Agendamentos,Empresa
 from sqlalchemy.sql import insert, select
 from pathlib import Path
 
@@ -81,6 +82,30 @@ class Auth:
         except Exception as e:
             return f"Erro ao cadastrar: {str(e)}", 150
 
+    
+def excluir_agendamentos_vencidos():
+    try:
+        from datetime import datetime
+        with db.session() as session:
+            qtd = session.query(Agendamentos).filter(
+                Agendamentos.data_exame < datetime.now().date()
+            ).delete()
+            session.commit()
+            print(f"✅ {qtd} agendamentos vencidos removidos")
+            return qtd
+    except Exception as e:
+        print(f"❌ Erro ao limpar agendamentos: {str(e)}")
+        session.rollback()
+        return 0
+
+def listar_empresas_com_agendamento():
+    excluir_agendamentos_vencidos()
+    with db.session() as session:
+        slc = select(Agendamentos)
+        result = session.execute(slc).scalars().all()
+        return result
+
+
 def vercontas() :
     """ Seleciona no Banco de dados as informações sobre contas registradas e as retorna. """
     try:
@@ -127,7 +152,7 @@ def puxardados(razao):
         empresa.append(i[3])
     return empresa
 
-
+                 
 
 def atualizarempresa(cnpj, coluna, valor):
         if coluna:
