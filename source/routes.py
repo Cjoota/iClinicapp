@@ -47,16 +47,15 @@ class Router:
         return wrapper
     
     def route_change(self, route):
+        rota_atual = self.page.route
+        view_atual = self.page.views
+        print(rota_atual,view_atual)
         """ Função de troca de paginas, recebe o chamado do capturador de evento ao trocar de pagina. """
         async def executor():
             await self.loading_simples(True)
-        self.page.views.clear()
+        if not rota_atual in view_atual:
+            self.page.views.clear()
         self.page.run_task(executor)
-        rota = route.route
-        rotas_protegidas = ["/home", "/contabilidade", "/documentos", "/empresas", "/gerardoc"]
-        if rota in rotas_protegidas and not self.page.session.get("logado"):
-            self.page.go("/login")
-            return
         if route.route in self.routes:
             self.routes[route.route]()
         

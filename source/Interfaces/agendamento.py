@@ -1,6 +1,5 @@
 from database.models import Agendamentos
 from datetime import datetime
-from funcoes import db
 import flet as ft
 from Interfaces.sidebar import Sidebar
 from Interfaces.main_interface import Main_interface
@@ -11,6 +10,7 @@ from database.databasecache import ContabilidadeDB
 class Agendamento:
     def __init__(self, page: ft.Page):
         self.page = page
+        self.db = ContabilidadeDB()
         self.page.clean()
         self.responsive = Responsive(page)
         self.sidebar = Sidebar(page)

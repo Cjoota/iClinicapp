@@ -284,7 +284,7 @@ class Empresas:
                 font_family="Arial"
             ),
             columns=columns,
-            column_spacing=120,
+            column_spacing=100,
             rows=linhas,
             border_radius=10,
             sort_ascending=True
@@ -317,11 +317,11 @@ class Empresas:
                 ]
             else:
                 cells = [
-                    ft.DataCell(ft.Text(empresa[0].upper(),size=13)),
-                    ft.DataCell(ft.Text(empresa[1],size=13)),
-                    ft.DataCell(ft.Text(empresa[2],size=13)),
-                    ft.DataCell(ft.Text(empresa[3].upper(),size=13)),
-                    ft.DataCell(ft.Text(empresa[4].upper(),size=13)),
+                    ft.DataCell(ft.Text(empresa[0].upper(),size=11)),
+                    ft.DataCell(ft.Text(empresa[1],size=11)),
+                    ft.DataCell(ft.Text(empresa[2],size=11)),
+                    ft.DataCell(ft.Text(empresa[3].upper(),size=11)),
+                    ft.DataCell(ft.Text(empresa[4].upper(),size=11)),
                     ft.DataCell(
                         ft.Row([
                             ft.IconButton(

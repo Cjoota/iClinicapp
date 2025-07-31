@@ -32,9 +32,12 @@ class Sidebar:
         def sair(e):
             if self.page.session.contains_key("perm"):
                 self.page.session.remove("perm")
-            self.page.session.remove("logado")
-            self.page.session.remove("user")
-            self.page.client_storage.remove("nick")
+            if self.page.session.contains_key("logado"):
+                self.page.session.remove("logado")
+            if self.page.session.contains_key("user"):
+                self.page.session.remove("user")
+            if self.page.client_storage.contains_key("nick"):
+                self.page.client_storage.remove("nick")
             self.page.go("/login")
 
         alert = ft.AlertDialog(
