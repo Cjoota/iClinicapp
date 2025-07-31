@@ -91,7 +91,6 @@ class Sidebar:
             self.menu_item(ft.Icons.BUSINESS, "Empresas", "/empresas"),
             self.menu_item(ft.Icons.CREATE_ROUNDED, "Gerar exames", "/gerardoc"),
             self.menu_item(ft.Icons.DESCRIPTION, "Exames gerados", "/documentos"),
-            self.menu_item(ft.Icons.FILE_UPLOAD, "Exames prontos", "/exames-prontos"),
             self.menu_item(ft.Icons.CALENDAR_TODAY, "Agendamento", "/agendamento"),
         ]
 

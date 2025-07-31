@@ -301,7 +301,9 @@ class Gerardoc:
                 "TGP (Alanina)",
                 "CREATININA",
                 "URÉIA",
-                "TOXICOLOGICO"
+                "TOXICOLOGICO",
+                "ACIDO METILETILCETONA",
+                "ACIDO HIPURICO"
             ]
             for modelo in self.modelos_excel:
                 self.listview.controls.append(

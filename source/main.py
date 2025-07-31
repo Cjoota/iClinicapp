@@ -60,9 +60,6 @@ def limpar_cache():
 	print("Limpando Cache")
 	verify = Verificacoes()
 	verify.close()
-	
-	excluir_agendamentos_vencidos()
-	
 	import shutil
 	from pathlib import Path
 	for d in Path(".").rglob("__pycache__"):

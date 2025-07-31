@@ -1,16 +1,18 @@
-import datetime
-from funcoes import db
+
 import flet as ft
 from Interfaces.sidebar import Sidebar
 from Interfaces.main_interface import Main_interface
 from Interfaces.telaresize import Responsive
-from funcoes import listar_empresas_com_agendamento
+from funcoes import listar_empresas_com_agendamento,excluir_agendamentos_vencidos
 from funcoes import verempresa
 from database.databasecache import ContabilidadeDB
+from database.models import Agendamentos
+from datetime import datetime
 
 class Agendamento:
     def __init__(self, page: ft.Page):
         self.page = page
+        self.db = ContabilidadeDB()
         self.page.clean()
         self.responsive = Responsive(page)
         self.sidebar = Sidebar(page)
@@ -32,10 +34,11 @@ class Agendamento:
 
         self.tab_agendamentos = ft.Container(
             content=self.build_table(self.gerar_linhas(self.agendamentos)),
-
+   
             alignment=ft.alignment.top_center,
             expand=True,
-            adaptive=True
+            adaptive=True,
+            border_radius=15
         )
 
         self.btn_novo_agendamento = ft.FloatingActionButton(
@@ -163,12 +166,18 @@ class Agendamento:
     def salvar_agendamento_editado(self, index):
         agendamento = self.agendamentos[index]
         agendamento.nome_empresa = self.empresa_dropdown.value
-        agendamento.data_exame = datetime.datetime.strptime(self.data_input.value, "%d/%m/%Y")
+        agendamento.data_exame = datetime.strptime(self.data_input.value, "%d/%m/%Y")
         agendamento.tipo_exame = self.tipo_input.value
         agendamento.colaborador = self.colaborador_input.value
 
-        from database.models import Agendamentos
-        with db.session() as session:
+        if datetime.strptime(self.data_input.value,"%d/%m/%Y").date() < datetime.now().date():
+            self.snack_bar = ft.SnackBar(ft.Text("Data não pode ser inferior á atual!"),bgcolor=ft.Colors.RED)
+            self.page.open(self.snack_bar)
+            self.page.update()
+            self.fechar_dialog()
+            return
+        
+        with self.db.session() as session:
             ag = session.query(Agendamentos).filter_by(id=agendamento.id).first()
             if ag:
                 ag.nome_empresa = agendamento.nome_empresa
@@ -182,56 +191,6 @@ class Agendamento:
         self.tab_agendamentos.content = self.build_table(self.gerar_linhas(self.agendamentos))
         self.page.update()
 
-    def acao_excluir(self, index):
-        from database.models import Agendamentos
-        agendamento = self.agendamentos[index]
-
-    def confirmar_exclusao(self, agendamento):
-        def excluir(e):
-            try:
-                from database.models import Agendamentos
-                with db.session() as session:
-                    session.query(Agendamentos).filter_by(id=agendamento.id).delete()
-                    session.commit()
-                self.fechar_dialog()  # Usa seu método existente
-                self.agendamentos = listar_empresas_com_agendamento()
-                self.tab_agendamentos.content = self.build_table(self.gerar_linhas(self.agendamentos))
-
-                # Feedback visual
-                self.page.snack_bar = ft.SnackBar(
-                    ft.Text("✅ Agendamento excluído com sucesso!"),
-                    bgcolor=ft.Colors.GREEN_400
-                )
-                self.page.snack_bar.open = True
-                self.page.update()
-            
-            except Exception as e:
-                self.page.snack_bar = ft.SnackBar(
-                    ft.Text(f"❌ Erro ao excluir: {str(e)}"),
-                    bgcolor=ft.Colors.RED_400
-                )
-                self.page.snack_bar.open = True
-                self.page.update()
-                #dialog de confirmação
-                self.page.dialog = ft.AlertDialog(
-                    modal=True,
-                    title=ft.Text("Confirmar Exclusão",weight=ft.FontWeight.BOLD),
-                    content=ft.Text(f"Execluir agendamento de {agendamento.nome_empresa} {agendamento.tipo_exame}?"),
-                    actions=[
-                        ft.TextButton("Cancelar", on_click=lambda e: self.fechar_dialog()),
-                        ft.TextButton(
-                            "Confirmar",
-                            on_click=excluir,
-                            style=ft.ButtonStyle(color=ft.Colors.WHITE, bgcolor=ft.Colors.RED)
-                        )
-                            
-                    ]
-                )
-                self.page.dialog.open = True
-                self.page.update()
-                    
-                
-        
 
     def acao_editar(self, index):
         self.abrir_editar_agendamento(index)
@@ -246,13 +205,13 @@ class Agendamento:
             ft.DataColumn(ft.Text("Empresa",width=300)),
             ft.DataColumn(ft.Text("Exame")),
             ft.DataColumn(ft.Text("Data do Agendamento")),
-            ft.DataColumn(ft.Text("Ações"))  
+            ft.DataColumn(ft.Text("Ações"),heading_row_alignment=ft.MainAxisAlignment.CENTER)  
                 ]
         return ft.Column([
             ft.DataTable(
                 columns=columns,
                 rows=linhas,
-                column_spacing=120,
+                column_spacing=100,
                 heading_row_color="#A1FB8B",
                 data_row_color=ft.Colors.WHITE,
                 heading_text_style=ft.TextStyle(size=15, weight=ft.FontWeight.BOLD),
@@ -268,25 +227,6 @@ class Agendamento:
                 self.acao_editar(index)
             return abrir_popup
 
-        def excluir_agendamento(index, agendamento):
-            def abrir_popup(e):
-                self.page.dialog = ft.AlertDialog(
-                    modal=True,
-                    title=ft.Text("Confirmar Exclusão", size=16, weight="bold"),
-                    content=ft.Text(f"Tem certeza que deseja excluir o agendamento de\n{agendamento.nome_empresa} - {agendamento.tipo_exame}?"),
-                    actions=[
-                        ft.TextButton("Cancelar", on_click=lambda _: self.fechar_dialogo()),
-                        ft.TextButton(
-                            "Excluir",
-                            style=ft.ButtonStyle(color="white", bgcolor="red"),
-                            on_click=lambda _: self.acao_excluir(index)
-                        )
-                    ],
-                    actions_alignment="end"
-                )
-                self.page.dialog.open = True
-                self.page.update()
-            return abrir_popup
 
         for i, agendamento in enumerate(dados):
             linha = ft.DataRow(
@@ -311,7 +251,7 @@ class Agendamento:
                                 tooltip="Excluir",
                                 on_click=lambda e, ag=agendamento: self.excluir_direto(ag)
                             )
-                        ], spacing=5)
+                        ], spacing=5,vertical_alignment=ft.CrossAxisAlignment.CENTER,alignment=ft.MainAxisAlignment.CENTER)
                     )
                 ]
             )
@@ -319,7 +259,7 @@ class Agendamento:
         return linhas
     def excluir_direto(self, agendamento):
         from database.models import Agendamentos
-        with db.session() as session:
+        with self.db.session() as session:
             session.query(Agendamentos).filter_by(id=agendamento.id).delete()
             session.commit()
         self.agendamentos = listar_empresas_com_agendamento()
@@ -353,10 +293,8 @@ class Agendamento:
                 buscar,
             ft.Container(
                     content=self.tab_agendamentos,
-                    padding=10,
-                    border=ft.border.all(1, ft.Colors.GREY_300),
-                    border_radius=10,
-                    expand=True
+                    border_radius=15,
+                    
                 )
             ], expand=True, scroll=ft.ScrollMode.ADAPTIVE)
         ], expand=True)
@@ -384,16 +322,18 @@ class Agendamento:
         data_exame = self.data_input.value
         tipo_exame = self.tipo_input.value
         colaborador = self.colaborador_input.value
-
         if not empresa_nome or not data_exame or not tipo_exame or not colaborador:
-            self.page.snack_bar = ft.SnackBar(ft.Text("Preencha todos os campos!"))
-            self.page.snack_bar.open = True
+            self.snack_bar = ft.SnackBar(ft.Text("Preencha todos os campos!"),bgcolor=ft.Colors.RED)
+            self.page.open(self.snack_bar)
             self.page.update()
             return
-
-        from database.models import Agendamentos
-        from datetime import datetime
-        with db.session() as session:
+        if datetime.strptime(data_exame,"%d/%m/%Y").date() < datetime.now().date():
+            self.snack_bar = ft.SnackBar(ft.Text("Data não pode ser inferior á atual!"),bgcolor=ft.Colors.RED)
+            self.page.open(self.snack_bar)
+            self.page.update()
+            self.fechar_dialog()
+            return
+        with self.db.session() as session:
             novo_agendamento = Agendamentos(
                 nome_empresa=empresa_nome,
                 data_exame=datetime.strptime(data_exame, "%d/%m/%Y"),

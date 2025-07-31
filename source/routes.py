@@ -49,7 +49,6 @@ class Router:
     def route_change(self, route):
         rota_atual = self.page.route
         view_atual = self.page.views
-        print(rota_atual,view_atual)
         """ Função de troca de paginas, recebe o chamado do capturador de evento ao trocar de pagina. """
         async def executor():
             await self.loading_simples(True)

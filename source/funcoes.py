@@ -3,7 +3,6 @@ import asyncio
 import hashlib
 import secrets
 import re
-from database.datacreator import keys
 import psycopg2
 import datetime
 import logging
@@ -12,14 +11,10 @@ from database.databasecache import ContabilidadeDB
 from database.models import CaixaDiario, CaixaMensal,User,Agendamentos,Empresa
 from sqlalchemy.sql import insert, select
 from pathlib import Path
-
 import json
 import subprocess
 import platform
 from database.models import Empresa
-from database.datacreator import commitlocal
-from sqlalchemy.orm import Session
-from database.datacreator import connectlocal
 
 # Habilitando o sistema de log de erros.
 logging.basicConfig(level=logging.INFO)
@@ -91,15 +86,14 @@ def excluir_agendamentos_vencidos():
                 Agendamentos.data_exame < datetime.now().date()
             ).delete()
             session.commit()
-            print(f"✅ {qtd} agendamentos vencidos removidos")
-            return qtd
+            logger.info(f"{qtd} agendamentos vencidos removidos")
+            
     except Exception as e:
-        print(f"❌ Erro ao limpar agendamentos: {str(e)}")
+        logger.info(f"Erro ao limpar agendamentos: {str(e)}")
         session.rollback()
         return 0
 
 def listar_empresas_com_agendamento():
-    excluir_agendamentos_vencidos()
     with db.session() as session:
         slc = select(Agendamentos)
         result = session.execute(slc).scalars().all()
