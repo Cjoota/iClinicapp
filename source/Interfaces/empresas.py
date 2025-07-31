@@ -1,3 +1,4 @@
+import re
 import flet as ft
 from funcoes import verempresa, cadasempresa, excluiremp
 from Interfaces.telaresize import Responsive
@@ -23,7 +24,9 @@ class Empresas:
             label="CNPJ",
             border_radius=10,
             focused_border_color="#74FE4E",
-            label_style=ft.TextStyle(color=ft.Colors.GREY_800)
+            max_length=18,
+            label_style=ft.TextStyle(color=ft.Colors.GREY_800),
+            on_change=self.mascarar_cnpj
         )
         self.contato = ft.TextField(
             label="Contato",
@@ -65,6 +68,24 @@ class Empresas:
             bgcolor="#A1FB8B",
         )
 
+    def mascarar_cnpj(self, e):
+        valor = re.sub(r'\D', '', e.control.value)[:14] 
+        formatado = ""
+
+        if len(valor) >= 1:
+            formatado += valor[:2]
+        if len(valor) >= 3:
+            formatado = valor[:2] + "." + valor[2:5]
+        if len(valor) >= 6:
+            formatado = valor[:2] + "." + valor[2:5] + "." + valor[5:8]
+        if len(valor) >= 9:
+            formatado = valor[:2] + "." + valor[2:5] + "." + valor[5:8] + "/" + valor[8:12]
+        if len(valor) >= 13:
+            formatado = valor[:2] + "." + valor[2:5] + "." + valor[5:8] + "/" + valor[8:12] + "-" + valor[12:14]
+
+        e.control.value = formatado
+        e.control.update()
+    
     def on_resize(self, e):
         if self.page.route == "/empresas":
             self.responsive = Responsive(self.page)
@@ -93,6 +114,8 @@ class Empresas:
         except Exception as e:
             self.mostrar_snackbar(f"Erro ao cadastrar: {str(e)}", ft.Colors.RED)
 
+    
+    
     def abrir_dialog_cadastro(self, e):
         self.razao.value = ""
         self.cnpj.value = ""
