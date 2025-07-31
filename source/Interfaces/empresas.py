@@ -29,6 +29,7 @@ class Empresas:
             label="Contato",
             border_radius=10,
             focused_border_color="#74FE4E",
+            max_length=18,
             label_style=ft.TextStyle(color=ft.Colors.GREY_800)
         )
         self.endereco = ft.TextField(
