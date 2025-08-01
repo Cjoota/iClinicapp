@@ -30,7 +30,6 @@ class Login:
                             width=350, height=35, border_radius=10,
                             bgcolor=ft.Colors.with_opacity(0.7, ft.Colors.WHITE),
                             color=ft.Colors.BLACK )
-        self.bypass_button = ft.ElevatedButton("BYPASS (RETIRAR AO MESCLAR)",on_click=self.bypass)
         self.entryButton = ft.ElevatedButton("Entrar", color=ft.Colors.WHITE,
                             width=340, height=35,
                             bgcolor=ft.Colors.with_opacity(0.7, '#26BD00'),
@@ -42,7 +41,6 @@ class Login:
 
         return ft.Column(
             [
-                self.bypass_button,
                 self.title,
                 self.subtitle,
                 self.subtitleInstruction,
@@ -102,8 +100,7 @@ class Login:
         if not usuario or not senha:
             self.GlobalModal.content = ft.Text("Preencha todos os campos")
             self.GlobalModal.bgcolor = ft.Colors.RED
-            self.GlobalModal.open = True
-            self.GlobalModal.update()
+            self.page.open(self.GlobalModal)
         else:
             if auth.login(usuario=usuario, password=senha):
                 self.show_loading(True)
@@ -143,12 +140,5 @@ class Login:
             self.passw.value = ""
             self.page.update()
 
-
-    """ RETIRAR AO MESCLAR COM A MASTER """
-    """  RETIRAR OS BYPASS DOS GET_CARGO E GET_APELIDO   """
-    def bypass(self,e):
-        self.page.session.set("logado", "sim")
-        self.page.session.set("perm","all")
-        self.page.go("/home")
 
     

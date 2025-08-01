@@ -12,5 +12,7 @@ test.py
 *.xlsx
 *.pdf
 *.vscode
-
+Relacao_empresas.json
+verify.json
+Relacao_empresas.json
 verify.json

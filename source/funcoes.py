@@ -196,7 +196,7 @@ def get_cargo(user):
             return result.cargo
     except:
         """  RETIRAR NA MASTER   """
-        return "Bypass"
+        return "Função não encontrada"
 def set_cargo(user:str,cargo:str):
     """ Altera o Cargo do usuario inserido, no banco de dados. """
     with db.session() as session:
@@ -225,7 +225,7 @@ def get_apelido(user:str):
             return result
     except:
         """  RETIRAR NA MASTER   """
-        return "Bypass"
+        return "Usuario"
 class Verificacoes:
     """VERIFICAÇÕES DE ESTADO \n -
     Verifica o estado do banco de dados e dos uploads do caixa para nuvem.
@@ -318,13 +318,15 @@ class Verificacoes:
     
     async def uptable(self):
         if not self.get_config("v"):
-            hoje = datetime.datetime.now().strftime("%d")
-            if hoje == "01":
-                if not self.get_config("e"):
-                    date = datetime.datetime.now()
+            from datetime import datetime,date
+            mes = datetime.now().date().month
+            hoje = datetime.now().date()
+            if hoje == date(year=2025,month=mes,day=1):
+                if not self.get_config("m"):
+                    date = datetime.now()
                     valores = await self.db._executar_upmensal(self.db.async_session())
                     async with self.db.async_session() as session:
-                        _isrt_ = insert(CaixaMensal).values(datarefence=datetime.datetime.date(date),descricao='Fecha de mensal automatico',valor=valores)
+                        _isrt_ = insert(CaixaMensal).values(datarefence=datetime.date(date),descricao='Fecha de mensal automatico',valor=valores)
                         await session.execute(_isrt_)
                         await session.commit() 
                         await session.close()
@@ -335,6 +337,7 @@ class Verificacoes:
                 self.set_config("v",True)
                 logging.info("O Mês não terminou!")
                 del hoje
+                del mes
             
 
 

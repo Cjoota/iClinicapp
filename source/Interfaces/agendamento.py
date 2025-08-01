@@ -258,7 +258,6 @@ class Agendamento:
             linhas.append(linha)
         return linhas
     def excluir_direto(self, agendamento):
-        from database.models import Agendamentos
         with self.db.session() as session:
             session.query(Agendamentos).filter_by(id=agendamento.id).delete()
             session.commit()
