@@ -583,7 +583,19 @@ class ContabilidadePage:
        
         date = ft.DatePicker(current_date=datetime.datetime.now(),on_change=lambda e: date_picker(e))
         self.descricao_conta = ft.TextField(label=ft.Text("Nome da conta"),border_radius=10,width=180,border_color=ft.Colors.RED)
-        self.valor_conta = ft.TextField(label=ft.Text("Valor"),border_radius=10,width=180,border_color=ft.Colors.RED)
+        self.valor_conta = ft.TextField(
+            label=ft.Text("Valor"),
+            border_radius=10,
+            width=180,
+            border_color=ft.Colors.RED,
+            keyboard_type=ft.KeyboardType.NUMBER,
+            input_filter=ft.InputFilter(
+                regex_string=r"^\d*$",
+                replacement_string=""
+            ),
+        )
+
+
         self.vencimento_conta = ft.ElevatedButton(text="Vencimento",on_click=lambda _: self.page.open(date),color="#F12626")
         visualizer = ft.TextField(disabled=True,width=115,
                                   label_style=ft.TextStyle(color=ft.Colors.BLACK,),
