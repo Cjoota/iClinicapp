@@ -243,7 +243,7 @@ class Documentos:
             self.page.update()
         
         def abrirdoc(self, idx) -> None:
-            requesite = f"{idx[0]} {str(idx[1]).replace(" ", "-")} {idx[2]} {idx[3]} {str(idx[4]).replace(":","-")}.xlsx".replace("/", "-")
+            requesite = f"{idx[0]} {str(idx[1]).replace(" ", "-")} {str(idx[2]).replace(" ", "-")} {idx[3]} {str(idx[4]).replace(":","-")}.xlsx".replace("/", "-")
             print(requesite)
             try:
                 documentosdir = Path("documentos_gerados")
