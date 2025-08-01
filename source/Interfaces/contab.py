@@ -24,6 +24,23 @@ class ContabilidadePage:
         self.dados = vercontas()
         self.page.on_resized = self.on_resize
     
+    def formatar_valor(self, e: ft.ControlEvent):
+        valor_bruto = ''.join(filter(str.isdigit, e.control.value))
+
+        if valor_bruto == "":
+            e.control.value = "0.00"
+        else:
+            if len(valor_bruto) > 8:
+                valor_bruto = valor_bruto[-8:]
+
+            valor_float = int(valor_bruto) / 100
+            valor_formatado = f"{valor_float:.2f}"  
+            if e.control.value != valor_formatado:
+                e.control.value = valor_formatado
+                e.control.cursor_position = len(valor_formatado)
+
+        e.control.update()
+
     def formatar_valor_caixa(self, e: ft.ControlEvent):
         valor_bruto = ''.join(filter(str.isdigit, self.valores.value))
 
@@ -584,16 +601,14 @@ class ContabilidadePage:
         date = ft.DatePicker(current_date=datetime.datetime.now(),on_change=lambda e: date_picker(e))
         self.descricao_conta = ft.TextField(label=ft.Text("Nome da conta"),border_radius=10,width=180,border_color=ft.Colors.RED)
         self.valor_conta = ft.TextField(
-    label=ft.Text("Valor"),
-    border_radius=10,
-    width=180,
-    border_color=ft.Colors.RED,
-    input_filter=ft.InputFilter(
-        regex_string=r"^\d*$", 
-        replacement_string=""
-    ),
-    keyboard_type=ft.KeyboardType.NUMBER
-)
+            label=ft.Text("Valor"),
+            border_radius=10,
+            width=180,
+            border_color=ft.Colors.RED,
+            keyboard_type=ft.KeyboardType.NUMBER,
+            input_filter=ft.InputFilter(regex_string=r'[0-9]*', replacement_string=""),
+            on_change=self.formatar_valor
+            )
         self.vencimento_conta = ft.ElevatedButton(text="Vencimento",on_click=lambda _: self.page.open(date),color="#F12626")
         visualizer = ft.TextField(disabled=True,width=115,
                                   label_style=ft.TextStyle(color=ft.Colors.BLACK,),
