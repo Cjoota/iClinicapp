@@ -1,19 +1,20 @@
+from datetime import datetime
 import asyncio
 import hashlib
 import secrets
 import re
-from database.datacreator import keys
 import psycopg2
 import datetime
 import logging
 from database.datacreator import connectlocal,commitlocal
 from database.databasecache import ContabilidadeDB
-from database.models import CaixaDiario, CaixaMensal,User
+from database.models import CaixaDiario, CaixaMensal,User,Agendamentos,Empresa
 from sqlalchemy.sql import insert, select
 from pathlib import Path
 import json
 import subprocess
 import platform
+from database.models import Empresa
 
 # Habilitando o sistema de log de erros.
 logging.basicConfig(level=logging.INFO)
@@ -55,8 +56,7 @@ class Auth:
             return secrets.compare_digest(senhasalva, senhacalculada)
         
         return False
-    
-    
+        
     def cadastro(self,user,passw,):
         """ 
             Cadastro
@@ -76,6 +76,29 @@ class Auth:
             return "Usuário Invalido.", 150
         except Exception as e:
             return f"Erro ao cadastrar: {str(e)}", 150
+
+    
+def excluir_agendamentos_vencidos():
+    try:
+        from datetime import datetime
+        with db.session() as session:
+            qtd = session.query(Agendamentos).filter(
+                Agendamentos.data_exame < datetime.now().date()
+            ).delete()
+            session.commit()
+            logger.info(f"{qtd} agendamentos vencidos removidos")
+            
+    except Exception as e:
+        logger.info(f"Erro ao limpar agendamentos: {str(e)}")
+        session.rollback()
+        return 0
+
+def listar_empresas_com_agendamento():
+    with db.session() as session:
+        slc = select(Agendamentos)
+        result = session.execute(slc).scalars().all()
+        return result
+
 
 def vercontas() :
     """ Seleciona no Banco de dados as informações sobre contas registradas e as retorna. """
@@ -123,6 +146,26 @@ def puxardados(razao):
         empresa.append(i[3])
     return empresa
 
+                 
+
+def atualizarempresa(cnpj, coluna, valor):
+        if coluna:
+            with db.session() as session:
+                empresa = session.query(Empresa).filter_by(cnpj=cnpj).first()
+                if empresa:
+                    match coluna:
+                        case "razao":
+                            empresa.razao = valor
+                        case "contato":
+                            empresa.contato = valor
+                        case "endereco":
+                            empresa.endereco = valor
+                        case "municipio":
+                            empresa.municipio = valor
+                    session.commit()
+                else:
+                    raise ValueError("Empresa não encontrada com esse CNPJ.")
+
 def converter_xlsx_para_pdf(caminho_xlsx, caminho_pdf):
     """ Converte arquivos ( .xlsx ) para ( .pdf )."""
     if platform.system() == "Windows":
@@ -146,10 +189,14 @@ def converter_xlsx_para_pdf(caminho_xlsx, caminho_pdf):
 
 def get_cargo(user):
     """ Seleciona o cargo do usuario inserido, no banco de dados. """
-    with db.session() as session:
-        slec = select(User).where(User.usuario == user)
-        result = session.execute(slec).scalar_one_or_none()
-        return result.cargo
+    try:
+        with db.session() as session:
+            slec = select(User).where(User.usuario == user)
+            result = session.execute(slec).scalar_one_or_none()
+            return result.cargo
+    except:
+        """  RETIRAR NA MASTER   """
+        return "Função não encontrada"
 def set_cargo(user:str,cargo:str):
     """ Altera o Cargo do usuario inserido, no banco de dados. """
     with db.session() as session:
@@ -170,11 +217,15 @@ def set_apelido(user:str, apelido:str):
             session.close()
 def get_apelido(user:str):
     """ Seleciona o apelido do usuario registrado no bando de dados. """
-    with db.session() as session:
-        slc = session.query(User).filter_by(usuario=user).first()
-        result = slc.apelido
-        session.close()
-        return result
+    try:
+        with db.session() as session:
+            slc = session.query(User).filter_by(usuario=user).first()
+            result = slc.apelido 
+            session.close()
+            return result
+    except:
+        """  RETIRAR NA MASTER   """
+        return "Usuario"
 class Verificacoes:
     """VERIFICAÇÕES DE ESTADO \n -
     Verifica o estado do banco de dados e dos uploads do caixa para nuvem.
@@ -216,6 +267,7 @@ class Verificacoes:
                 json.dump(dados_iniciais, f, ensure_ascii=False, indent=4)
         del dados_iniciais
 
+    
     def close(self):
         dados = {
             "verificado_hoje": False,
@@ -266,13 +318,15 @@ class Verificacoes:
     
     async def uptable(self):
         if not self.get_config("v"):
-            hoje = datetime.datetime.now().strftime("%d")
-            if hoje == "01":
-                if not self.get_config("e"):
-                    date = datetime.datetime.now()
+            from datetime import datetime,date
+            mes = datetime.now().date().month
+            hoje = datetime.now().date()
+            if hoje == date(year=2025,month=mes,day=1):
+                if not self.get_config("m"):
+                    date = datetime.now()
                     valores = await self.db._executar_upmensal(self.db.async_session())
                     async with self.db.async_session() as session:
-                        _isrt_ = insert(CaixaMensal).values(datarefence=datetime.datetime.date(date),descricao='Fecha de mensal automatico',valor=valores)
+                        _isrt_ = insert(CaixaMensal).values(datarefence=datetime.date(date),descricao='Fecha de mensal automatico',valor=valores)
                         await session.execute(_isrt_)
                         await session.commit() 
                         await session.close()
@@ -283,6 +337,7 @@ class Verificacoes:
                 self.set_config("v",True)
                 logging.info("O Mês não terminou!")
                 del hoje
+                del mes
             
 
 
@@ -317,6 +372,8 @@ class Verificacoes:
                 logging.info(f"São 18h! Executando upload para DB... {agora}")
                 await self.updiario()
                 self.set_config("d",True)
+                self.close()
+                break
 
             
             await asyncio.sleep(30)

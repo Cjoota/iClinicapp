@@ -65,3 +65,14 @@ class Caixa(Base):
     descricao = Column(String(50), nullable=False)
     type = Column(String(10), default='Entrada')
     registrado_em = Column(TIMESTAMP, default=func.now())
+
+class Agendamentos(Base):
+    __tablename__ = 'agendamentos'
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    nome_empresa = Column(String(255), nullable=False)   
+    data_exame = Column(Date, nullable=False)    
+    tipo_exame = Column(String(100), nullable=False) 
+    criado_em = Column(TIMESTAMP, default=func.now())
+    colaborador = Column(String(255), nullable=False)
+    

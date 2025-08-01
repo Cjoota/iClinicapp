@@ -7,9 +7,11 @@ from Interfaces.telaresize import Responsive
 from Interfaces.main_interface import Main_interface
 from Interfaces.sidebar import Sidebar
 from datetime import date
+from controleexames import ControleExames
 class Gerardoc:
         def __init__(self,page:ft.Page) -> None:
             self.page = page
+            self.controle = ControleExames()
             self.responsive = Responsive(self.page)
             self.sidebar = Sidebar(self.page)
             self.main = Main_interface(self.page)
@@ -24,7 +26,29 @@ class Gerardoc:
             self.risk_ergonomico = []
             self.page.on_resized = self.on_resize
 
-        def on_resize(self,e):
+        def limitar_cpf(self, e):
+            cpf = ''.join(filter(str.isdigit, self.cpfclb.value))[:11]
+            self.cpfclb.value = cpf
+            self.cpfclb.update()
+
+        def formatar_cpf(self, e):
+            cpf = ''.join(filter(str.isdigit, self.cpfclb.value))[:11]
+            if len(cpf) == 11:
+                self.cpfclb.value = f"{cpf[:3]}.{cpf[3:6]}.{cpf[6:9]}-{cpf[9:]}"
+                self.cpfclb.update()
+
+        def limitar_data(self, e):
+            data = ''.join(filter(str.isdigit, self.datanascimentoclb.value))[:8]
+            self.datanascimentoclb.value = data
+            self.datanascimentoclb.update()
+
+        def formatar_data(self, e):
+            data = ''.join(filter(str.isdigit, self.datanascimentoclb.value))[:8]
+            if len(data) == 8:
+                self.datanascimentoclb.value = f"{data[:2]}/{data[2:4]}/{data[4:]}"
+                self.datanascimentoclb.update()
+                
+        def on_resize(self,e):            
             if self.page.route == "/gerardoc":
                 self.responsive = Responsive(self.page)
                 self.responsive.atualizar_widgets(self.build_view())
@@ -36,11 +60,11 @@ class Gerardoc:
                 self.listviewexam = ft.ListView(expand=True)
                 self.checkbox = ft.Checkbox(label=ft.Text("Gerar em todos os modelos"),on_change=self.selecionar_todos,
                                             label_position=ft.LabelPosition.LEFT,check_color="#26BD00",active_color="#D3FACA")
-                self.drop = ft.Dropdown(label="Empresas",autofocus=True,options=[],width=200)
+                self.drop = ft.Dropdown(label="Empresas",width=200,max_menu_height=100,menu_height=300,enable_filter=True,editable=True)
                 self.date = ft.TextField(label="Data do exame",border_radius=16,width=140)
                 self.nomeclb = ft.TextField(label="Nome Completo",border_radius=16,width=250)
-                self.cpfclb = ft.TextField(label="CPF",border_radius=16,width=250)
-                self.datanascimentoclb = ft.TextField(label="Data de nascimento",border_radius=16,width=250)
+                self.cpfclb = ft.TextField(label="CPF",border_radius=16,width=250, on_change=self.limitar_cpf, on_blur=self.formatar_cpf)
+                self.datanascimentoclb = ft.TextField(label="Data de nascimento",border_radius=16,width=250, on_change=self.limitar_data, on_blur=self.formatar_data)
                 self.funcaoclb = ft.TextField(label="Função",border_radius=16,width=250)
                 self.setorclb = ft.TextField(label="Setor",border_radius=16,width=250)
                 self.clbinterface =ft.Column([
@@ -276,11 +300,7 @@ class Gerardoc:
                 "TGO (Aspartato)",
                 "TGP (Alanina)",
                 "CREATININA",
-                "URÉIA",
-                "TOXICOLOGICO",
-                "ACIDO METILETILCETONA",
-                "ACIDO HIPURICO"
-
+                "URÉIA"
             ]
             for modelo in self.modelos_excel:
                 self.listview.controls.append(
@@ -363,9 +383,9 @@ class Gerardoc:
                 for empresa in self.empresas_drop:
                     self.drop.options.append( #type: ignore
                         ft.DropdownOption(
-                            text=f"{empresa[0]}",
+                            text=f"{empresa[0]}", style=ft.ButtonStyle(text_style=ft.TextStyle(size=12))
                         )
-                    )    
+                    ) 
             else:
                 self.drop.options.append( #type: ignore
                     ft.DropdownOption(
@@ -400,6 +420,7 @@ class Gerardoc:
                             self.risk_biologico.remove(e.control.label)
                         case "e":
                             self.risk_ergonomico.remove(e.control.label)
+            self.drop.update()
             def criar_risco(risco,tipo):
                 rsk = ft.Checkbox(label=risco,data=tipo,on_change=catch_risk)
                 return rsk
@@ -523,7 +544,7 @@ class Gerardoc:
                 self.dataselect = None
                 self.date.update()
 
-        def gerar_documento(self, e):
+        def gerar_documento(self, e):            
             if not self.checkdate.value:
                 self.dataselect = self.date.value
             self.empresas = puxardados(self.drop.value)
@@ -649,6 +670,7 @@ class Gerardoc:
                 self.page.snack_bar = self.modal
                 self.modal.open = True
                 self.clean_risks()
+                self.controle.registrar_exames(self.empresas[0], nome, exames_selecionados, self.dataselect)
                 self.page.add(self.modal)      
                 
         def show_loading(self,page, show=True):
@@ -677,4 +699,3 @@ class Gerardoc:
                     page.update()
                 else:
                     pass    
-        

@@ -8,6 +8,10 @@ class Login:
 - Gerencia o login e gera a pagina de login.\n
 
     """
+    def on_enter(self, e: ft.KeyboardEvent):
+        if e.key == "Enter":
+            self.on_login_click(e)
+    
     def __init__(self, page: ft.Page):
         self.page = page 
         self.GlobalColor = '#26BD00'
@@ -33,6 +37,8 @@ class Login:
         self.cadastroButton = ft.ElevatedButton("Cadastrar", color=ft.Colors.WHITE,
                             width=340, height=35,
                             bgcolor=ft.Colors.with_opacity(0.7, '#26BD00'), on_click=lambda e: self.page.go("/cadastro"))
+        self.page.on_keyboard_event = self.on_enter
+
         return ft.Column(
             [
                 self.title,
@@ -94,8 +100,7 @@ class Login:
         if not usuario or not senha:
             self.GlobalModal.content = ft.Text("Preencha todos os campos")
             self.GlobalModal.bgcolor = ft.Colors.RED
-            self.GlobalModal.open = True
-            self.GlobalModal.update()
+            self.page.open(self.GlobalModal)
         else:
             if auth.login(usuario=usuario, password=senha):
                 self.show_loading(True)
@@ -134,7 +139,6 @@ class Login:
             self.user.value = ""
             self.passw.value = ""
             self.page.update()
-
 
 
     

@@ -1,3 +1,4 @@
+from funcoes import excluir_agendamentos_vencidos
 import flet as ft
 from api import iniciar_servidor_fastapi
 from database.databasecache import inicializar_db,contabilidade_db
@@ -36,7 +37,7 @@ class Main():
 				self.page.client_storage.clear()
 			logger.info("Sessão Limpa")
 		except:
-			logger.info("Usuário desconctado antes de fazer o login!")
+			logger.info("Usuário desconectado antes de fazer o login!")
 	async def init_cache(self):
 		""" Inicia o cache inteligente e preenche com as informações do DB """
 		await contabilidade_db.buscar_dados(force_update=True)
@@ -50,14 +51,13 @@ class Main():
 			self.page.run_task(self.verfy.uptable)
 			self.page.run_task(self.verfy.verify)
 			self.page.run_task(self.init_cache)
+			excluir_agendamentos_vencidos()
 			initialize = True
 			
 @atexit.register
 def limpar_cache():
 	""" Limpa o cache do banco de dados e o que o sistema gerou. """
 	print("Limpando Cache")
-	verify = Verificacoes()
-	verify.close()
 	import shutil
 	from pathlib import Path
 	for d in Path(".").rglob("__pycache__"):

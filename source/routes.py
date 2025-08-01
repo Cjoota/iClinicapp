@@ -1,7 +1,8 @@
 import flet as ft
 from Interfaces.Login_interface import Login
 from Interfaces.cadastro import Cadastro
-
+import asyncio
+from Interfaces.agendamento import Agendamento
 class Router:
     """SISTEMA DE ROTAS E ENDEREÇAMENTO DE ABAS.\n-
     - route_change:\n 
@@ -28,9 +29,13 @@ class Router:
             "/empresas": self.require_login(self.empresas_view),
             "/gerardoc": self.require_login(self.gerardoc_view),
             "/cadastro": self.cadastro_view,
+            "/agendamento": self.require_login(self.agendamentos_view),
         }
         self.page.on_route_change = self.route_change
+        self.page.on_view_pop = self.view_pop
         self.page.on_connect = self.page.go("/")
+        self.loading_view = None  
+        self.is_loading = False  
 
     def require_login(self, view_func):
         """ Verifica se o usuario está logado. """
@@ -42,16 +47,17 @@ class Router:
         return wrapper
     
     def route_change(self, route):
+        rota_atual = self.page.route
+        view_atual = self.page.views
         """ Função de troca de paginas, recebe o chamado do capturador de evento ao trocar de pagina. """
-        self.page.views.clear()
-        rota = route.route
-        rotas_protegidas = ["/home", "/contabilidade", "/documentos", "/empresas", "/gerardoc"]
-        if rota in rotas_protegidas and not self.page.session.get("logado"):
-            self.page.go("/login")
-            return
-
+        async def executor():
+            await self.loading_simples(True)
+        if not rota_atual in view_atual:
+            self.page.views.clear()
+        self.page.run_task(executor)
         if route.route in self.routes:
             self.routes[route.route]()
+        
         else:
             self.page.views.append(
                 ft.View(
@@ -61,9 +67,15 @@ class Router:
                         ft.Text("404 - Página não encontrada"),
                     ]
                 )
-            )
+            )        
         self.page.update()
-    
+  
+    def view_pop(self,view):
+        # Captura o evento de voltar
+        self.page.views.pop()
+        top_view = self.page.views[-1]
+        self.page.go(top_view.route)  # Atualiza a rota
+
     def main_interface_view(self):
         from Interfaces.main_interface import Main_interface
         main_view = Main_interface(self.page)
@@ -88,6 +100,18 @@ class Router:
             )
         )
     
+
+    def agendamentos_view(self):
+        agendament_view = Agendamento(self.page)
+        self.page.views.append(
+            ft.View(
+                "/agendamento",
+                [
+                    agendament_view.build_view()
+                ]
+            )
+        )
+
     def contabilidade_view(self):
         from Interfaces.contab import ContabilidadePage
         contab_view = ContabilidadePage(self.page)
@@ -133,7 +157,42 @@ class Router:
                 ]
             )
         )
-    
+        
+    async def loading_simples(self, duration=1):
+        async def _esconder_loading():
+            try:
+                if self.loading_view and self.loading_view in self.page.views:
+                    self.page.views.remove(self.loading_view)
+                    self.page.update()
+            except Exception as e:
+                print(f"Erro ao remover loading: {e}")
+            finally:
+                self.loading_view = None
+                self.is_loading = False
+        if self.is_loading:
+            return
+        try:
+            self.is_loading = True
+            
+            bar_ref = ft.Ref[ft.ProgressRing]()
+            ring = ft.Container(
+                content=ft.ProgressRing(color="#22ff38", ref=bar_ref),
+                expand=True,
+                alignment=ft.alignment.center
+            )
+            self.loading_view = ft.View(controls=[ring])
+
+            self.page.views.append(self.loading_view)
+            self.page.update()
+
+            await asyncio.sleep(duration)
+            
+        except Exception as e:
+            print(f"Erro no loading: {e}")
+            
+        finally:
+            await _esconder_loading()
+        
     def gerardoc_view(self):
         from Interfaces.gerarDoc import Gerardoc
         gerardoc_view = Gerardoc(self.page)

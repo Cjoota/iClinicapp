@@ -15,6 +15,7 @@ class ContabilidadePage:
         self.responsive = Responsive(self.page)
         self.sidebar = Sidebar(self.page)
         self.db = ContabilidadeDB()
+        self.dados_tabela = []
         self.main_interface_instance = Main_interface(page)
         self.card_dados = contabilidade_db.cache.get("contabilidade")
         self.contas_tabela = self.page.run_task(self.get_contas).result()
@@ -22,6 +23,39 @@ class ContabilidadePage:
         self.data_conta = ""
         self.dados = vercontas()
         self.page.on_resized = self.on_resize
+    
+    def formatar_valor_caixa(self, e: ft.ControlEvent):
+        valor_bruto = ''.join(filter(str.isdigit, self.valores.value))
+
+        if valor_bruto == "":
+            self.valores.value = "0.00"
+        else:
+            if len(valor_bruto) > 8:
+                valor_bruto = valor_bruto[-8:]  # limite de 999999.99
+
+            valor_float = int(valor_bruto) / 100
+            valor_formatado = f"{valor_float:.2f}"  # ponto como separador decimal
+            self.valores.value = valor_formatado
+
+        self.valores.update()
+
+
+
+    def formatar_valor_retiro(self, e: ft.ControlEvent):
+        valor_bruto = ''.join(filter(str.isdigit, self.valoresRetiro.value))
+
+        if valor_bruto == "":
+            self.valoresRetiro.value = "0.00"
+        else:
+            if len(valor_bruto) > 8:
+                valor_bruto = valor_bruto[-8:]
+
+            valor_float = int(valor_bruto) / 100
+            valor_formatado = f"{valor_float:.2f}"
+            self.valoresRetiro.value = valor_formatado
+
+        self.valoresRetiro.update()
+
     
     def on_resize(self,e):
         if self.page.route == "/contabilidade":
@@ -69,10 +103,10 @@ class ContabilidadePage:
                 snack.open = True
                 self.page.open(snack)
         async def registrar_pagamento(e):
-            entrada = str(self.valores.value).replace(",",".")
+            entrada = str(self.valores.value).replace(",",".",)
             entrada = Decimal(entrada)
             forma_pagamento = self.selected_chip.label.value if self.selected_chip else "Nenhuma"
-            servico = f"{self.servico.value}, Pago com: {forma_pagamento} "
+            servico = f"{self.servico.value},Pago com: {forma_pagamento} "
             if entrada and servico:
                 async with self.db.async_session() as session:
                     __insert__ = Caixa(valor=entrada,descricao=servico)
@@ -93,18 +127,37 @@ class ContabilidadePage:
                 self.clicked.selected = True
                 self.selected_chip = self.clicked
                 self.page.update()
-            self.valores = ft.TextField(label="Valor",prefix_text="R$",width=200, height=35, border_radius=10,
-                                input_filter=ft.InputFilter(regex_string=r'[0-9,.]*', replacement_string=""),
-                                keyboard_type=ft.KeyboardType.NUMBER,bgcolor=ft.Colors.WHITE,prefix_icon=ft.Icons.MONETIZATION_ON)
+            self.valores = ft.TextField(
+    label="Valor",
+    prefix_text="R$ ",
+    width=200,
+    height=35,
+    border_radius=10,
+    input_filter=ft.InputFilter(regex_string=r'[0-9]*', replacement_string=""),
+    keyboard_type=ft.KeyboardType.NUMBER,
+    bgcolor=ft.Colors.WHITE,
+    prefix_icon=ft.Icons.MONETIZATION_ON,
+    on_change=self.formatar_valor_caixa
+)
+
             self.servico = ft.TextField(label="Serviço",width=200, height=35, border_radius=10
                                 ,bgcolor=ft.Colors.WHITE,prefix_icon=ft.Icons.TEXT_SNIPPET)
             self.chipPix = ft.Chip(label=ft.Text("Pix"),on_select=selected)
             self.chipMoney = ft.Chip(label=ft.Text("Dinheiro"),on_select=selected)
             self.chipPixRetiro = ft.Chip(label=ft.Text("Pix"),on_select=selected)
             self.chipMoneyRetiro = ft.Chip(label=ft.Text("Dinheiro"),on_select=selected)
-            self.valoresRetiro = ft.TextField(label="Valor",prefix_text="R$",width=200, height=35, border_radius=10,
-                                input_filter=ft.InputFilter(regex_string=r'[0-9,.]*', replacement_string=""),
-                                keyboard_type=ft.KeyboardType.NUMBER,bgcolor=ft.Colors.WHITE,prefix_icon=ft.Icons.MONETIZATION_ON)
+            self.valoresRetiro = ft.TextField(
+    label="Valor",
+    prefix_text="R$ ",
+    width=200,
+    height=35,
+    border_radius=10,
+    input_filter=ft.InputFilter(regex_string=r'[0-9]*', replacement_string=""),
+    keyboard_type=ft.KeyboardType.NUMBER,
+    bgcolor=ft.Colors.WHITE,
+    prefix_icon=ft.Icons.MONETIZATION_ON,
+    on_change=self.formatar_valor_retiro
+)
             self.motivo = ft.TextField(label="Motivo e Quem",width=200, height=35, border_radius=10
                                 ,bgcolor=ft.Colors.WHITE,prefix_icon=ft.Icons.TEXT_SNIPPET)
             self.cardcontainer = ft.Container(
@@ -190,18 +243,37 @@ class ContabilidadePage:
                 self.clicked.selected = True
                 self.selected_chip = self.clicked
                 self.page.update()
-            self.valores = ft.TextField(label="Valor",prefix_text="R$",width=170, height=42, border_radius=10,
-                                input_filter=ft.InputFilter(regex_string=r'[0-9,.]*', replacement_string=""),
-                                keyboard_type=ft.KeyboardType.NUMBER,bgcolor=ft.Colors.WHITE,prefix_icon=ft.Icons.MONETIZATION_ON)
+            self.valores = ft.TextField(
+    label="Valor",
+    prefix_text="R$ ",
+    width=200,
+    height=35,
+    border_radius=10,
+    input_filter=ft.InputFilter(regex_string=r'[0-9]*', replacement_string=""),
+    keyboard_type=ft.KeyboardType.NUMBER,
+    bgcolor=ft.Colors.WHITE,
+    prefix_icon=ft.Icons.MONETIZATION_ON,
+    on_change=self.formatar_valor_caixa
+)
+
             self.servico = ft.TextField(label="Serviço",width=170, height=42, border_radius=10
                                 ,bgcolor=ft.Colors.WHITE,prefix_icon=ft.Icons.TEXT_SNIPPET)
             self.chipPix = ft.Chip(label=ft.Text("Pix"),on_select=selected)
             self.chipMoney = ft.Chip(label=ft.Text("Dinheiro"),on_select=selected)
             self.chipPixRetiro = ft.Chip(label=ft.Text("Pix"),on_select=selected)
             self.chipMoneyRetiro = ft.Chip(label=ft.Text("Dinheiro"),on_select=selected)
-            self.valoresRetiro = ft.TextField(label="Valor",prefix_text="R$",width=170, height=42, border_radius=10,
-                                input_filter=ft.InputFilter(regex_string=r'[0-9,.]*', replacement_string=""),
-                                keyboard_type=ft.KeyboardType.NUMBER,bgcolor=ft.Colors.WHITE,prefix_icon=ft.Icons.MONETIZATION_ON)
+            self.valoresRetiro = ft.TextField(
+    label="Valor",
+    prefix_text="R$ ",
+    width=200,
+    height=35,
+    border_radius=10,
+    input_filter=ft.InputFilter(regex_string=r'[0-9]*', replacement_string=""),
+    keyboard_type=ft.KeyboardType.NUMBER,
+    bgcolor=ft.Colors.WHITE,
+    prefix_icon=ft.Icons.MONETIZATION_ON,
+    on_change=self.formatar_valor_retiro
+)
             self.motivo = ft.TextField(label="Motivo",width=170, height=42, border_radius=10
                                 ,bgcolor=ft.Colors.WHITE,prefix_icon=ft.Icons.TEXT_SNIPPET)
             self.linhas = [
@@ -321,18 +393,37 @@ class ContabilidadePage:
                 self.clicked.selected = True
                 self.selected_chip = self.clicked
                 self.page.update()
-            self.valores = ft.TextField(label="Valor",prefix_text="R$",width=170, height=42, border_radius=10,
-                                input_filter=ft.InputFilter(regex_string=r'[0-9,.]*', replacement_string=""),
-                                keyboard_type=ft.KeyboardType.NUMBER,bgcolor=ft.Colors.WHITE,prefix_icon=ft.Icons.MONETIZATION_ON)
+            self.valores = ft.TextField(
+    label="Valor",
+    prefix_text="R$ ",
+    width=200,
+    height=35,
+    border_radius=10,
+    input_filter=ft.InputFilter(regex_string=r'[0-9]*', replacement_string=""),
+    keyboard_type=ft.KeyboardType.NUMBER,
+    bgcolor=ft.Colors.WHITE,
+    prefix_icon=ft.Icons.MONETIZATION_ON,
+    on_change=self.formatar_valor_caixa
+)
+
             self.servico = ft.TextField(label="Serviço",width=170, height=42, border_radius=10
                                 ,bgcolor=ft.Colors.WHITE,prefix_icon=ft.Icons.TEXT_SNIPPET)
             self.chipPix = ft.Chip(label=ft.Text("Pix"),on_select=selected)
             self.chipMoney = ft.Chip(label=ft.Text("Dinheiro"),on_select=selected)
             self.chipPixRetiro = ft.Chip(label=ft.Text("Pix"),on_select=selected)
             self.chipMoneyRetiro = ft.Chip(label=ft.Text("Dinheiro"),on_select=selected)
-            self.valoresRetiro = ft.TextField(label="Valor",prefix_text="R$",width=170, height=42, border_radius=10,
-                                input_filter=ft.InputFilter(regex_string=r'[0-9,.]*', replacement_string=""),
-                                keyboard_type=ft.KeyboardType.NUMBER,bgcolor=ft.Colors.WHITE,prefix_icon=ft.Icons.MONETIZATION_ON)
+            self.valoresRetiro = ft.TextField(
+    label="Valor",
+    prefix_text="R$ ",
+    width=200,
+    height=35,
+    border_radius=10,
+    input_filter=ft.InputFilter(regex_string=r'[0-9]*', replacement_string=""),
+    keyboard_type=ft.KeyboardType.NUMBER,
+    bgcolor=ft.Colors.WHITE,
+    prefix_icon=ft.Icons.MONETIZATION_ON,
+    on_change=self.formatar_valor_retiro
+)
             self.motivo = ft.TextField(label="Motivo",width=170, height=42, border_radius=10
                                 ,bgcolor=ft.Colors.WHITE,prefix_icon=ft.Icons.TEXT_SNIPPET)
             self.linhas = [

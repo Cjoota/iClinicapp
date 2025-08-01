@@ -6,6 +6,7 @@ from Interfaces.main_interface import Main_interface
 from Interfaces.sidebar import Sidebar
 from Interfaces.telaresize import Responsive
 from funcoes import converter_xlsx_para_pdf
+from datetime import datetime
 class Documentos:
         def __init__(self,page:ft.Page) -> None:
             page.clean()
@@ -39,23 +40,23 @@ class Documentos:
             ])
             
         def gerar_linhas(self, dataatt):
-            return [
-                ft.DataRow(
-                    cells=
-                    [
+            linhas = []
+            for i,exame in enumerate(dataatt):
+                cells = [
                         ft.DataCell(ft.Container(content=ft.Text(exame[0]), alignment=ft.alignment.center)),
                         ft.DataCell(ft.Container(content=ft.Text(exame[1]), alignment=ft.alignment.center)),
                         ft.DataCell(ft.Container(content=ft.Text(exame[2]), alignment=ft.alignment.center)),
                         ft.DataCell(ft.Container(content=ft.Text(exame[3]), alignment=ft.alignment.center)),
                         ft.DataCell(ft.Row(
                             [
-                                ft.IconButton(icon=ft.Icons.OPEN_IN_BROWSER, icon_color=ft.Colors.BLACK, bgcolor=ft.Colors.GREEN_100,tooltip=ft.Tooltip("Abrir exame"),on_click=lambda e,idx=i: self.abrirdoc(idx)),
+                                ft.IconButton(icon=ft.Icons.OPEN_IN_BROWSER, icon_color=ft.Colors.BLACK, bgcolor=ft.Colors.GREEN_100,tooltip=ft.Tooltip("Abrir exame"),on_click=lambda e,idx=exame: self.abrirdoc(idx)),
                                 ft.IconButton(icon=ft.Icons.DELETE, icon_color=ft.Colors.BLACK, bgcolor=ft.Colors.RED_100,tooltip=ft.Tooltip("Excluir exame"),on_click=lambda e,idx=i: self.delete(idx))
                             ],alignment=ft.MainAxisAlignment.CENTER
                         )),
-                    ]
-                ) for i, exame in enumerate(dataatt)
-            ]
+                ]
+                linhas.append(ft.DataRow(cells=cells))
+            return linhas
+            
     
         def on_resize(self,e):
             if self.page.route == "/documentos":
@@ -173,6 +174,13 @@ class Documentos:
                 )
                  
         def documentosgerados(self)-> list:
+            def ordenar(dados):
+                def extrair_datetime(lista):
+                    data_str = lista[3]  # índice 3 = data
+                    hora_str = lista[4]  # índice 4 = hora
+                    datetime_str = f"{data_str} {hora_str}"
+                    return datetime.strptime(datetime_str, '%d/%m/%Y %H:%M')
+                return sorted(dados, key=extrair_datetime,reverse=True)
             documents = []
             documentosdir = Path(r"documentos_gerados")
             if not documentosdir.exists():
@@ -181,7 +189,9 @@ class Documentos:
             for doc in documentosdir.glob("*.xlsx"):
                 exame,empresa,colab,data,hora = doc.name.replace(".xlsx","").split()
                 documents.append([exame,empresa.replace("-"," "),colab.replace("-"," "),data.replace("-","/"),hora.replace("-",":")])
-            return documents
+            ordenados = ordenar(documents)
+            
+            return ordenados
         
         def atualizar_tabela(self,e):
             termo_busca = str(self.search_exam.value).upper()
@@ -232,29 +242,24 @@ class Documentos:
             self.page.update()
         
         def abrirdoc(self, idx) -> None:
+            requesite = f"{idx[0]} {str(idx[1]).replace(" ", "-")} {idx[2]} {idx[3]} {str(idx[4]).replace(":","-")}.xlsx".replace("/", "-")
+            print(requesite)
             try:
                 documentosdir = Path("documentos_gerados")
                 documento = documentosdir.glob("*.xlsx")
-                for i, doc in enumerate(documento):
-                    if idx == i:
-                        os.makedirs("pdf_temp", exist_ok=True)
+                for doc in documento:
+                    if requesite in doc.name:
+                        print(doc.name, "passei")
                         pdf_path = Path("pdf_temp") / doc.name.replace(".xlsx", ".pdf")
                         if not pdf_path.exists():
                             self.loading_(True)
-                            converter_xlsx_para_pdf(doc.absolute(), "pdf_temp")
-                            # Aguarda o PDF ser realmente salvo (até 5 segundos)
-                            for _ in range(10):
-                                if pdf_path.exists():
-                                    break
-
+                            converter_xlsx_para_pdf(doc.absolute(),"pdf_temp")
+                            for _ in range(0,10):
+                                pass
                             self.loading_(False)
-
+                            self.page.launch_url(f"http://192.168.3.59:8001/pdf/{pdf_path.name}")
                         if pdf_path.exists():
                             self.page.launch_url(f"http://192.168.3.59:8001/pdf/{pdf_path.name}")
-                        else:
-                            self.main.barra_aviso("PDF não foi gerado a tempo.", ft.Colors.RED)
-                        break
-
             except Exception as e:
                 self.main.barra_aviso(f"Erro ao gerar visualização: {str(e)}", ft.Colors.RED)
                 print("Erro na função",str(e))

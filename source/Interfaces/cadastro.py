@@ -8,7 +8,10 @@ class Cadastro:
     def __init__(self,page:ft.Page):
         self.page = page 
         self.GlobalColor = '#26BD00'
-
+    
+    def on_enter(self, e: ft.KeyboardEvent):
+        if e.key == "Enter":
+            self.cadastrar(e)
 
     def build_view(self):
         self.title = ft.Text("iClínica", size=50, weight=ft.FontWeight.BOLD, color=self.GlobalColor)
@@ -34,6 +37,8 @@ class Cadastro:
         self.cadastroButton = ft.ElevatedButton("Cadastrar", color=ft.Colors.WHITE,
                             width=340, height=35,
                             bgcolor=ft.Colors.with_opacity(0.7, '#26BD00'), on_click=self.cadastrar)
+        self.page.on_keyboard_event = self.on_enter
+        
         return ft.Column(
             [
                 self.title,
@@ -49,8 +54,8 @@ class Cadastro:
             height=self.page.height,
             alignment=ft.MainAxisAlignment.CENTER,
             horizontal_alignment=ft.CrossAxisAlignment.CENTER
-        )
-    
+                 )
+          
     def barra_aviso(self,mensagem:str ,cor:str, text_color=ft.Colors.WHITE, icone=ft.Icon(ft.Icons.WARNING,color=ft.Colors.YELLOW_900 )):
         snack_bar = ft.SnackBar(
             content=ft.Row([icone,ft.Text(mensagem,color=text_color)]),

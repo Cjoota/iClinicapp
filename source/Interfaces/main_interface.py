@@ -14,6 +14,7 @@ class Main_interface:
         self.responsive = Responsive(self.page)
         self.sidebar = Sidebar(self.page)
         self.parar_evento = asyncio.Event()
+        self.relogio = ft.Text("", text_align=ft.TextAlign.CENTER)
         self.gerados = self.get_gerados()
         self.documentospr = self.documentosgerados()
         self.saud = ft.Text(size=self.responsive.font_size(), color=ft.Colors.GREY_800, weight=ft.FontWeight.BOLD, font_family="Inter")
@@ -190,7 +191,7 @@ class Main_interface:
             content=ft.Container(
                 content=ft.Column([
                     ft.Row([
-                        ft.Text(title, color=ft.Colors.BLACK54, weight=ft.FontWeight.BOLD, size=19,text_align=ft.TextAlign.CENTER),
+                        ft.Text(title, color=ft.Colors.BLACK, weight=ft.FontWeight.BOLD, size=19,text_align=ft.TextAlign.CENTER),
                     ], alignment=ft.MainAxisAlignment.CENTER, vertical_alignment=ft.CrossAxisAlignment.CENTER),
                     value
                 ], alignment=ft.MainAxisAlignment.CENTER, horizontal_alignment=ft.CrossAxisAlignment.CENTER),
@@ -217,7 +218,6 @@ class Main_interface:
                 await asyncio.sleep(1)
             
     def build_view(self):
-        self.relogio = ft.Text("", text_align=ft.TextAlign.CENTER)
         if self.responsive.is_mobile():
             self.homecontent = ft.Container(
                 content=ft.Column([
