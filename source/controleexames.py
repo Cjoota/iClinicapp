@@ -55,10 +55,10 @@ class ControleExames:
         ws["B2"] = empresa
         empresa_arquivo = f"{empresa}_{datetime.datetime.now().strftime("%m-%Y")}.xlsx"
         saida = Path("relacoes")
-        wb.save(fr"{saida}\{empresa_arquivo}")
+        wb.save(fr"{saida}/{empresa_arquivo}")
 
     def registrar_exames(self, empresa: str, nome: str, exames: list[str], data_exame: str):
-        relacao = Path(rf"relacoes\{empresa}_{datetime.datetime.now().strftime("%m-%Y")}.xlsx")
+        relacao = Path(rf"relacoes/{empresa}_{datetime.datetime.now().strftime("%m-%Y")}.xlsx")
         if not relacao.exists():
             self._criar_planilha(empresa)
             self._salvar_json(empresa,6)
