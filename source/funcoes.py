@@ -372,6 +372,8 @@ class Verificacoes:
                 logging.info(f"São 18h! Executando upload para DB... {agora}")
                 await self.updiario()
                 self.set_config("d",True)
+                self.close()
+                break
 
             
             await asyncio.sleep(30)

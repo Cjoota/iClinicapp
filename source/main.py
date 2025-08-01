@@ -58,8 +58,6 @@ class Main():
 def limpar_cache():
 	""" Limpa o cache do banco de dados e o que o sistema gerou. """
 	print("Limpando Cache")
-	verify = Verificacoes()
-	verify.close()
 	import shutil
 	from pathlib import Path
 	for d in Path(".").rglob("__pycache__"):

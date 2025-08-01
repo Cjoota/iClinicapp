@@ -15,6 +15,7 @@ class ContabilidadePage:
         self.responsive = Responsive(self.page)
         self.sidebar = Sidebar(self.page)
         self.db = ContabilidadeDB()
+        self.dados_tabela = []
         self.main_interface_instance = Main_interface(page)
         self.card_dados = contabilidade_db.cache.get("contabilidade")
         self.contas_tabela = self.page.run_task(self.get_contas).result()
