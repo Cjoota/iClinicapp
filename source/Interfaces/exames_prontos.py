@@ -50,7 +50,7 @@ class Documentos:
                         ft.DataCell(ft.Row(
                             [
                                 ft.IconButton(icon=ft.Icons.OPEN_IN_BROWSER, icon_color=ft.Colors.BLACK, bgcolor=ft.Colors.GREEN_100,tooltip=ft.Tooltip("Abrir exame"),on_click=lambda e,idx=exame: self.abrirdoc(idx)),
-                                ft.IconButton(icon=ft.Icons.DELETE, icon_color=ft.Colors.BLACK, bgcolor=ft.Colors.RED_100,tooltip=ft.Tooltip("Excluir exame"),on_click=lambda e,idx=i: self.delete(idx))
+                                ft.IconButton(icon=ft.Icons.DELETE, icon_color=ft.Colors.BLACK, bgcolor=ft.Colors.RED_100,tooltip=ft.Tooltip("Excluir exame"),on_click=lambda e,idx=exame: self.delete(idx))
                             ],alignment=ft.MainAxisAlignment.CENTER
                         )),
                 ]
@@ -215,10 +215,11 @@ class Documentos:
         
         def delete(self,idx)-> None:
             def excluir(e):
-                documentosdir = Path(r"documentos_gerados")
+                requesite = f"{idx[0]} {str(idx[1]).replace(" ", "-")} {idx[2]} {idx[3]} {str(idx[4]).replace(":","-")}.xlsx".replace("/", "-")
+                documentosdir = Path("documentos_gerados")
                 documento = documentosdir.glob("*.xlsx")
-                for i,doc in enumerate(documento):
-                    if idx == i:
+                for doc in documento:
+                    if requesite in doc.name:
                         doc.unlink()
                 self.documentosprontos = self.documentosgerados()
                 self.tabela_exames.content = self.buildtable(self.gerar_linhas(self.documentosprontos))
