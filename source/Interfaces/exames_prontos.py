@@ -257,9 +257,9 @@ class Documentos:
                             for _ in range(0,10):
                                 pass
                             self.loading_(False)
-                            self.page.launch_url(f"http://192.168.3.72:8001/pdf/{pdf_path.name}")
+                            self.page.launch_url(f"http://192.168.3.59:8001/pdf/{pdf_path.name}")
                         if pdf_path.exists():
-                            self.page.launch_url(f"http://192.168.3.72:8001/pdf/{pdf_path.name}")
+                            self.page.launch_url(f"http://192.168.3.59:8001/pdf/{pdf_path.name}")
             except Exception as e:
                 self.main.barra_aviso(f"Erro ao gerar visualização: {str(e)}", ft.Colors.RED)
                 print("Erro na função",str(e))
