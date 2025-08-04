@@ -606,7 +606,7 @@ class Gerardoc:
                         ws["E9"] = tipo_exame[0]
                         saida = Path(r"documentos_gerados")
                         saida.mkdir(exist_ok=True)
-                        self.nome_arquivo = f"{modelo} {self.empresas[0].replace(' ', '-')} {nome.replace(' ', '-')} {dt.datetime.now().strftime('%d-%m-%Y %H-%M')} .xlsx"
+                        self.nome_arquivo = f"{modelo} {self.empresas[0].replace(' ', '-')} {nome.replace(' ', '-')} {dt.datetime.now().strftime('%d-%m-%Y %H-%M')}.xlsx"
                         wb.save(saida / self.nome_arquivo)
                     elif modelo == "ASO":
                         if not self.risk:
@@ -657,7 +657,7 @@ class Gerardoc:
                         ws["H11"] = tipo_exame[0]
                         saida = Path(r"documentos_gerados")
                         saida.mkdir(exist_ok=True)
-                        self.nome_arquivo = f"{modelo} {self.empresas[0].replace(' ', '-')} {nome.replace(' ', '-')} {dt.datetime.now().strftime('%d-%m-%Y %H-%M')} .xlsx"
+                        self.nome_arquivo = f"{modelo} {self.empresas[0].replace(' ', '-')} {nome.replace(' ', '-')} {dt.datetime.now().strftime('%d-%m-%Y %H-%M')}.xlsx"
                         wb.save(saida / self.nome_arquivo)
                 self.nomeclb.value = None
                 self.cpfclb.value = None
