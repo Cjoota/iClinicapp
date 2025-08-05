@@ -633,29 +633,42 @@ class ContabilidadePage:
         )
         self.page.open(modal)
     
-    def buildtable(self,linhas):
+    def buildtable(self, linhas):
         return ft.Column([
+            # Botão sempre visível, fixo em cima
             ft.Row([
-                ft.DataTable(
-                    column_spacing=10,
-                    heading_row_color="#A1FB8B",
-                    border_radius=10,
-                    expand=True,
-                    columns=[
-                        ft.DataColumn(ft.Text("Conta",weight=ft.FontWeight.BOLD,size=15),heading_row_alignment=ft.MainAxisAlignment.START),
-                        ft.DataColumn(ft.Text("Valor",weight=ft.FontWeight.BOLD,size=15),numeric=True,heading_row_alignment=ft.MainAxisAlignment.CENTER),
-                        ft.DataColumn(ft.Text("Vencimento",weight=ft.FontWeight.BOLD,size=15),heading_row_alignment=ft.MainAxisAlignment.CENTER),
-                        ft.DataColumn(ft.Text("Status",weight=ft.FontWeight.BOLD,size=15),heading_row_alignment=ft.MainAxisAlignment.CENTER),
-                        ft.DataColumn(ft.Text("Ações",weight=ft.FontWeight.BOLD,size=15),heading_row_alignment=ft.MainAxisAlignment.CENTER),
-                    ],
-                    rows=linhas
+                ft.TextButton(
+                    icon=ft.Icons.PAYMENTS,
+                    text="Registrar Conta",
+                    style=ft.ButtonStyle(color=ft.Colors.BLACK),
+                    icon_color=ft.Colors.BLACK45,
+                    on_click=lambda e: self.registrar_conta(e)
                 )
-                ],alignment=ft.MainAxisAlignment.CENTER,vertical_alignment=ft.CrossAxisAlignment.CENTER),
-                ft.Row([
-                    ft.TextButton(icon=ft.Icons.PAYMENTS,text="Registrar Conta",style=ft.ButtonStyle(color=ft.Colors.BLACK),
-                                icon_color=ft.Colors.BLACK45,on_click=lambda e: self.registrar_conta(e))
-                ])
-        ])
+            ], alignment=ft.MainAxisAlignment.START),
+
+            # Tabela com scroll, ocupando toda a largura
+            ft.Row([
+                ft.Container(
+                    content=ft.DataTable(
+                        column_spacing=10,
+                        heading_row_color="#A1FB8B",
+                        border_radius=10,
+                        expand=True,
+                        columns=[
+                            ft.DataColumn(ft.Text("Conta",weight=ft.FontWeight.BOLD,size=15),heading_row_alignment=ft.MainAxisAlignment.START),
+                            ft.DataColumn(ft.Text("Valor",weight=ft.FontWeight.BOLD,size=15),numeric=True,heading_row_alignment=ft.MainAxisAlignment.CENTER),
+                            ft.DataColumn(ft.Text("Vencimento",weight=ft.FontWeight.BOLD,size=15),heading_row_alignment=ft.MainAxisAlignment.CENTER),
+                            ft.DataColumn(ft.Text("Status",weight=ft.FontWeight.BOLD,size=15),heading_row_alignment=ft.MainAxisAlignment.CENTER),
+                            ft.DataColumn(ft.Text("Ações",weight=ft.FontWeight.BOLD,size=15),heading_row_alignment=ft.MainAxisAlignment.CENTER),
+                        ],
+                        rows=linhas
+                    ),
+                    height=300,  # altura fixa para scroll
+                    expand=True,
+                    padding=ft.padding.only(bottom=0),
+                )
+            ], expand=True)
+        ], expand=True)
 
     def gerar_linhas(self, data):
         linhas = []
