@@ -1,32 +1,43 @@
 import flet as ft
 from pathlib import Path
 from collections import defaultdict
+from openpyxl import load_workbook
 from Interfaces.sidebar import Sidebar
 from Interfaces.telaresize import Responsive
 
-def listar_exames_por_empresa():
-    documentosdir = Path("documentos_gerados")
+def listar_exames_por_empresa_controle():
+    relacoes_dir = Path("relacoes")
     exames_por_empresa = defaultdict(list)
 
-    if not documentosdir.exists():
+    if not relacoes_dir.exists():
         return {}
 
-    for doc in documentosdir.glob("*.xlsx"):
-        partes = doc.name.replace(".xlsx", "").split()
-        if len(partes) < 5:
+    for arquivo in relacoes_dir.glob("*.xlsx"):
+        if "modelo" in arquivo.name.lower():
+            continue  # Pula arquivos de modelo
+
+        empresa_nome = arquivo.stem.rsplit("_", 1)[0].replace("-", " ")
+        try:
+            wb = load_workbook(arquivo)
+            ws = wb.active
+            # Supondo que os dados começam na linha 6
+            for row in ws.iter_rows(min_row=6, values_only=True):
+                if not row or len(row) < 11:
+                    continue
+                nome_colaborador = row[1]  # Coluna B
+                exames = row[3]            # Coluna D
+                data_exame = row[10]       # Coluna K
+                if nome_colaborador and exames and data_exame:
+                    exames_por_empresa[empresa_nome].append({
+                        "exame": exames,
+                        "colaborador": nome_colaborador,
+                        "data": str(data_exame),
+                        "hora": "",  # Se quiser adicionar hora, ajuste aqui
+                        "arquivo": arquivo
+                    })
+        except Exception as e:
+            print(f"Erro ao ler arquivo {arquivo}: {e}")
             continue
-        exame, empresa, colaborador, data, hora = partes
-        empresa_nome = empresa.replace("-", " ")
-        colaborador_nome = colaborador.replace("-", " ")
-        data_fmt = data.replace("-", "/")
-        hora_fmt = hora.replace("-", ":")
-        exames_por_empresa[empresa_nome].append({
-            "exame": exame,
-            "colaborador": colaborador_nome,
-            "data": data_fmt,
-            "hora": hora_fmt,
-            "arquivo": doc
-        })
 
     return exames_por_empresa
 
@@ -37,7 +48,7 @@ class Relacoes:
         self.page.title = "Relações"
         self.sidebar = Sidebar(self.page)
         self.expansion_list = ft.ExpansionPanelList()
-        self.empresas_exames = listar_exames_por_empresa()
+        self.empresas_exames = listar_exames_por_empresa_controle()
         self.search_field = ft.TextField(
             label="Pesquisar empresa...",
             on_change=self.filtrar_empresas,
@@ -57,13 +68,24 @@ class Relacoes:
         filtro = e.control.value
         self.carregar_empresas(filtro)
 
-    def excluir_exame(self, arquivo):
+    def excluir_exame(self, arquivo, colaborador, exame_texto, data):
         try:
-            arquivo.unlink()  # Remove o arquivo do sistema
+            wb = load_workbook(arquivo)
+            ws = wb.active
+            for row_num in range(6, ws.max_row + 1):
+                if (ws[f"B{row_num}"].value == colaborador and
+                    ws[f"D{row_num}"].value == exame_texto and
+                    str(ws[f"K{row_num}"].value) == str(data)):
+                    ws[f"B{row_num}"] = None
+                    ws[f"D{row_num}"] = None
+                    ws[f"K{row_num}"] = None
+                    break
+            wb.save(arquivo)
+            print(f"Exame excluído com sucesso")
         except Exception as e:
             print(f"Erro ao excluir exame: {e}")
-        # Atualiza a lista após exclusão
-        self.empresas_exames = listar_exames_por_empresa()
+
+        self.empresas_exames = listar_exames_por_empresa_controle()
         self.carregar_empresas(self.search_field.value if hasattr(self, 'search_field') else "")
 
     def criar_painel(self, empresa, exames):
@@ -93,7 +115,9 @@ class Relacoes:
                                 icon=ft.Icons.DELETE,
                                 icon_color=ft.Colors.RED,
                                 tooltip="Excluir exame",
-                                on_click=lambda e, arquivo=exame['arquivo']: self.excluir_exame(arquivo)
+                                on_click=lambda e, arquivo=exame['arquivo'], colaborador=exame['colaborador'],
+                                       exame_texto=exame['exame'], data=exame['data']:
+                                       self.excluir_exame(arquivo, colaborador, exame_texto, data)
                             )
                         ],
                         alignment=ft.MainAxisAlignment.SPACE_BETWEEN
