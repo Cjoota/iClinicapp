@@ -92,7 +92,9 @@ class Sidebar:
             self.menu_item(ft.Icons.CREATE_ROUNDED, "Gerar exames", "/gerardoc"),
             self.menu_item(ft.Icons.DESCRIPTION, "Exames gerados", "/documentos"),
             self.menu_item(ft.Icons.CALENDAR_TODAY, "Agendamento", "/agendamento"),
-        ]
+            self.menu_item(ft.Icons.LIST_ALT, "Relações", "/relacoes"),
+            ]
+
 
         self.sidebar_items_mobile = [
             ft.Container(
@@ -106,6 +108,7 @@ class Sidebar:
             self.menu_item(ft.Icons.BUSINESS, "Empresas", "/empresas"),
             self.menu_item(ft.Icons.CREATE_ROUNDED, "Gerar exames", "/gerardoc"),
             self.menu_item(ft.Icons.DESCRIPTION, "Exames gerados", "/documentos"),
+            self.menu_item(ft.Icons.LIST_ALT, "Relações", "/relacoes"),
         ]
 
         if not self.resize.is_shd():

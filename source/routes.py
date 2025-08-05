@@ -1,6 +1,7 @@
 import flet as ft
 from Interfaces.Login_interface import Login
 from Interfaces.cadastro import Cadastro
+from Interfaces.relacoes import Relacoes
 import asyncio
 from Interfaces.agendamento import Agendamento
 class Router:
@@ -27,6 +28,7 @@ class Router:
             "/contabilidade": self.require_login(self.contabilidade_view),
             "/documentos": self.require_login(self.documentos_view),
             "/empresas": self.require_login(self.empresas_view),
+            "/relacoes": self.require_login(self.relacoes_view),
             "/gerardoc": self.require_login(self.gerardoc_view),
             "/cadastro": self.cadastro_view,
             "/agendamento": self.require_login(self.agendamentos_view),
@@ -205,6 +207,19 @@ class Router:
             )
         )
     
+    def relacoes_view(self):
+        relacoes_view = Relacoes(self.page)
+        self.page.views.append(
+            ft.View(
+                "/relacoes",
+                [
+                    relacoes_view.build_view()
+                ],
+                scroll=ft.ScrollMode.ADAPTIVE
+            )
+        )
+
+
     def cadastro_view(self):
         cadastro = Cadastro(self.page)
         self.page.views.append(
