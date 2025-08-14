@@ -3,7 +3,7 @@ import flet as ft
 from Interfaces.sidebar import Sidebar
 from Interfaces.main_interface import Main_interface
 from Interfaces.telaresize import Responsive
-from funcoes import listar_empresas_com_agendamento,excluir_agendamentos_vencidos
+from funcoes import listar_empresas_com_agendamento
 from funcoes import verempresa
 from database.databasecache import ContabilidadeDB
 from database.models import Agendamentos
@@ -13,12 +13,10 @@ class Agendamento:
     def __init__(self, page: ft.Page):
         self.page = page
         self.db = ContabilidadeDB()
-        self.page.clean()
         self.responsive = Responsive(page)
         self.sidebar = Sidebar(page)
         self.main = Main_interface(page)
         self.agendamentos = listar_empresas_com_agendamento()
-        self.page.on_resized = self.on_resize
         self.linhas = self.gerar_linhas(self.agendamentos)
         self.tabela = self.build_table(self.linhas)
         self.page.controls.append(self.tabela)
@@ -48,7 +46,6 @@ class Agendamento:
             on_click=self.abrir_formulario_agendamento
         )
 
-        self.mostrar()
 
     def formatar_data(self, e):
         texto = self.data_input.value
@@ -63,16 +60,6 @@ class Agendamento:
             formatado = numeros
         self.data_input.value = formatado
         self.page.update()
-
-    def mostrar(self):
-        self.page.controls.clear()
-        self.page.add(self.build_view())
-        self.page.update()
-
-    def on_resize(self, e):
-        if self.page.route == "/agendamentos":
-            self.responsive = Responsive(self.page)
-            self.responsive.atualizar_widgets(self.build_view())
 
     def abrir_formulario_agendamento(self, e):
         empresas = verempresa()
@@ -279,7 +266,7 @@ class Agendamento:
         self.tab_agendamentos.content = self.build_table(self.gerar_linhas(filtradas))
         self.tab_agendamentos.update()
 
-    def build_view(self):
+    def build_content(self):
         titulo = ft.Text("Agendamentos", size=30, weight=ft.FontWeight.BOLD, color=ft.Colors.GREY_800)
         buscar = self.buscar
 
@@ -299,22 +286,8 @@ class Agendamento:
         ], expand=True)
 
         if self.responsive.is_desktop():
-            return ft.Row([
-                ft.Column([self.sidebar.build()], expand=False),
-                conteudo
-            ], expand=True)
+            return conteudo
 
-        return ft.Column([
-            self.sidebar.build(),
-            ft.Row([titulo, self.btn_novo_agendamento], alignment=ft.MainAxisAlignment.SPACE_BETWEEN),
-            self.buscar,
-            ft.Container(
-                content=self.tab_agendamentos,
-                padding=10,
-                border=ft.border.all(1, ft.Colors.GREY_300),
-                border_radius=10
-            )
-        ], scroll=ft.ScrollMode.ADAPTIVE)
 
     def salvar_agendamento(self, e):
         empresa_nome = self.empresa_dropdown.value

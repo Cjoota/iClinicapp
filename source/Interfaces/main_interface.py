@@ -217,7 +217,7 @@ class Main_interface:
                     self.relogio.update()
                 await asyncio.sleep(1)
             
-    def build_view(self):
+    async def build_content(self):
         if self.responsive.is_mobile():
             self.homecontent = ft.Container(
                 content=ft.Column([
@@ -237,6 +237,7 @@ class Main_interface:
                     ),
                 ]),padding=0
             )
+            return self.homecontent
         elif self.responsive.is_tablet():
             self.homecontent = ft.Container(
                 content=ft.Column([
@@ -256,6 +257,7 @@ class Main_interface:
                     ),
                 ])
             )
+            return self.homecontent
         elif self.responsive.is_desktop():
             self.homecontent = ft.Column([
                     ft.Container(
@@ -268,37 +270,7 @@ class Main_interface:
                             ],alignment=ft.MainAxisAlignment.CENTER, horizontal_alignment=ft.CrossAxisAlignment.CENTER, spacing=0
                         ),margin=ft.Margin(left=80,top=40,right=0,bottom=0)
                     ),
-                    self.cardcontainer,
-                    ft.Container(
-                        content=self.cardmain("Documentos Gerados", None ,None, self.tabct,True)
-                    ),
+                    self.cardcontainer
                 ],alignment=ft.MainAxisAlignment.START, horizontal_alignment=ft.CrossAxisAlignment.START)
-        self.page.run_task(self.clock)
-        if self.responsive.is_mobile():
-            return ft.Column(
-                [
-                    ft.Row([self.sidebar.build()],alignment=ft.MainAxisAlignment.CENTER,vertical_alignment=ft.CrossAxisAlignment.CENTER,width=self.responsive.content_width()),
-                    ft.Column([ft.Container(content=self.homecontent,padding=0)],alignment=ft.MainAxisAlignment.CENTER,horizontal_alignment=ft.CrossAxisAlignment.CENTER,spacing=0)
-                ],alignment=ft.MainAxisAlignment.CENTER,horizontal_alignment=ft.CrossAxisAlignment.CENTER,spacing=0
-            )
-        if self.responsive.is_tablet():
-            return ft.Column(
-                [
-                    ft.Row([self.sidebar.build()],alignment=ft.MainAxisAlignment.CENTER,vertical_alignment=ft.CrossAxisAlignment.CENTER),
-                    ft.Column([self.homecontent],alignment=ft.MainAxisAlignment.CENTER,horizontal_alignment=ft.CrossAxisAlignment.CENTER)
-                ],alignment=ft.MainAxisAlignment.CENTER,horizontal_alignment=ft.CrossAxisAlignment.CENTER
-            )
-        else:
-            return ft.Row(
-                [
-                    ft.Column([self.sidebar.build()],alignment=ft.MainAxisAlignment.START),
-                    ft.Container(content=self.homecontent,expand=True)
-                ],
-                width=self.page.width,
-                height=self.page.height,
-                alignment=ft.MainAxisAlignment.START
-            )
-
-    
-        
+            return self.homecontent
         

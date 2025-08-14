@@ -13,9 +13,7 @@ class Gerardoc:
             self.page = page
             self.controle = ControleExames()
             self.responsive = Responsive(self.page)
-            self.sidebar = Sidebar(self.page)
             self.main = Main_interface(self.page)
-            self.page.clean()
             self.modelos_excel = self.carregar_modelos_excel()
             self.dataselect = None
             self.empresas_drop = verempresa()
@@ -24,7 +22,27 @@ class Gerardoc:
             self.risk_fisico = []
             self.risk_biologico = []
             self.risk_ergonomico = []
-            self.page.on_resized = self.on_resize
+            self.listview = ft.ListView(expand=True)
+            self.listviewtypes = ft.ListView(expand=True)
+            self.listviewexam = ft.ListView(expand=True)
+            self.checkbox = ft.Checkbox(label=ft.Text("Gerar em todos os modelos"),on_change=self.selecionar_todos,
+                                            label_position=ft.LabelPosition.LEFT,check_color="#26BD00",active_color="#D3FACA")
+            self.drop = ft.Dropdown(label="Empresas",width=200,max_menu_height=100,menu_height=300,enable_filter=True,editable=True)
+            self.atualizar_lista_modelos()
+            self.carregardrop()
+            self.date = ft.TextField(label="Data do exame",border_radius=16,width=140)
+            self.nomeclb = ft.TextField(label="Nome Completo",border_radius=16,width=250)
+            self.cpfclb = ft.TextField(label="CPF",border_radius=16,width=250, on_change=self.limitar_cpf, on_blur=self.formatar_cpf)
+            self.datanascimentoclb = ft.TextField(label="Data de nascimento",border_radius=16,width=250, on_change=self.limitar_data, on_blur=self.formatar_data)
+            self.funcaoclb = ft.TextField(label="Função",border_radius=16,width=250)
+            self.setorclb = ft.TextField(label="Setor",border_radius=16,width=250)
+            self.checkdate = ft.Checkbox(label="Usar data de hoje",check_color=ft.Colors.BLACK,active_color="#74FE4E",on_change=lambda e: self.selectdate(e))
+            self.risk_selector = ft.ElevatedButton(text="Defina os Riscos",icon=ft.Icons.WARNING,icon_color=ft.Colors.YELLOW_800,color=ft.Colors.BLACK54,on_click=lambda e: self.risk_page(e))
+            self.listview.controls.append(ft.Text("Modelos disponiveis: ",text_align=ft.TextAlign.START))
+            self.listviewtypes.controls.append(ft.Text("Qual tipo do documento: ",text_align=ft.TextAlign.START))
+            self.listviewexam.controls.append(ft.Text("Quais exames elencar: ",text_align=ft.TextAlign.START))
+            self.listview.controls.append(self.checkbox)
+            
 
         def limitar_cpf(self, e):
             cpf = ''.join(filter(str.isdigit, self.cpfclb.value))[:11]
@@ -47,26 +65,9 @@ class Gerardoc:
             if len(data) == 8:
                 self.datanascimentoclb.value = f"{data[:2]}/{data[2:4]}/{data[4:]}"
                 self.datanascimentoclb.update()
-                
-        def on_resize(self,e):            
-            if self.page.route == "/gerardoc":
-                self.responsive = Responsive(self.page)
-                self.responsive.atualizar_widgets(self.build_view())
 
-        def build_view(self):
+        def build_content(self):
             if self.responsive.is_desktop():
-                self.listview = ft.ListView(expand=True)
-                self.listviewtypes = ft.ListView(expand=True)
-                self.listviewexam = ft.ListView(expand=True)
-                self.checkbox = ft.Checkbox(label=ft.Text("Gerar em todos os modelos"),on_change=self.selecionar_todos,
-                                            label_position=ft.LabelPosition.LEFT,check_color="#26BD00",active_color="#D3FACA")
-                self.drop = ft.Dropdown(label="Empresas",width=200,max_menu_height=100,menu_height=300,enable_filter=True,editable=True)
-                self.date = ft.TextField(label="Data do exame",border_radius=16,width=140)
-                self.nomeclb = ft.TextField(label="Nome Completo",border_radius=16,width=250)
-                self.cpfclb = ft.TextField(label="CPF",border_radius=16,width=250, on_change=self.limitar_cpf, on_blur=self.formatar_cpf)
-                self.datanascimentoclb = ft.TextField(label="Data de nascimento",border_radius=16,width=250, on_change=self.limitar_data, on_blur=self.formatar_data)
-                self.funcaoclb = ft.TextField(label="Função",border_radius=16,width=250)
-                self.setorclb = ft.TextField(label="Setor",border_radius=16,width=250)
                 self.clbinterface =ft.Column([
                         ft.Row([
                             ft.Text("Insira os dados do colaborador")
@@ -94,8 +95,6 @@ class Gerardoc:
                         ],alignment=ft.MainAxisAlignment.CENTER,vertical_alignment=ft.CrossAxisAlignment.CENTER
                         ),
                     ],alignment=ft.MainAxisAlignment.CENTER,horizontal_alignment=ft.CrossAxisAlignment.CENTER)
-                self.checkdate = ft.Checkbox(label="Usar data de hoje",check_color=ft.Colors.BLACK,active_color="#74FE4E",on_change=lambda e: self.selectdate(e))
-                self.risk_selector = ft.ElevatedButton(text="Defina os Riscos",icon=ft.Icons.WARNING,icon_color=ft.Colors.YELLOW_800,color=ft.Colors.BLACK54,on_click=lambda e: self.risk_page(e))
                 self.dates = ft.Container(
                     content=ft.Column([
                         ft.Column([self.checkdate,self.date])
@@ -132,22 +131,7 @@ class Gerardoc:
                         ],alignment=ft.MainAxisAlignment.CENTER,vertical_alignment=ft.CrossAxisAlignment.CENTER,spacing=5),
                         margin=ft.margin.only(top=-20)
                 )],scroll=ft.ScrollMode.ADAPTIVE)
-                self.listview.controls.append(ft.Text("Modelos disponiveis: ",text_align=ft.TextAlign.START))
-                self.listviewtypes.controls.append(ft.Text("Qual tipo do documento: ",text_align=ft.TextAlign.START))
-                self.listviewexam.controls.append(ft.Text("Quais exames elencar: ",text_align=ft.TextAlign.START))
-                self.listview.controls.append(self.checkbox)
-                self.page.run_task(self.atualizar_lista_modelos)
-                self.page.run_task(self.carregardrop)
-                return ft.Row(
-                    [
-                        ft.Column([self.sidebar.build()],alignment=ft.MainAxisAlignment.START,horizontal_alignment=ft.CrossAxisAlignment.START),
-                        ft.Container(content=self.doccontent,expand=True,adaptive=True)
-                    ],
-                    width=self.page.width,
-                    height=self.page.height,
-
-                
-                )
+                return self.doccontent
             elif self.responsive.is_tablet():
                 self.listview = ft.ListView(expand=True)
                 self.listviewtypes = ft.ListView(expand=True)
@@ -270,7 +254,7 @@ class Gerardoc:
                 modelos.append(arquivo.name.replace(".xlsx",""))
             return modelos           
         
-        async def atualizar_lista_modelos(self):
+        def atualizar_lista_modelos(self):
             self.listview.controls.clear()
             self.listviewexam.controls.clear()
             self.listviewtypes.controls.clear()
@@ -380,7 +364,7 @@ class Gerardoc:
             e.control.selected = not getattr(e.control, 'selected', False)
             self.page.update()
         
-        async def carregardrop(self):
+        def carregardrop(self):
             self.drop.options.clear() #type: ignore
             if self.empresas_drop:
                 for empresa in self.empresas_drop:

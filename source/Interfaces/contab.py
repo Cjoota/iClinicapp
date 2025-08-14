@@ -22,7 +22,6 @@ class ContabilidadePage:
         self.selected_chip = None
         self.data_conta = ""
         self.dados = vercontas()
-        self.page.on_resized = self.on_resize
     
     def formatar_valor_caixa(self, e: ft.ControlEvent):
         valor_bruto = ''.join(filter(str.isdigit, self.valores.value))
@@ -56,11 +55,6 @@ class ContabilidadePage:
 
         self.valoresRetiro.update()
 
-    
-    def on_resize(self,e):
-        if self.page.route == "/contabilidade":
-            self.responsive = Responsive(self.page)
-            self.responsive.atualizar_widgets(self.build_view())
 
     async def get_contas(self):
         contas = await contabilidade_db.buscar_contas()
@@ -82,7 +76,7 @@ class ContabilidadePage:
             self.tablecontent.content = self.buildtable(self.gerar_linhas(self.dados_tabela))
             self.tablecontent.update()
 
-    def build_view(self):
+    def build_content(self):
         async def retirar_valores(e):
             saida = str(self.valoresRetiro.value).replace(",",".")
             saida = Decimal(saida)
@@ -128,18 +122,17 @@ class ContabilidadePage:
                 self.selected_chip = self.clicked
                 self.page.update()
             self.valores = ft.TextField(
-    label="Valor",
-    prefix_text="R$ ",
-    width=200,
-    height=35,
-    border_radius=10,
-    input_filter=ft.InputFilter(regex_string=r'[0-9]*', replacement_string=""),
-    keyboard_type=ft.KeyboardType.NUMBER,
-    bgcolor=ft.Colors.WHITE,
-    prefix_icon=ft.Icons.MONETIZATION_ON,
-    on_change=self.formatar_valor_caixa
-)
-
+                label="Valor",
+                prefix_text="R$ ",
+                width=200,
+                height=35,
+                border_radius=10,
+                input_filter=ft.InputFilter(regex_string=r'[0-9]*', replacement_string=""),
+                keyboard_type=ft.KeyboardType.NUMBER,
+                bgcolor=ft.Colors.WHITE,
+                prefix_icon=ft.Icons.MONETIZATION_ON,
+                on_change=self.formatar_valor_caixa
+            )
             self.servico = ft.TextField(label="Serviço",width=200, height=35, border_radius=10
                                 ,bgcolor=ft.Colors.WHITE,prefix_icon=ft.Icons.TEXT_SNIPPET)
             self.chipPix = ft.Chip(label=ft.Text("Pix"),on_select=selected)
@@ -147,17 +140,17 @@ class ContabilidadePage:
             self.chipPixRetiro = ft.Chip(label=ft.Text("Pix"),on_select=selected)
             self.chipMoneyRetiro = ft.Chip(label=ft.Text("Dinheiro"),on_select=selected)
             self.valoresRetiro = ft.TextField(
-    label="Valor",
-    prefix_text="R$ ",
-    width=200,
-    height=35,
-    border_radius=10,
-    input_filter=ft.InputFilter(regex_string=r'[0-9]*', replacement_string=""),
-    keyboard_type=ft.KeyboardType.NUMBER,
-    bgcolor=ft.Colors.WHITE,
-    prefix_icon=ft.Icons.MONETIZATION_ON,
-    on_change=self.formatar_valor_retiro
-)
+                label="Valor",
+                prefix_text="R$ ",
+                width=200,
+                height=35,
+                border_radius=10,
+                input_filter=ft.InputFilter(regex_string=r'[0-9]*', replacement_string=""),
+                keyboard_type=ft.KeyboardType.NUMBER,
+                bgcolor=ft.Colors.WHITE,
+                prefix_icon=ft.Icons.MONETIZATION_ON,
+                on_change=self.formatar_valor_retiro
+            )
             self.motivo = ft.TextField(label="Motivo e Quem",width=200, height=35, border_radius=10
                                 ,bgcolor=ft.Colors.WHITE,prefix_icon=ft.Icons.TEXT_SNIPPET)
             self.cardcontainer = ft.Container(
@@ -226,15 +219,7 @@ class ContabilidadePage:
                         content=self.main_interface_instance.cardmain("Contabilidade de contas",None,None,self.tablecontent,True)
                     ),
             ],alignment=ft.MainAxisAlignment.START,horizontal_alignment=ft.CrossAxisAlignment.START)
-            return ft.Row(
-                [
-                    ft.Column([self.sidebar.build()],alignment=ft.MainAxisAlignment.START,horizontal_alignment=ft.CrossAxisAlignment.START),
-                    ft.Container(content=self.contabcontent,expand=True)
-                ],
-                width=self.page.width,
-                height=self.page.height,
-                alignment=ft.MainAxisAlignment.START,
-            ) 
+            return self.contabcontent
         elif self.responsive.is_tablet():
             def selected(e: ft.ControlEvent):
                 self.clicked = e.control

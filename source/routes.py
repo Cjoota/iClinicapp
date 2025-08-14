@@ -1,220 +1,146 @@
 import flet as ft
+import asyncio
+
 from Interfaces.Login_interface import Login
 from Interfaces.cadastro import Cadastro
-import asyncio
 from Interfaces.agendamento import Agendamento
-class Router:
-    """SISTEMA DE ROTAS E ENDEREÇAMENTO DE ABAS.\n-
-    - route_change:\n 
-        Gerenciamento de rotas chamado atráves do evento de troca de pagina.\n
-        
-    - require_login:\n
-        Verificação do login, verifica se o usuário ja se logou e se está permitido o acesso.\n
-        
-    - <Nome da aba>_view:\n
-        Geração das paginas.\n
-    
-    - Go:\n
-        Função de troca unica de paginas.
+from Interfaces.layout import MainLayout
+from Interfaces.main_interface import Main_interface
+from Interfaces.exames_prontos import ExamesProntos
+from Interfaces.contab import ContabilidadePage
+from Interfaces.empresas import Empresas
 
-    """
+class Router:
     def __init__(self, page: ft.Page):
         self.page = page
-        self.routes = {
-            "/": self.login_view,
-            "/login": self.login_view,
-            "/home": self.require_login(self.main_interface_view),
-            "/contabilidade": self.require_login(self.contabilidade_view),
-            "/documentos": self.require_login(self.documentos_view),
-            "/empresas": self.require_login(self.empresas_view),
-            "/gerardoc": self.require_login(self.gerardoc_view),
-            "/cadastro": self.cadastro_view,
-            "/agendamento": self.require_login(self.agendamentos_view),
+        self.main_layout = None
+
+        self.no_AuthRoutes = {
+            "/": self.contentRouteBuilder(Login, "/"),
+            "/login": self.contentRouteBuilder(Login, "/login"),
+            "/cadastro": self.contentRouteBuilder(Cadastro, "/cadastro"),
         }
+        self.AuthRoutesRequired = {
+            "/home": self.main_interface_content,
+            "/contabilidade": self.require_login(self.contabilidade_content),
+            "/documentos": self.documentos_content,
+            "/empresas": self.empresas_content,
+            "/gerardoc": self.require_login(self.gerardoc_content),
+            "/agendamento": self.require_login(self.agendamentos_content),
+        }
+
         self.page.on_route_change = self.route_change
         self.page.on_view_pop = self.view_pop
         self.page.on_connect = self.page.go("/")
-        self.loading_view = None  
-        self.is_loading = False  
 
-    def require_login(self, view_func):
-        """ Verifica se o usuario está logado. """
+    def require_login(self, content_func):
         def wrapper():
             if not self.page.session.get("logado"):
-                self.page.go("/login")
+                self.page.go("/")
                 return
-            view_func()
+            return content_func()
         return wrapper
-    
-    def route_change(self, route):
-        rota_atual = self.page.route
-        view_atual = self.page.views
-        """ Função de troca de paginas, recebe o chamado do capturador de evento ao trocar de pagina. """
-        async def executor():
-            await self.loading_simples(True)
-        if not rota_atual in view_atual:
-            self.page.views.clear()
-        self.page.run_task(executor)
-        if route.route in self.routes:
-            self.routes[route.route]()
-        
-        else:
-            self.page.views.append(
-                ft.View(
-                    "/404",
-                    [
-                        ft.AppBar(title=ft.Text("iCLINICA"), bgcolor=ft.Colors.ON_SURFACE_VARIANT),
-                        ft.Text("404 - Página não encontrada"),
-                    ]
-                )
-            )        
-        self.page.update()
-  
-    def view_pop(self,view):
-        # Captura o evento de voltar
-        self.page.views.pop()
-        top_view = self.page.views[-1]
-        self.page.go(top_view.route)  # Atualiza a rota
 
-    def main_interface_view(self):
+    def route_change(self, route):
+        async def trocar_view():
+            try:
+                route_called = route.route
+
+                if route_called in self.no_AuthRoutes:
+                    self.main_layout = None
+                    view = await self.no_AuthRoutes[route_called]()
+                    self.page.views.clear()
+                    self.page.views.append(view)
+                    self.page.update()
+                    return
+
+                if route_called in self.AuthRoutesRequired:
+                    if self.main_layout is None or not self.page.views or self.page.views[-1].route != "main":
+                        self.main_layout = MainLayout(self.page)
+                        self.page.views.clear()
+                        self.page.views.append(self.main_layout.get_view("main"))
+                        self.page.update()
+                        await asyncio.sleep(0.05)  
+                    
+                    content_builder = self.AuthRoutesRequired[route_called]
+                    await self.main_layout.navigate_to(route_called, content_builder)
+                    return
+
+                view = ft.View("/404", [ft.Text("Página não encontrada")])
+                self.page.views.clear()
+                self.page.views.append(view)
+                self.page.update()
+            except Exception as e:
+                print(f"Erro em trocar_view: {e}")
+                import traceback
+                traceback.print_exc()
+
+        self.page.run_task(trocar_view)
+
+    def view_pop(self, view):
+        self.page.views.pop()
+        if self.page.views:
+            top_view = self.page.views[-1]
+            self.page.go(top_view.route)
+
+
+    def contentRouteBuilder(self, pageclass, route,requireLogin=False):
+        async def handler():
+            return await self.viewContentCaller(pageclass=pageclass, route=route,requireLogin=requireLogin)
+        return handler
+
+
+    async def viewContentCaller(self, pageclass,requireLogin=False,route=None):
+        instancePage = pageclass(self.page)
+        if requireLogin:
+            return self.require_login(instancePage.build_content())
+        build = await instancePage.build_view()
+        return ft.View(route, [build])
+
+    # Métodos de conteúdo (retornam apenas o conteúdo, não a view completa)
+    async def main_interface_content(self):
         from Interfaces.main_interface import Main_interface
         main_view = Main_interface(self.page)
-        self.page.views.append(
-            ft.View(
-                "/home",
-                [
-                    main_view.build_view()
-                    
-                ],scroll=ft.ScrollMode.ADAPTIVE
-            )
-        )
-    
-    def login_view(self):
-        login_view = Login(self.page)
-        self.page.views.append(
-            ft.View(
-                "/login",
-                [
-                    login_view.build_view()
-                ]
-            )
-        )
-    
+        return await main_view.build_content()
 
-    def agendamentos_view(self):
-        agendament_view = Agendamento(self.page)
-        self.page.views.append(
-            ft.View(
-                "/agendamento",
-                [
-                    agendament_view.build_view()
-                ]
-            )
-        )
+    async def documentos_content(self):
+        from Interfaces.exames_prontos import ExamesProntos
+        documentos_view = ExamesProntos(self.page)
+        controle = await documentos_view.build_content()
+        return controle
 
-    def contabilidade_view(self):
+    def contabilidade_content(self):
         from Interfaces.contab import ContabilidadePage
         contab_view = ContabilidadePage(self.page)
         if self.page.session.get("perm") == "all":
-            self.page.views.append(
-                ft.View(
-                    "/contabilidade",
-                    [
-                        contab_view.build_view()
-                    ],scroll=ft.ScrollMode.ADAPTIVE
-                )
-            )
+            return contab_view.build_content()
         else:
-            self.page.views.append(
-                ft.View(
-                    "/contabilidade",
-                    [
-                        ft.Row([ft.Text("Sem Permissões para acessar!", scale=1.8)], alignment=ft.MainAxisAlignment.CENTER)
-                    ]
-                )
-            )
-    
-    def documentos_view(self):
-        from Interfaces.exames_prontos import Documentos
-        documentos_view = Documentos(self.page)
-        self.page.views.append(
-            ft.View(
-                "/documentos",
-                [
-                    documentos_view.build_view()
-                ]
-            )
-        )
-    
-    def empresas_view(self):
-        from Interfaces.empresas import Empresas
-        Empresas_view = Empresas(self.page)
-        self.page.views.append(
-            ft.View(
-                "/empresas",
-                [
-                    Empresas_view.build_view()
-                ]
-            )
-        )
-        
-    async def loading_simples(self, duration=1):
-        async def _esconder_loading():
-            try:
-                if self.loading_view and self.loading_view in self.page.views:
-                    self.page.views.remove(self.loading_view)
-                    self.page.update()
-            except Exception as e:
-                print(f"Erro ao remover loading: {e}")
-            finally:
-                self.loading_view = None
-                self.is_loading = False
-        if self.is_loading:
-            return
-        try:
-            self.is_loading = True
-            
-            bar_ref = ft.Ref[ft.ProgressRing]()
-            ring = ft.Container(
-                content=ft.ProgressRing(color="#22ff38", ref=bar_ref),
-                expand=True,
+            return ft.Container(
+                content=ft.Text("Sem Permissões para acessar!", scale=1.8),
                 alignment=ft.alignment.center
             )
-            self.loading_view = ft.View(controls=[ring])
 
-            self.page.views.append(self.loading_view)
-            self.page.update()
+    async def empresas_content(self):
+        from Interfaces.empresas import Empresas
+        empresas_view = Empresas(self.page)
+        controle = await empresas_view.build_content()
+        return controle
 
-            await asyncio.sleep(duration)
-            
-        except Exception as e:
-            print(f"Erro no loading: {e}")
-            
-        finally:
-            await _esconder_loading()
-        
-    def gerardoc_view(self):
+    def gerardoc_content(self):
         from Interfaces.gerarDoc import Gerardoc
         gerardoc_view = Gerardoc(self.page)
-        self.page.views.append(
-            ft.View(
-                "/gerardoc",
-                [
-                    gerardoc_view.build_view()
-                ]
-            )
-        )
-    
+        controle = gerardoc_view.build_content()
+        return controle
+
+    def agendamentos_content(self):
+        agendament_view = Agendamento(self.page)
+        return agendament_view.build_content()
+
+    async def login_view(self):
+        login_view = Login(self.page)
+        controle = await login_view.build_view()
+        return ft.View("/login", [controle])
+
     def cadastro_view(self):
         cadastro = Cadastro(self.page)
-        self.page.views.append(
-            ft.View(
-                "/cadastro",
-                [
-                    cadastro.build_view()
-                ] 
-            )
-        )
-    
-    def go(self, route):
-        self.page.go(route)
+        return ft.View("/cadastro", [cadastro.build_view()])

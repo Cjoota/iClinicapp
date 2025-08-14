@@ -13,7 +13,7 @@ class Cadastro:
         if e.key == "Enter":
             self.cadastrar(e)
 
-    def build_view(self):
+    async def build_view(self):
         self.title = ft.Text("iClínica", size=50, weight=ft.FontWeight.BOLD, color=self.GlobalColor)
         self.subtitle = ft.Text('Cadastre-se', size=20, weight=ft.FontWeight.BOLD, color=ft.Colors.BLACK, font_family='Semibold')
         self.subtitleInstruction = ft.Text('Preencha as informações a seguir:', size=13, weight=ft.FontWeight.W_400, color=ft.Colors.BLACK, font_family='Semibold')

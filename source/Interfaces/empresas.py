@@ -10,9 +10,8 @@ class Empresas:
     def __init__(self, page: ft.Page):
         self.page = page
         self.responsive = Responsive(self.page)
-        self.page.clean()
+        self.main = Main_interface(self.page)
         self.dados = verempresa()
-        self.page.on_resized = self.on_resize
         """ Controles """
         self.razao = ft.TextField(
             label="Razão Social",
@@ -85,11 +84,6 @@ class Empresas:
 
         e.control.value = formatado
         e.control.update()
-    
-    def on_resize(self, e):
-        if self.page.route == "/empresas":
-            self.responsive = Responsive(self.page)
-            self.responsive.atualizar_widgets(self.build_view())
 
     def cadastro(self, e):
         try:
@@ -114,8 +108,6 @@ class Empresas:
         except Exception as e:
             self.mostrar_snackbar(f"Erro ao cadastrar: {str(e)}", ft.Colors.RED)
 
-    
-    
     def abrir_dialog_cadastro(self, e):
         self.razao.value = ""
         self.cnpj.value = ""
@@ -315,8 +307,6 @@ class Empresas:
         )
         ],scroll=ft.ScrollMode.AUTO)
 
-        
-
     def gerarlinhas(self, data):
         linhas = []
         for i, empresa in enumerate(data):
@@ -381,29 +371,21 @@ class Empresas:
         self.tabempresas.content = self.buildtableE(self.gerarlinhas(self.dados))
         self.tabempresas.update()
 
-    def build_view(self):
-        self.main = Main_interface(self.page)
-        self.sidebar = Sidebar(self.page)
-        
+    async def build_content(self):
         if self.responsive.is_desktop():
-            return ft.Row(
+            self.companie_content = ft.Container(content=ft.Row(
                 [
-                    ft.Column([self.sidebar.build()], alignment=ft.MainAxisAlignment.START),
                     ft.Column(
                         [
                             ft.Row([ft.Text("Empresas", size=30, color=ft.Colors.GREY_800)], alignment=ft.MainAxisAlignment.CENTER),
-                            ft.Row(
-                                [
-                                    self.register_button
-                                ],
-                                alignment=ft.MainAxisAlignment.END
-                            ),
+                            ft.Row([self.register_button],alignment=ft.MainAxisAlignment.END),
                             ft.Column([self.caixadebusca,self.tabempresas],alignment=ft.MainAxisAlignment.CENTER,horizontal_alignment=ft.MainAxisAlignment.CENTER,expand=True,scroll=ft.ScrollMode.ADAPTIVE)
                         ],expand=True              
                     )
                 ],expand=True
-                
+                )
             )
+            return self.companie_content
         
         elif self.responsive.is_mobile():
             return ft.Column(

@@ -17,7 +17,7 @@ class Login:
         self.GlobalColor = '#26BD00'
         self.GlobalModal = ft.SnackBar(content=ft.Text(""), bgcolor=ft.Colors.GREEN)
 
-    def build_view(self):
+    async def build_view(self):
         self.title = ft.Text("iClínica", size=50, weight=ft.FontWeight.BOLD, color=self.GlobalColor)
         self.subtitle = ft.Text('Faça seu login', size=20, weight=ft.FontWeight.BOLD, color=ft.Colors.BLACK, font_family='Semibold')
         self.subtitleInstruction = ft.Text('Entre com seu usuário e senha', size=13, weight=ft.FontWeight.W_400, color=ft.Colors.BLACK, font_family='Semibold')

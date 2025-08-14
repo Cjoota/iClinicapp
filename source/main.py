@@ -26,18 +26,20 @@ class Main():
 		self.page.theme_mode = ft.ThemeMode.LIGHT
 		self.page.on_route_change = self.router.route_change
 		self.page.on_disconnect = lambda _: self.Disconnect()
-		self.page.on_connect = self.page.go("/login")
+		self.page.on_connect = self.page.go("/")
 
 	def Disconnect(self):
 		""" Limpa os dados salvos durante a sessão do usuário ao sair do sistema. """
 		try:
 			if self.page.session.contains_key("user"):
-				self.page.session.clear()
+				self.page.session.remove("user")
+			if self.page.session.contains_key("logado"):
+				self.page.session.remove("Logado")
 			if self.page.client_storage.contains_key("nick"):
-				self.page.client_storage.clear()
+				self.page.client_storage.remove("nick")
 			logger.info("Sessão Limpa")
 		except:
-			logger.info("Usuário desconectado antes de fazer o login!")
+			logger.info("Usuário desconectado")
 	async def init_cache(self):
 		""" Inicia o cache inteligente e preenche com as informações do DB """
 		await contabilidade_db.buscar_dados(force_update=True)
@@ -65,7 +67,7 @@ def limpar_cache():
 	for doc in Path("pdf_temp").glob("*.pdf"):
 		doc.unlink()
 	
-ft.app(target=Main,view=ft.AppView.WEB_BROWSER, host="192.168.3.59",port=53712,assets_dir="assets")
+ft.app(target=Main,view=ft.AppView.WEB_BROWSER, host="192.168.0.245",port=53712,assets_dir="assets")
 
 
 

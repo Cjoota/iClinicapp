@@ -1,5 +1,5 @@
 
-import os
+import asyncio
 import flet as ft
 from pathlib import Path
 from Interfaces.main_interface import Main_interface
@@ -7,16 +7,15 @@ from Interfaces.sidebar import Sidebar
 from Interfaces.telaresize import Responsive
 from funcoes import converter_xlsx_para_pdf
 from datetime import datetime
-class Documentos:
+class ExamesProntos:
         def __init__(self,page:ft.Page) -> None:
-            page.clean()
             self.page = page
             self.responsive = Responsive(self.page)
-            self.servidor_rodando = False
+            self.main = Main_interface(self.page)
             self.documentosprontos = self.documentosgerados()
             self.docinterface = ft.ListView(expand=True,divider_thickness=1)
             self.documentosselecionados = None
-            self.page.on_resized = self.on_resize
+            self.loading = ft.Container(content=ft.ProgressRing(width=60 , height=60 , stroke_width=6, color="#26f553"),visible=False,bgcolor=ft.Colors.with_opacity(0.4,ft.Colors.BLACK),expand=True,width=self.page.width,height=self.page.height,alignment=ft.alignment.center)
         
         def buildtable(self,linhas) -> ft.Column:
             return ft.Column([
@@ -36,12 +35,11 @@ class Documentos:
                         rows=linhas
                     )
                     ],alignment=ft.MainAxisAlignment.CENTER,vertical_alignment=ft.CrossAxisAlignment.CENTER),
-                    
             ])
             
         def gerar_linhas(self, dataatt):
             linhas = []
-            for i,exame in enumerate(dataatt):
+            for exame in dataatt:
                 cells = [
                         ft.DataCell(ft.Container(content=ft.Text(exame[0]), alignment=ft.alignment.center)),
                         ft.DataCell(ft.Container(content=ft.Text(exame[1]), alignment=ft.alignment.center)),
@@ -56,12 +54,6 @@ class Documentos:
                 ]
                 linhas.append(ft.DataRow(cells=cells))
             return linhas
-            
-    
-        def on_resize(self,e):
-            if self.page.route == "/documentos":
-                self.responsive = Responsive(self.page)
-                self.responsive.atualizar_widgets(self.build_view())
         
         def loading_(self,on:bool):
             if on is True:
@@ -74,9 +66,8 @@ class Documentos:
                 self.loading.visible = False
                 self.page.update()
 
-        def build_view(self) -> None:
+        async def build_content(self):
             if self.responsive.is_desktop():
-                self.main = Main_interface(self.page)
                 self.sidebar = Sidebar(self.page)
                 self.tabela_exames = ft.Container(
                     content=self.buildtable(self.gerar_linhas(self.documentosprontos)),border_radius=10,expand=True
@@ -85,27 +76,18 @@ class Documentos:
                 self.exames_interface = ft.Container(
                     content=ft.Column(
                         [
-                            ft.Column([ft.Text("Buscar exame:"),self.search_exam],alignment=ft.MainAxisAlignment.START,expand=True),
                             ft.Row([self.tabela_exames],expand=True)
                         ],expand=True),expand=True
                 )
                 self.doccontent = ft.Container(
                     content=ft.Column(
                         [
-                            self.main.cardmain("Exames gerados",None,None,self.exames_interface,True)
+                            ft.Column([ft.Text("Buscar exame:"),self.search_exam],alignment=ft.MainAxisAlignment.START,expand=True),
+                            self.main.cardmain("Exames gerados",None,self.page.height*0.90,self.exames_interface,True)
                         ]
-                        ,alignment=ft.MainAxisAlignment.START,horizontal_alignment=ft.CrossAxisAlignment.START,expand=True,scroll=ft.ScrollMode.ADAPTIVE),expand=True,border_radius=10,adaptive=True
+                        ,alignment=ft.MainAxisAlignment.START,horizontal_alignment=ft.CrossAxisAlignment.START,expand=True,scroll=ft.ScrollMode.ADAPTIVE),expand=True,border_radius=10,adaptive=True,
                 )
-                self.loading = ft.Container(content=ft.ProgressRing(width=60 , height=60 , stroke_width=6, color="#26f553"),visible=False,bgcolor=ft.Colors.with_opacity(0.4,ft.Colors.BLACK),expand=True,width=self.page.width,height=self.page.height,alignment=ft.alignment.center)
-                return ft.Row(
-                [
-                    ft.Column([self.sidebar.build()],alignment=ft.MainAxisAlignment.START,horizontal_alignment=ft.CrossAxisAlignment.START),
-                    ft.Column([self.doccontent],scroll=ft.ScrollMode.ADAPTIVE,expand=True,adaptive=True,alignment=ft.MainAxisAlignment.START,horizontal_alignment=ft.CrossAxisAlignment.CENTER)
-                ],
-                width=self.page.width,
-                height=self.page.height,
-                vertical_alignment=ft.CrossAxisAlignment.START
-                )
+                return self.doccontent
             elif self.responsive.is_tablet():
                 self.main = Main_interface(self.page)
                 self.sidebar = Sidebar(self.page)
@@ -176,8 +158,8 @@ class Documentos:
         def documentosgerados(self)-> list:
             def ordenar(dados):
                 def extrair_datetime(lista):
-                    data_str = lista[3]  # índice 3 = data
-                    hora_str = lista[4]  # índice 4 = hora
+                    data_str = lista[3]
+                    hora_str = lista[4] 
                     datetime_str = f"{data_str} {hora_str}"
                     return datetime.strptime(datetime_str, '%d/%m/%Y %H:%M')
                 return sorted(dados, key=extrair_datetime,reverse=True)
@@ -190,7 +172,6 @@ class Documentos:
                 exame,empresa,colab,data,hora = doc.name.replace(".xlsx","").split()
                 documents.append([exame,empresa.replace("-"," "),colab.replace("-"," "),data.replace("-","/"),hora.replace("-",":")])
             ordenados = ordenar(documents)
-            
             return ordenados
         
         def atualizar_tabela(self,e):
@@ -215,7 +196,7 @@ class Documentos:
         
         def delete(self,idx)-> None:
             def excluir(e):
-                requesite = f"{idx[0]} {str(idx[1]).replace(" ", "-")} {idx[2]} {idx[3]} {str(idx[4]).replace(":","-")}.xlsx".replace("/", "-")
+                requesite = f"{idx[0]} {str(idx[1]).replace(" ", "-")} {str(idx[2]).replace(" ", "-")} {str(idx[3]).replace("/", "-")} {str(idx[4]).replace(":","-")}"
                 documentosdir = Path("documentos_gerados")
                 documento = documentosdir.glob("*.xlsx")
                 for doc in documento:
@@ -243,7 +224,7 @@ class Documentos:
             self.page.update()
         
         def abrirdoc(self, idx) -> None:
-            requesite = f"{idx[0]} {str(idx[1]).replace(" ", "-")} {idx[2]} {idx[3]} {str(idx[4]).replace(":","-")}.xlsx".replace("/", "-")
+            requesite = f"{idx[0]} {str(idx[1]).replace(" ", "-")} {str(idx[2]).replace(" ", "-")} {str(idx[3]).replace("/", "-")} {str(idx[4]).replace(":","-")}"
             print(requesite)
             try:
                 documentosdir = Path("documentos_gerados")
@@ -258,9 +239,9 @@ class Documentos:
                             for _ in range(0,10):
                                 pass
                             self.loading_(False)
-                            self.page.launch_url(f"http://192.168.3.59:8001/pdf/{pdf_path.name}")
-                        if pdf_path.exists():
-                            self.page.launch_url(f"http://192.168.3.59:8001/pdf/{pdf_path.name}")
+                            self.page.launch_url(f"http://192.168.0.245:8001/pdf/{pdf_path.name}")
+                        elif pdf_path.exists():
+                            self.page.launch_url(f"http://192.168.0.245:8001/pdf/{pdf_path.name}")
             except Exception as e:
                 self.main.barra_aviso(f"Erro ao gerar visualização: {str(e)}", ft.Colors.RED)
                 print("Erro na função",str(e))
