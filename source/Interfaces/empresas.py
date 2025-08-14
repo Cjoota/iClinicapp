@@ -19,13 +19,26 @@ class Empresas:
             focused_border_color="#74FE4E",
             label_style=ft.TextStyle(color=ft.Colors.GREY_800)
         )
+
+        self.tipo_doc = ft.Dropdown(
+            label="Tipo Documento",
+            options=[
+                ft.dropdown.Option("CNPJ"),
+                ft.dropdown.Option("CEI"),
+                ft.dropdown.Option("CAEPF"),
+            ],
+            value="CNPJ",
+            width=150,
+            on_change=self.on_tipo_doc_change
+        )
+
         self.cnpj = ft.TextField(
-            label="CNPJ",
+            label="CNPJ / CEI / CAEPF",
             border_radius=10,
             focused_border_color="#74FE4E",
-            max_length=18,
+            max_length=20,
             label_style=ft.TextStyle(color=ft.Colors.GREY_800),
-            on_change=self.mascarar_cnpj
+            on_change=self.mascarar_documento
         )
         self.contato = ft.TextField(
             label="Contato",
@@ -67,23 +80,56 @@ class Empresas:
             bgcolor="#A1FB8B",
         )
 
-    def mascarar_cnpj(self, e):
-        valor = re.sub(r'\D', '', e.control.value)[:14] 
-        formatado = ""
+    def on_tipo_doc_change(self, e):
+        self.mascarar_documento(None)
 
-        if len(valor) >= 1:
-            formatado += valor[:2]
-        if len(valor) >= 3:
-            formatado = valor[:2] + "." + valor[2:5]
-        if len(valor) >= 6:
-            formatado = valor[:2] + "." + valor[2:5] + "." + valor[5:8]
-        if len(valor) >= 9:
-            formatado = valor[:2] + "." + valor[2:5] + "." + valor[5:8] + "/" + valor[8:12]
-        if len(valor) >= 13:
-            formatado = valor[:2] + "." + valor[2:5] + "." + valor[5:8] + "/" + valor[8:12] + "-" + valor[12:14]
+    def formatar_documento(self, numero: str, tipo: str) -> str:
+        nums = ''.join(filter(str.isdigit, numero))
 
-        e.control.value = formatado
-        e.control.update()
+        if tipo.upper() in ['CNPJ', 'CAEPF']:
+            if len(nums) > 14:
+                nums = nums[:14]
+            fmt = ""
+            if len(nums) >= 1:
+                fmt = nums[:2]
+            if len(nums) >= 3:
+                fmt = f"{nums[:2]}.{nums[2:5]}"
+            if len(nums) >= 6:
+                fmt = f"{nums[:2]}.{nums[2:5]}.{nums[5:8]}"
+            if len(nums) >= 9:
+                fmt = f"{nums[:2]}.{nums[2:5]}.{nums[5:8]}/{nums[8:12]}"
+            if len(nums) >= 13:
+                fmt = f"{nums[:2]}.{nums[2:5]}.{nums[5:8]}/{nums[8:12]}-{nums[12:14]}"
+            return fmt
+
+        elif tipo.upper() == 'CEI':
+            if len(nums) > 12:
+                nums = nums[:12]
+            fmt = ""
+            if len(nums) >= 1:
+                fmt = nums[:3]
+            if len(nums) >= 4:
+                fmt = f"{nums[:3]}.{nums[3:8]}"
+            if len(nums) >= 9:
+                fmt = f"{nums[:3]}.{nums[3:8]}.{nums[8:10]}"
+            if len(nums) >= 11:
+                fmt = f"{nums[:3]}.{nums[3:8]}.{nums[8:10]}-{nums[10:12]}"
+            return fmt
+
+
+    def mascarar_documento(self, e):
+        tipo = self.tipo_doc.value or "CNPJ"
+        valor = self.cnpj.value or ""
+        formatado = self.formatar_documento(valor, tipo)
+        self.cnpj.value = formatado
+        self.cnpj.update()
+
+    # ... segue o resto do seu código sem alterações
+
+    def on_resize(self, e):
+        if self.page.route == "/empresas":
+            self.responsive = Responsive(self.page)
+            self.responsive.atualizar_widgets(self.build_view())
 
     def cadastro(self, e):
         try:
@@ -114,10 +160,10 @@ class Empresas:
         self.contato.value = ""
         self.endereco.value = ""
         self.municipio.value = ""
-        textfields = [
-            self.razao, self.cnpj, self.contato, self.endereco, self.municipio
-        ]
-        for campo in textfields:
+        self.tipo_doc.value = "CNPJ" 
+
+        # Configuração dos campos
+        for campo in [self.razao, self.cnpj, self.contato, self.endereco, self.municipio, self.tipo_doc]:
             campo.height = 50
             campo.border_radius = 16
             campo.filled = True
@@ -125,48 +171,74 @@ class Empresas:
             campo.border_color = ft.Colors.GREY_300
             campo.focused_border_color = "#74FE4E"
 
+        # Ajuste dos labels
+        self.cnpj.label = "Número"
+        self.tipo_doc.label = "Tipo"
+        
+        # Criação da linha para documento (agora sem o label "Documento")
+        linha_documento = ft.Row(
+            controls=[
+                self.tipo_doc,
+                self.cnpj,
+            ],
+            spacing=10,
+            alignment=ft.MainAxisAlignment.START,
+        )
+
         self.dialog_cadastro = ft.AlertDialog(
             modal=True,
             bgcolor=ft.Colors.WHITE,
             title=ft.Text(
-            "Cadastrar Nova Empresa",
-            size=22,
-            weight=ft.FontWeight.BOLD
-        ),
-        content=ft.Container(
-            content=ft.Column(
-                controls=[
-                    self.razao,
-                    self.cnpj,
-                    self.contato,
-                    self.endereco,
-                    self.municipio,
-                ],
-                tight=True,
-                spacing=12,
-                scroll=ft.ScrollMode.AUTO,
+                "Cadastrar Nova Empresa",
+                size=22,
+                weight=ft.FontWeight.BOLD
             ),
-            width=400,  # 👈 aumenta a largura
-            padding=ft.padding.symmetric(horizontal=20, vertical=10),
-        ),
-        actions=[
-            ft.ElevatedButton(
-                "Cancelar",
-                on_click=self.fechar_dialog_cadastro,
-                bgcolor=ft.Colors.RED_100,
-                color=ft.Colors.RED_900
+            content=ft.Container(
+                content=ft.Column(
+                    controls=[
+                        ft.Column([
+                            ft.Text("Razão Social", size=12, color=ft.Colors.GREY_600),
+                            self.razao
+                        ], spacing=2),
+                        linha_documento,  # Agora só com tipo e número
+                        ft.Column([
+                            ft.Text("Contato", size=12, color=ft.Colors.GREY_600),
+                            self.contato
+                        ], spacing=2),
+                        ft.Column([
+                            ft.Text("Endereço", size=12, color=ft.Colors.GREY_600),
+                            self.endereco
+                        ], spacing=2),
+                        ft.Column([
+                            ft.Text("Município", size=12, color=ft.Colors.GREY_600),
+                            self.municipio
+                        ], spacing=2),
+                    ],
+                    spacing=15,
+                    scroll=ft.ScrollMode.AUTO,
+                ),
+                width=500,
+                height=500,
+                padding=ft.padding.symmetric(horizontal=20, vertical=10),
             ),
-            ft.ElevatedButton(
-                "Salvar",
-                on_click=self.cadastro,
-                bgcolor="#74FE4E",
-                color=ft.Colors.BLACK
-            )
-        ],
-        actions_alignment=ft.MainAxisAlignment.END,
-        shape=ft.RoundedRectangleBorder(radius=20),
-        inset_padding=ft.padding.all(20),
-    )
+            actions=[
+                ft.ElevatedButton(
+                    "Cancelar",
+                    on_click=self.fechar_dialog_cadastro,
+                    bgcolor=ft.Colors.RED_100,
+                    color=ft.Colors.RED_900
+                ),
+                ft.ElevatedButton(
+                    "Salvar",
+                    on_click=self.cadastro,
+                    bgcolor="#74FE4E",
+                    color=ft.Colors.BLACK
+                )
+            ],
+            actions_alignment=ft.MainAxisAlignment.END,
+            shape=ft.RoundedRectangleBorder(radius=20),
+            inset_padding=ft.padding.all(20),
+        )
 
         self.page.open(self.dialog_cadastro)
         self.page.update()
@@ -178,73 +250,135 @@ class Empresas:
     def abrir_dialog_edicao(self, index):
         empresa = self.dados[index]
         
+
+        self.cnpj_original = empresa[1]
+        
         self.razao.value = empresa[0]
         self.cnpj.value = empresa[1]    
         self.contato.value = empresa[2]
         self.endereco.value = empresa[3]
         self.municipio.value = empresa[4]
 
-        for campo in [self.razao, self.cnpj, self.contato, self.endereco, self.municipio]:
+        doc = empresa[1]
+        doc_limpo = re.sub(r'\D', '', doc)
+        tipo_inferido = "CNPJ"
+
+        if len(doc_limpo) == 14 and "/" in doc and "-" in doc:
+            if doc.startswith("0") or int(doc_limpo[:3]) <= 999:
+                tipo_inferido = "CAEPF"
+            else:
+                tipo_inferido = "CNPJ"
+        elif len(doc_limpo) == 12 and "-" in doc and doc.count(".") == 2:
+            tipo_inferido = "CEI"
+
+        self.tipo_doc.value = tipo_inferido
+
+        # Configuração dos campos
+        for campo in [self.razao, self.cnpj, self.contato, self.endereco, self.municipio, self.tipo_doc]:
             campo.height = 50
             campo.border_radius = 16
             campo.filled = True
             campo.fill_color = ft.Colors.GREY_100
             campo.border_color = ft.Colors.GREY_300
             campo.focused_border_color = "#74FE4E"
+
+        # Ajuste dos labels
+        self.cnpj.label = "Número"
+        self.tipo_doc.label = "Tipo"
         
+        # Criação da linha para documento
+        linha_documento = ft.Row(
+            controls=[
+                self.tipo_doc,
+                self.cnpj,
+            ],
+            spacing=10,
+            alignment=ft.MainAxisAlignment.START,
+        )
+
+        # Trunca o nome da empresa se for muito longo
+        nome_empresa = empresa[0]
+        titulo = f"Editar Empresa: {nome_empresa[:20]}..." if len(nome_empresa) > 20 else f"Editar Empresa: {nome_empresa}"
+
         self.dialog_edicao = ft.AlertDialog(
             modal=True,
             bgcolor=ft.Colors.WHITE,
             title=ft.Text(
-                f"Editar Empresa:",
-                size=15,
+                titulo,
+                size=18,
                 weight=ft.FontWeight.BOLD
             ),
-            content=ft.Container(  
-            width=400,         
-            content=ft.Column(
-                controls=[
-                    self.razao,
-                    self.cnpj,
-                    self.contato,
-                    self.endereco,
-                    self.municipio,
-                ],
-                tight=True,
-                spacing=12,
-                scroll=ft.ScrollMode.AUTO,
-            )
-        ),
-        actions=[
-            ft.ElevatedButton(
-                "Cancelar",
-                on_click=self.fechar_dialog_edicao,
-                bgcolor=ft.Colors.RED_100,
-                color=ft.Colors.RED_900
+            content=ft.Container(
+                content=ft.Column(
+                    controls=[
+                        ft.Column([
+                            ft.Text("Razão Social", size=12, color=ft.Colors.GREY_600),
+                            self.razao
+                        ], spacing=2),
+                        linha_documento,
+                        ft.Column([
+                            ft.Text("Contato", size=12, color=ft.Colors.GREY_600),
+                            self.contato
+                        ], spacing=2),
+                        ft.Column([
+                            ft.Text("Endereço", size=12, color=ft.Colors.GREY_600),
+                            self.endereco
+                        ], spacing=2),
+                        ft.Column([
+                            ft.Text("Município", size=12, color=ft.Colors.GREY_600),
+                            self.municipio
+                        ], spacing=2),
+                    ],
+                    spacing=15,
+                    scroll=ft.ScrollMode.AUTO,
+                ),
+                width=500,
+                height=500,
+                padding=ft.padding.symmetric(horizontal=20, vertical=10),
             ),
-            ft.ElevatedButton(
-                "Salvar",
-                on_click=lambda e: self.salvar_edicao(e, index),
-                bgcolor="#74FE4E",
-                color=ft.Colors.BLACK
-            )
-        ],
-        actions_alignment=ft.MainAxisAlignment.END,
-        shape=ft.RoundedRectangleBorder(radius=20),
-        inset_padding=20,
-    )
+            actions=[
+                ft.ElevatedButton(
+                    "Cancelar",
+                    on_click=self.fechar_dialog_edicao,
+                    bgcolor=ft.Colors.RED_100,
+                    color=ft.Colors.RED_900
+                ),
+                ft.ElevatedButton(
+                    "Salvar",
+                    on_click=lambda e: self.salvar_edicao(e, index),
+                    bgcolor="#74FE4E",
+                    color=ft.Colors.BLACK
+                )
+            ],
+            actions_alignment=ft.MainAxisAlignment.END,
+            shape=ft.RoundedRectangleBorder(radius=20),
+            inset_padding=ft.padding.all(20),
+        )
+        
+        # Configura os eventos de mudança
+        self.cnpj.on_change = self.mascarar_documento  
+        self.tipo_doc.on_change = lambda e: self.mascarar_documento(None)
+        
+        # Abre o diálogo
         self.page.open(self.dialog_edicao)
+        
+        # Aplica a máscara
+        self.mascarar_documento(None)
         self.page.update()
 
     def salvar_edicao(self, e, index):
         try:
             cnpj_original = self.dados[index][1]  
-
+            novo_cnpj = self.cnpj.value
             atualizarempresa(cnpj_original, "razao", self.razao.value)
+            atualizarempresa(cnpj_original, "cnpj", self.cnpj.value)
             atualizarempresa(cnpj_original, "contato", self.contato.value)
             atualizarempresa(cnpj_original, "endereco", self.endereco.value)
             atualizarempresa(cnpj_original, "municipio", self.municipio.value)
 
+            if cnpj_original != novo_cnpj:
+                atualizarempresa(cnpj_original, "cnpj", novo_cnpj)
+            
             self.dados = verempresa()
             self.tabempresas.content = self.buildtableE(self.gerarlinhas(self.dados))
             self.tabempresas.update()
@@ -276,13 +410,13 @@ class Empresas:
         if self.responsive.is_mobile():
             columns = [
                 ft.DataColumn(ft.Text("Razão Social", text_align=ft.TextAlign.CENTER)),
-                ft.DataColumn(ft.Text("CNPJ", text_align=ft.TextAlign.CENTER)),
+                ft.DataColumn(ft.Text("CNPJ / CAEPF / CEI", text_align=ft.TextAlign.CENTER)),
                 ft.DataColumn(ft.Text("Ações", text_align=ft.TextAlign.CENTER)),
             ]
         else:
             columns = [
                 ft.DataColumn(ft.Text("Razão Social", text_align=ft.TextAlign.CENTER)),
-                ft.DataColumn(ft.Text("CNPJ", text_align=ft.TextAlign.CENTER)),
+                ft.DataColumn(ft.Text("CNPJ / CAEPF / CEI", text_align=ft.TextAlign.CENTER)),
                 ft.DataColumn(ft.Text("Contato", text_align=ft.TextAlign.CENTER)),
                 ft.DataColumn(ft.Text("Endereço", text_align=ft.TextAlign.CENTER)),
                 ft.DataColumn(ft.Text("Município", text_align=ft.TextAlign.CENTER)),
