@@ -157,6 +157,7 @@ class Sidebar:
                 self.menu_item(ft.Icons.CREATE_ROUNDED, "Gerar exames", "/criar_exame"),
                 self.menu_item(ft.Icons.DESCRIPTION, "Exames gerados", "/exames_gerados"),
                 self.menu_item(ft.Icons.CALENDAR_TODAY, "Agendamento", "/agendamento"),
+                self.menu_item(ft.Icons.ASSIGNMENT, "Relacoes", "/relacoes"),
             ]
             return ft.Container(
                 content=ft.Column([ft.Column(self.sidebar_items, expand=True), self.avatar],
@@ -182,6 +183,7 @@ class Sidebar:
                 self.menu_item(ft.Icons.BUSINESS, "Empresas", "/empresas"),
                 self.menu_item(ft.Icons.CREATE_ROUNDED, "Gerar exames", "/gerardoc"),
                 self.menu_item(ft.Icons.DESCRIPTION, "Exames gerados", "/documentos"),
+                self.menu_item(ft.Icons.ASSIGNMENT, "Relacoes", "/relacoes"),
             ]
             return ft.Container(
                 content=ft.Row(self.sidebar_items_mobile, alignment=ft.MainAxisAlignment.CENTER,
