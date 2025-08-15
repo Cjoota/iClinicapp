@@ -1,21 +1,19 @@
-
-import flet as ft
-from Interfaces.sidebar import Sidebar
-from Interfaces.main_interface import Main_interface
-from Interfaces.telaresize import Responsive
-from funcoes import listar_empresas_com_agendamento
-from funcoes import verempresa
-from database.databasecache import ContabilidadeDB
-from database.models import Agendamentos
 from datetime import datetime
+import flet as ft
 
-class Agendamento:
+from src.pages.HomePage.interface import HomePage
+from src.utils.telaresize import Responsive
+from src.functions.funcs import listar_empresas_com_agendamento,verempresa
+from src.database.databasecache import ContabilidadeDB
+from src.database.models import Agendamentos
+
+
+class AppointmentPage:
     def __init__(self, page: ft.Page):
         self.page = page
         self.db = ContabilidadeDB()
         self.responsive = Responsive(page)
-        self.sidebar = Sidebar(page)
-        self.main = Main_interface(page)
+        self.main = HomePage(page)
         self.agendamentos = listar_empresas_com_agendamento()
         self.linhas = self.gerar_linhas(self.agendamentos)
         self.tabela = self.build_table(self.linhas)

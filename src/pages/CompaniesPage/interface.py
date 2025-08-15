@@ -1,16 +1,16 @@
 import re
 import flet as ft
-from funcoes import verempresa, cadasempresa, excluiremp
-from Interfaces.telaresize import Responsive
-from Interfaces.sidebar import Sidebar
-from Interfaces.main_interface import Main_interface
-from funcoes import atualizarempresa
 
-class Empresas:
+from src.functions.funcs import verempresa, cadasempresa, excluiremp,atualizarempresa
+from src.utils.telaresize import Responsive
+from src.pages.HomePage.interface import HomePage
+
+
+class CompaniesPage:
     def __init__(self, page: ft.Page):
         self.page = page
         self.responsive = Responsive(self.page)
-        self.main = Main_interface(self.page)
+        self.main = HomePage(self.page)
         self.dados = verempresa()
         """ Controles """
         self.razao = ft.TextField(

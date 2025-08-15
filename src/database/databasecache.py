@@ -2,6 +2,7 @@ import asyncio
 import datetime
 import time
 import logging
+import os
 from typing import Dict, Optional, Any
 from decimal import Decimal
 from dataclasses import dataclass
@@ -10,8 +11,8 @@ from sqlalchemy import select, func, delete
 from dotenv import load_dotenv
 from sqlalchemy.engine import create_engine
 from sqlalchemy.orm import sessionmaker,Session
-import os
-from database.models import Base, Caixa, CaixaMensal, ContaAPagar, CaixaDiario
+
+from src.database.models import Base, Caixa, CaixaMensal, ContaAPagar, CaixaDiario
 
 load_dotenv()
 logging.basicConfig(level=logging.INFO)

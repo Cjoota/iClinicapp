@@ -1,14 +1,15 @@
 import flet as ft
 import asyncio
 
-from Interfaces.Login_interface import Login
-from Interfaces.cadastro import Cadastro
-from Interfaces.agendamento import Agendamento
-from Interfaces.layout import MainLayout
-from Interfaces.main_interface import Main_interface
-from Interfaces.exames_prontos import ExamesProntos
-from Interfaces.contab import ContabilidadePage
-from Interfaces.empresas import Empresas
+from src.pages.LoginPage.interface import LoginPage
+from src.pages.RegisterPage.interface import RegisterPage
+from src.pages.AppointmentsPage.interface import AppointmentPage
+from src.core.layout import MainLayout
+from src.pages.HomePage.interface import HomePage
+from src.pages.GeneratedExamsPage.interface import GeneratedExamsPage
+from src.pages.AccountingPage.interface import AccountingPage
+from src.pages.CompaniesPage.interface import CompaniesPage
+from src.pages.CreateExamPage.interface import CreateExamPage
 
 class Router:
     def __init__(self, page: ft.Page):
@@ -16,9 +17,9 @@ class Router:
         self.main_layout = None
 
         self.no_AuthRoutes = {
-            "/": self.contentRouteBuilder(Login, "/"),
-            "/login": self.contentRouteBuilder(Login, "/login"),
-            "/cadastro": self.contentRouteBuilder(Cadastro, "/cadastro"),
+            "/": self.contentRouteBuilder(LoginPage, "/"),
+            "/login": self.contentRouteBuilder(LoginPage, "/login"),
+            "/cadastro": self.contentRouteBuilder(RegisterPage, "/cadastro"),
         }
         self.AuthRoutesRequired = {
             "/home": self.main_interface_content,
@@ -99,19 +100,16 @@ class Router:
 
     # Métodos de conteúdo (retornam apenas o conteúdo, não a view completa)
     async def main_interface_content(self):
-        from Interfaces.main_interface import Main_interface
-        main_view = Main_interface(self.page)
+        main_view = HomePage(self.page)
         return await main_view.build_content()
 
     async def documentos_content(self):
-        from Interfaces.exames_prontos import ExamesProntos
-        documentos_view = ExamesProntos(self.page)
+        documentos_view = GeneratedExamsPage(self.page)
         controle = await documentos_view.build_content()
         return controle
 
     def contabilidade_content(self):
-        from Interfaces.contab import ContabilidadePage
-        contab_view = ContabilidadePage(self.page)
+        contab_view = AccountingPage(self.page)
         if self.page.session.get("perm") == "all":
             return contab_view.build_content()
         else:
@@ -121,26 +119,24 @@ class Router:
             )
 
     async def empresas_content(self):
-        from Interfaces.empresas import Empresas
-        empresas_view = Empresas(self.page)
+        empresas_view = CompaniesPage(self.page)
         controle = await empresas_view.build_content()
         return controle
 
     def gerardoc_content(self):
-        from Interfaces.gerarDoc import Gerardoc
-        gerardoc_view = Gerardoc(self.page)
+        gerardoc_view = CreateExamPage(self.page)
         controle = gerardoc_view.build_content()
         return controle
 
     def agendamentos_content(self):
-        agendament_view = Agendamento(self.page)
+        agendament_view = AppointmentPage(self.page)
         return agendament_view.build_content()
 
     async def login_view(self):
-        login_view = Login(self.page)
+        login_view = LoginPage(self.page)
         controle = await login_view.build_view()
         return ft.View("/login", [controle])
 
     def cadastro_view(self):
-        cadastro = Cadastro(self.page)
+        cadastro = RegisterPage(self.page)
         return ft.View("/cadastro", [cadastro.build_view()])

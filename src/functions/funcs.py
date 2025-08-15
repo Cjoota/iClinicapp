@@ -6,15 +6,17 @@ import re
 import psycopg2
 import datetime
 import logging
-from database.datacreator import connectlocal,commitlocal
-from database.databasecache import ContabilidadeDB
-from database.models import CaixaDiario, CaixaMensal,User,Agendamentos,Empresa
-from sqlalchemy.sql import insert, select
 from pathlib import Path
 import json
 import subprocess
 import platform
-from database.models import Empresa
+
+from src.database.datacreator import connectlocal,commitlocal
+from src.database.databasecache import ContabilidadeDB
+from src.database.models import CaixaDiario, CaixaMensal,User,Agendamentos,Empresa
+from sqlalchemy.sql import insert, select
+
+
 
 # Habilitando o sistema de log de erros.
 logging.basicConfig(level=logging.INFO)

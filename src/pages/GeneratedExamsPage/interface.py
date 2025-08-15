@@ -1,17 +1,16 @@
-
-import asyncio
 import flet as ft
 from pathlib import Path
-from Interfaces.main_interface import Main_interface
-from Interfaces.sidebar import Sidebar
-from Interfaces.telaresize import Responsive
-from funcoes import converter_xlsx_para_pdf
 from datetime import datetime
-class ExamesProntos:
+
+from src.pages.HomePage.interface import HomePage
+from src.utils.telaresize import Responsive
+from src.functions.funcs import converter_xlsx_para_pdf
+
+class GeneratedExamsPage:
         def __init__(self,page:ft.Page) -> None:
             self.page = page
             self.responsive = Responsive(self.page)
-            self.main = Main_interface(self.page)
+            self.main = HomePage(self.page)
             self.documentosprontos = self.documentosgerados()
             self.docinterface = ft.ListView(expand=True,divider_thickness=1)
             self.documentosselecionados = None
@@ -68,7 +67,6 @@ class ExamesProntos:
 
         async def build_content(self):
             if self.responsive.is_desktop():
-                self.sidebar = Sidebar(self.page)
                 self.tabela_exames = ft.Container(
                     content=self.buildtable(self.gerar_linhas(self.documentosprontos)),border_radius=10,expand=True
                 )
@@ -89,8 +87,7 @@ class ExamesProntos:
                 )
                 return self.doccontent
             elif self.responsive.is_tablet():
-                self.main = Main_interface(self.page)
-                self.sidebar = Sidebar(self.page)
+                self.main = HomePage(self.page)
                 self.printbutton = ft.TextButton(icon=ft.Icons.PRINT, text="Imprimir selecionados", on_click=lambda e: self.imprimir(e),width=150,style=ft.ButtonStyle(bgcolor=ft.Colors.WHITE))
                 self.deletebutton = ft.TextButton(icon=ft.Icons.DELETE, text="Excluir selecionados", on_click=lambda e: self.delete(e),width=150,
                                                 icon_color=ft.Colors.RED,style=ft.ButtonStyle(text_style=ft.TextStyle(color=ft.Colors.RED),color=ft.Colors.with_opacity(0.4, ft.Colors.RED),bgcolor=ft.Colors.WHITE))
@@ -122,8 +119,7 @@ class ExamesProntos:
                 height=self.page.height,
                 )
             elif self.responsive.is_mobile():
-                self.main = Main_interface(self.page)
-                self.sidebar = Sidebar(self.page)
+                self.main = HomePage(self.page)
                 self.printbutton = ft.TextButton(icon=ft.Icons.PRINT, text="Imprimir selecionados", on_click=lambda e: self.imprimir(e),width=130,style=ft.ButtonStyle(bgcolor=ft.Colors.WHITE))
                 self.deletebutton = ft.TextButton(icon=ft.Icons.DELETE, text="Excluir selecionados", on_click=lambda e: self.delete(e),width=130,
                                                 icon_color=ft.Colors.RED,style=ft.ButtonStyle(text_style=ft.TextStyle(color=ft.Colors.RED),color=ft.Colors.with_opacity(0.4, ft.Colors.RED),bgcolor=ft.Colors.WHITE))

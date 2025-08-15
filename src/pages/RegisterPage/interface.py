@@ -1,8 +1,8 @@
 import flet as ft
-from funcoes import Auth,set_cargo,set_apelido
+from src.functions.funcs import Auth,set_cargo,set_apelido
 
 
-class Cadastro:
+class RegisterPage:
     """ SISTEMA DE CADASTRO E INTERFACE \n -
     """
     def __init__(self,page:ft.Page):

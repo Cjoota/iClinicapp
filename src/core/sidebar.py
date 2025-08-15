@@ -1,16 +1,17 @@
 import asyncio
 import flet as ft
-import datetime as dt
-from Interfaces.telaresize import Responsive
-from Interfaces.Login_interface import Login
-from funcoes import Verificacoes, get_cargo, get_apelido
 import gender_guesser.detector as gender
+
+from src.utils.telaresize import Responsive
+from src.pages.LoginPage.interface import LoginPage
+from src.functions.funcs import Verificacoes, get_cargo, get_apelido
+
 
 class Sidebar:
     def __init__(self, page: ft.Page):
         self.page = page
         self.resize = Responsive(self.page)
-        self.login = Login(page)
+        self.login = LoginPage(page)
         self.vr = Verificacoes()
         self.page.on_window_event = self.fechar_app
         self.item_selecionado = self.page.route

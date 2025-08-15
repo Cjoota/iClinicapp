@@ -1,9 +1,7 @@
 import flet as ft 
-from funcoes import Auth, get_cargo
+from src.functions.funcs import Auth, get_cargo
 
-
-
-class Login:
+class LoginPage:
     """SISTEMA DE LOGIN\n-
 - Gerencia o login e gera a pagina de login.\n
 

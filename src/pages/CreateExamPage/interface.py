@@ -1,19 +1,20 @@
 from openpyxl import load_workbook
-from funcoes import puxardados, verempresa
+from datetime import date
 import flet as ft
 import datetime as dt
 from pathlib import Path
-from Interfaces.telaresize import Responsive
-from Interfaces.main_interface import Main_interface
-from Interfaces.sidebar import Sidebar
-from datetime import date
-from controleexames import ControleExames
-class Gerardoc:
+
+from src.utils.telaresize import Responsive
+from src.pages.HomePage.interface import HomePage
+from src.functions.funcs import puxardados, verempresa
+from src.utils.controleexames import ControleExames
+
+class CreateExamPage:
         def __init__(self,page:ft.Page) -> None:
             self.page = page
             self.controle = ControleExames()
             self.responsive = Responsive(self.page)
-            self.main = Main_interface(self.page)
+            self.main = HomePage(self.page)
             self.modelos_excel = self.carregar_modelos_excel()
             self.dataselect = None
             self.empresas_drop = verempresa()

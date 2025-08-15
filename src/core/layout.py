@@ -1,7 +1,7 @@
 import flet as ft
 import asyncio
-from Interfaces.sidebar import Sidebar
-from Interfaces.telaresize import Responsive
+from src.core.sidebar import Sidebar
+from src.utils.telaresize import Responsive
 
 class MainLayout:
     def __init__(self, page: ft.Page):

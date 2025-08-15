@@ -3,16 +3,14 @@ import asyncio
 import datetime as dt
 import asyncio
 from pathlib import Path
-from Interfaces.sidebar import Sidebar
-from Interfaces.telaresize import Resize, Responsive
+from src.utils.telaresize import Resize, Responsive
 
-class Main_interface:
+class HomePage:
     def __init__(self, page: ft.Page):
         self.page = page
         self.page.on_resized = self.on_resize
         self.resize = Resize(self.page)
         self.responsive = Responsive(self.page)
-        self.sidebar = Sidebar(self.page)
         self.parar_evento = asyncio.Event()
         self.relogio = ft.Text("", text_align=ft.TextAlign.CENTER)
         self.gerados = self.get_gerados()

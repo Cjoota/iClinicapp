@@ -1,11 +1,12 @@
-from funcoes import excluir_agendamentos_vencidos
 import flet as ft
-from api import iniciar_servidor_fastapi
-from database.databasecache import inicializar_db,contabilidade_db
-from routes import Router
-from funcoes import Verificacoes
 import logging
 import atexit
+
+from src.functions.funcs import excluir_agendamentos_vencidos,Verificacoes
+from src.core.api import iniciar_servidor_fastapi
+from src.database.databasecache import inicializar_db,contabilidade_db
+from src.core.routes import Router
+
 #Habilida o sistema de log.
 logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger("CORE")

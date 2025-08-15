@@ -1,22 +1,21 @@
-from funcoes import vercontas
 from decimal import Decimal
-from database.models import ContaAPagar,Caixa
-from database.databasecache import ContabilidadeDB,contabilidade_db
-from Interfaces.main_interface import Main_interface
 import locale
 import flet as ft
-from Interfaces.sidebar import Sidebar
-from Interfaces.telaresize import Responsive
 
-class ContabilidadePage:
+from src.functions.funcs import vercontas
+from src.database.models import ContaAPagar,Caixa
+from src.database.databasecache import ContabilidadeDB,contabilidade_db
+from src.pages.HomePage.interface import HomePage
+from src.utils.telaresize import Responsive
+
+class AccountingPage:
     def __init__(self, page: ft.Page):
         locale.setlocale(locale.LC_ALL, 'pt_BR.UTF-8')
         self.page = page
         self.responsive = Responsive(self.page)
-        self.sidebar = Sidebar(self.page)
         self.db = ContabilidadeDB()
         self.dados_tabela = []
-        self.main_interface_instance = Main_interface(page)
+        self.main_interface_instance = HomePage(page)
         self.card_dados = contabilidade_db.cache.get("contabilidade")
         self.contas_tabela = self.page.run_task(self.get_contas).result()
         self.selected_chip = None

@@ -16,7 +16,7 @@ def iniciar_servidor_fastapi():
     global servidor_iniciado
     if not servidor_iniciado:
         def rodar_servidor():
-            subprocess.run(["uvicorn", "source.api:app", "--port", "8001", "--host", "0.0.0.0"]) 
+            subprocess.run(["uvicorn", "src.core.api:app", "--port", "8001", "--host", "0.0.0.0"]) 
         thread = threading.Thread(target=rodar_servidor, daemon=True)
         thread.start()
         servidor_iniciado = True
