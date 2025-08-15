@@ -344,7 +344,8 @@ class Verificacoes:
 
 
     async def updiario(self):
-        try:          
+        try:
+            self.set_config("d",True)
             date = datetime.datetime.now()
             caixa = await self.db._executar_diario(self.db.async_session())
             async with self.db.async_session() as session:
@@ -370,7 +371,7 @@ class Verificacoes:
             hora_atual = agora.time()
 
             
-            if datetime.time(18, 0) <= hora_atual <= datetime.time(18, 1) and not self.get_config("d"):
+            if datetime.time(18, 0) <= hora_atual <= datetime.time(23,59) and not self.get_config("d"):
                 logging.info(f"São 18h! Executando upload para DB... {agora}")
                 await self.updiario()
                 self.set_config("d",True)
