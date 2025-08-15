@@ -4,6 +4,28 @@ from collections import defaultdict
 from openpyxl import load_workbook
 from src.utils.telaresize import Responsive
 import re
+from datetime import datetime
+
+def tratar_data(data_exame):
+    if not data_exame:
+        return None
+    if isinstance(data_exame, datetime):
+        return data_exame.strftime("%d/%m/%Y")
+    if isinstance(data_exame, int) or isinstance(data_exame, float):
+        data_str = str(int(data_exame))
+        try:
+            if len(data_str) == 8:
+                return datetime.strptime(data_str, "%d%m%Y").strftime("%d/%m/%Y")
+        except:
+            return data_str
+    if isinstance(data_exame, str):
+        for fmt in ("%d/%m/%Y", "%d-%m-%Y", "%Y-%m-%d", "%d%m%Y"):
+            try:
+                return datetime.strptime(data_exame, fmt).strftime("%d/%m/%Y")
+            except:
+                continue
+        return data_exame
+    return str(data_exame)
 
 class Billings:
     def __init__(self, page: ft.Page):
@@ -36,7 +58,7 @@ class Billings:
         if not relacoes_dir.exists():
             return {}
 
-        for arquivo in relacoes_dir.rglob("*.xlsx"):
+        for arquivo in relacoes_dir.rglob("*.[xX][lL][sS][xX]"):
             if "modelo" in arquivo.name.lower():
                 continue
 
@@ -45,23 +67,23 @@ class Billings:
                 empresa_nome = partes[0].strip()
                 cnpj = ""  # Se quiser, pode tentar extrair o CNPJ de outro lugar
             else:
-                empresa_nome = arquivo.stem
+                empresa_nome = arquivo.stem.split("_")[0]
                 cnpj = ""
 
             try:
                 wb = load_workbook(arquivo)
                 ws = wb.active
-                for row in ws.iter_rows(min_row=6, values_only=True):
+                for row in ws.iter_rows(min_row=5, values_only=True):
                     if not row or len(row) < 11:
                         continue
                     nome_colaborador = row[1]
                     exames = row[3]
-                    data_exame = row[10]
+                    data_exame = tratar_data(row[10])
                     if nome_colaborador and exames and data_exame:
                         exames_por_empresa[(empresa_nome, cnpj)].append({
                             "exame": exames,
                             "colaborador": nome_colaborador,
-                            "data": str(data_exame),
+                            "data": data_exame,
                             "hora": "",
                             "arquivo": arquivo
                         })
@@ -208,8 +230,8 @@ class Billings:
                 [
                     ft.Container(
                         content=main_content,
-                        bgcolor=ft.Colors.WHITE,           # Fundo branco só no bloco central
-                        border_radius=30,                  # Mais arredondado
+                        bgcolor=ft.Colors.WHITE,          
+                        border_radius=30,                  
                         padding=30,
                         margin=ft.margin.symmetric(horizontal=20, vertical=20),
                         expand=True,

@@ -1,76 +1,85 @@
-
 import datetime
+import re
 from pathlib import Path
 from openpyxl import load_workbook
 import json
 import shutil
+
 class ControleExames:
     def __init__(self, pasta_export="exportados"):
         self.raiz = Path("relacoes")
-        self.raiz_modelos = Path(r"relacoes/modelos")
-        self.modelo = Path(r"relacoes/modelos/relacao.xlsx")
+        self.raiz_modelos = Path("relacoes/modelos")
+        self.modelo = Path("relacoes/modelos/relacao.xlsx")
         self.json = Path("Relacao_empresas.json")
         self.pasta_export = Path(pasta_export)
+
         if not self.raiz.exists():
             self.raiz.mkdir(exist_ok=True)
         if not self.raiz_modelos.exists():
             self.raiz_modelos.mkdir(exist_ok=True)
         if not self.pasta_export.exists():
             self.pasta_export.mkdir(exist_ok=True)
+
         if datetime.datetime.now().day == 1:
             self.fechar_mes()
         self.init_json()
 
-
     def init_json(self):   
         dados = {} 
         if not self.json.exists():
-            with open("Relacao_empresas.json", "w",encoding="utf-8") as f:
-                json.dump(dados,f,indent=4,ensure_ascii=False)
+            with open(self.json, "w", encoding="utf-8") as f:
+                json.dump(dados, f, indent=4, ensure_ascii=False)
 
-    def _carregar_json(self,empresa):
+    def _carregar_json(self, empresa):
         try:
-            caminho = Path("Relacao_empresas.json")
-            with open(caminho, "r", encoding="utf-8") as f:
+            with open(self.json, "r", encoding="utf-8") as f:
                 dados = json.load(f)
                 return dados[empresa]
         except:
-            self._salvar_json(empresa,6)
-            with open(caminho, "r", encoding="utf-8") as f:
+            self._salvar_json(empresa, 6)
+            with open(self.json, "r", encoding="utf-8") as f:
                 dados = json.load(f)
                 return dados[empresa]
 
-
-    def _salvar_json(self,empresa,value):
-        with open("Relacao_empresas.json", "r", encoding="utf-8") as f:
+    def _salvar_json(self, empresa, value):
+        with open(self.json, "r", encoding="utf-8") as f:
             dados = json.load(f)
         dados[empresa] = value
-        with open("Relacao_empresas.json", "w", encoding="utf-8") as f:
-                json.dump(dados, f, ensure_ascii=False, indent=4)
- 
+        with open(self.json, "w", encoding="utf-8") as f:
+            json.dump(dados, f, ensure_ascii=False, indent=4)
 
-    def _criar_planilha(self,empresa:str):
+    def _criar_planilha(self, empresa: str):
         wb = load_workbook(self.modelo)
         ws = wb.active
         ws["B2"] = empresa
-        empresa_arquivo = f"{empresa}_{datetime.datetime.now().strftime("%m-%Y")}.xlsx"
+        empresa_arquivo = f"{empresa}_{datetime.datetime.now().strftime('%m-%Y')}.xlsx"
         saida = Path("relacoes")
-        wb.save(fr"{saida}/{empresa_arquivo}")
+        wb.save(saida / empresa_arquivo)
 
+    def _limpar_texto_excel(self, texto):
+        if not texto:
+            return ""
+        texto = re.sub(r'[~*/:?[\]\\<>|]', '', str(texto))
+        return texto.strip()
+    
     def registrar_exames(self, empresa: str, nome: str, exames: list[str], data_exame: str):
-        relacao = Path(rf"relacoes/{empresa}_{datetime.datetime.now().strftime("%m-%Y")}.xlsx")
+        relacao = Path(f"relacoes/{empresa}_{datetime.datetime.now().strftime('%m-%Y')}.xlsx")
         if not relacao.exists():
             self._criar_planilha(empresa)
-            self._salvar_json(empresa,6)
+            self._salvar_json(empresa, 6)
+        
         wb = load_workbook(relacao)
         ws = wb.active
         inicial_value = self._carregar_json(empresa)
-        while True:
-            ws[f"B{inicial_value}"] = nome
-            ws[f"D{inicial_value}"] = f"{exames}".replace("[","").replace("]","").replace("'","").replace("'","")
-            ws[f"K{inicial_value}"]= data_exame
-            self._salvar_json(empresa,inicial_value+1)
-            break
+        
+        ws[f"B{inicial_value}"] = self._limpar_texto_excel(nome)
+        ws[f"D{inicial_value}"] = self._limpar_texto_excel(
+            ", ".join(exames) if isinstance(exames, list) else str(exames)
+        )
+        ws[f"K{inicial_value}"] = self._limpar_texto_excel(data_exame)
+        
+        self._salvar_json(empresa, inicial_value + 1)
+
         wb.save(relacao)
 
     def fechar_mes(self):
@@ -90,9 +99,7 @@ class ControleExames:
 
             if caminho_arquivo_atual.exists():
                 destino = self.pasta_export / nome_arquivo_atual
-
-            
                 shutil.move(str(caminho_arquivo_atual), str(destino))
 
             self._criar_planilha(empresa)
-            self._salvar_json(empresa, 5)
+            self._salvar_json(empresa, 6)  # resetar início na linha 6
