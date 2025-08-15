@@ -8,7 +8,6 @@ from src.utils.telaresize import Resize, Responsive
 class HomePage:
     def __init__(self, page: ft.Page):
         self.page = page
-        self.page.on_resized = self.on_resize
         self.resize = Resize(self.page)
         self.responsive = Responsive(self.page)
         self.parar_evento = asyncio.Event()
@@ -46,19 +45,6 @@ class HomePage:
         except Exception as e:
             print(f"Erro ao listar documentos gerados: {e}")
             return [0]
-
-    def on_resize(self,e):
-        if self.responsive.is_desktop():
-            self.responsive = Responsive(self.page)
-            if self.page.route == "/home":
-                self.page.views.clear()
-                self.page.views.append(
-                    ft.View(
-                        self.page.route,
-                        [self.build_view()]
-                    )
-                )
-                self.page.go(self.page.route)
     
     def documentosgerados(self) -> list:
         documents = []
@@ -215,7 +201,7 @@ class HomePage:
                     self.relogio.update()
                 await asyncio.sleep(1)
             
-    async def build_content(self):
+    def build_content(self):
         if self.responsive.is_mobile():
             self.homecontent = ft.Container(
                 content=ft.Column([

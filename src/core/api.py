@@ -23,7 +23,7 @@ def iniciar_servidor_fastapi():
 
 
 
-PDF_DIR = Path().resolve() / "pdf_temp"  # Aponta para a raiz do projeto
+PDF_DIR = Path().resolve() / "pdf_temp" 
 
 app = FastAPI()
 app.mount("/files", StaticFiles(directory=PDF_DIR), name="files")

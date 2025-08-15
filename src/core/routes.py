@@ -22,12 +22,12 @@ class Router:
             "/cadastro": self.contentRouteBuilder(RegisterPage, "/cadastro"),
         }
         self.AuthRoutesRequired = {
-            "/home": self.main_interface_content,
-            "/contabilidade": self.require_login(self.contabilidade_content),
-            "/documentos": self.documentos_content,
-            "/empresas": self.empresas_content,
-            "/gerardoc": self.require_login(self.gerardoc_content),
-            "/agendamento": self.require_login(self.agendamentos_content),
+            "/home": self.contentRouteBuilder(HomePage,"/home",True),
+            "/contabilidade": self.contabilidade_content,
+            "/exames_gerados": self.contentRouteBuilder(GeneratedExamsPage,"/exames_gerados",True),
+            "/empresas": self.contentRouteBuilder(CompaniesPage,"/empresas",True),
+            "/criar_exame": self.contentRouteBuilder(CreateExamPage,"/criar_exame",True),
+            "/agendamento": self.contentRouteBuilder(AppointmentPage,"/agendamento",True)
         }
 
         self.page.on_route_change = self.route_change
@@ -56,21 +56,24 @@ class Router:
                     return
 
                 if route_called in self.AuthRoutesRequired:
-                    if self.main_layout is None or not self.page.views or self.page.views[-1].route != "main":
-                        self.main_layout = MainLayout(self.page)
-                        self.page.views.clear()
-                        self.page.views.append(self.main_layout.get_view("main"))
-                        self.page.update()
-                        await asyncio.sleep(0.05)  
-                    
-                    content_builder = self.AuthRoutesRequired[route_called]
-                    await self.main_layout.navigate_to(route_called, content_builder)
+                    if self.logged():
+                        if self.main_layout is None or not self.page.views or self.page.views[-1].route != "main":
+                            self.main_layout = MainLayout(self.page)
+                            self.page.views.clear()
+                            self.page.views.append(self.main_layout.get_view("main"))
+                            self.page.update()
+                            await asyncio.sleep(0.05)  
+                        
+                        content_builder = self.AuthRoutesRequired[route_called]
+                        await self.main_layout.navigate_to(route_called, content_builder)
+                        return
+                    self.page.go("/login")
                     return
-
                 view = ft.View("/404", [ft.Text("Página não encontrada")])
                 self.page.views.clear()
                 self.page.views.append(view)
                 self.page.update()
+                
             except Exception as e:
                 print(f"Erro em trocar_view: {e}")
                 import traceback
@@ -87,21 +90,32 @@ class Router:
 
     def contentRouteBuilder(self, pageclass, route,requireLogin=False):
         async def handler():
-            return await self.viewContentCaller(pageclass=pageclass, route=route,requireLogin=requireLogin)
+            content = await self.viewContentCaller(pageclass=pageclass, route=route,requireLogin=requireLogin)
+            return content
         return handler
 
+
+    def logged(self) -> bool:
+        if not self.page.session.contains_key("logado"):
+            return False
+        if self.page.session.contains_key("logado"):
+            if self.page.session.get("logado"):
+                return True
 
     async def viewContentCaller(self, pageclass,requireLogin=False,route=None):
         instancePage = pageclass(self.page)
         if requireLogin:
-            return self.require_login(instancePage.build_content())
+            if self.logged():
+                return instancePage.build_content()
+            self.page.go("/login")
+            return
         build = await instancePage.build_view()
         return ft.View(route, [build])
 
     # Métodos de conteúdo (retornam apenas o conteúdo, não a view completa)
-    async def main_interface_content(self):
+    def main_interface_content(self):
         main_view = HomePage(self.page)
-        return await main_view.build_content()
+        return main_view.build_content()
 
     async def documentos_content(self):
         documentos_view = GeneratedExamsPage(self.page)

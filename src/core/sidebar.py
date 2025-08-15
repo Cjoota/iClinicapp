@@ -1,4 +1,4 @@
-import asyncio
+from pathlib import Path
 import flet as ft
 import gender_guesser.detector as gender
 
@@ -13,21 +13,10 @@ class Sidebar:
         self.resize = Responsive(self.page)
         self.login = LoginPage(page)
         self.vr = Verificacoes()
-        self.page.on_window_event = self.fechar_app
-        self.item_selecionado = self.page.route
         self.avatar = None
         self.usuario = str(self.page.session.get("user"))
         self.genero = gender.Detector()
-
-    async def fechar_app(self, e):
-        if e.data == "close":
-            self.parar_evento.set()
-            self.relogio_task.cancel()
-            try:
-                await self.relogio_task
-            except asyncio.CancelledError:
-                pass
-            self.page.window_destroy()
+        self.menu_items = []
 
     def logout(self):
         def sair(e):
@@ -54,61 +43,40 @@ class Sidebar:
         self.page.open(alert)
         alert.open = True
 
-    def menu_item(self, icon, text, rota):
-        is_selected = self.item_selecionado == rota
-        cor = '#26BD00' if is_selected else ft.Colors.GREY_600
-        cor_texto = '#26BD00' if is_selected else ft.Colors.BLACK
-        bg = ft.Colors.with_opacity(0.2, '#26BD00') if is_selected else ft.Colors.WHITE
-        border = ft.border.only(left=ft.BorderSide(4, '#26BD00')) if is_selected else None
+    def on_change(self, e, rota):
+        self.page.go(rota)
+        self.update_selection()
+        self.page.update()
 
-        return ft.Container(
-            content=ft.Row([ft.Icon(icon, color=cor), ft.Text(text, color=cor_texto)]),
+    def update_selection(self):
+        current_route = self.page.route
+        for item in self.menu_items:
+            is_selected = item.data == current_route
+            item.bgcolor = "#D4FFCA" if is_selected else ft.Colors.WHITE
+            item.border = ft.border.only(left=ft.BorderSide(4, '#26BD00')) if is_selected else None
+            
+            if hasattr(item, 'content') and isinstance(item.content, ft.Row):
+                for control in item.content.controls:
+                    if isinstance(control, ft.Icon):
+                        control.color = '#26BD00' if is_selected else ft.Colors.GREY_600
+                    elif isinstance(control, ft.Text):
+                        control.color = '#26BD00' if is_selected else ft.Colors.BLACK
+
+    def menu_item(self, icon, text, rota):
+        option = ft.Container(
+            content=ft.Row([ft.Icon(icon, color=ft.Colors.GREY_600), ft.Text(text, color=ft.Colors.BLACK)]),
             padding=5,
-            on_click=lambda _: self.page.go(rota),
+            on_click=lambda e: self.on_change(e,rota=rota),
             margin=ft.Margin(bottom=0, top=0, right=0, left=0),
             ink=True,
-            bgcolor=bg,
-            border=border,
-            border_radius=10
+            bgcolor=ft.Colors.WHITE,
+            border_radius=10,
+            data=rota,
         )
+        self.menu_items.append(option)
+        return option
 
     def build(self):
-        self.sidebar_items = [
-            ft.Container(
-                content=ft.Row([ft.Image(src="logo.png", height=60, width=60)],
-                               alignment=ft.MainAxisAlignment.CENTER,
-                               vertical_alignment=ft.CrossAxisAlignment.CENTER),
-                bgcolor=ft.Colors.WHITE,
-                margin=ft.margin.only(top=5)
-            ),
-            self.menu_item(ft.Icons.HOME_OUTLINED, "Home", "/home"),
-            self.menu_item(ft.Icons.MONETIZATION_ON, "Contabilidade", "/contabilidade"),
-            ft.Container(
-                content=ft.Row([ft.Text("Empresarial", weight=ft.FontWeight.BOLD, size=16)],
-                               alignment=ft.MainAxisAlignment.START),
-                padding=0,
-                margin=ft.Margin(bottom=0, top=10, left=5, right=0),
-            ),
-            self.menu_item(ft.Icons.BUSINESS, "Empresas", "/empresas"),
-            self.menu_item(ft.Icons.CREATE_ROUNDED, "Gerar exames", "/gerardoc"),
-            self.menu_item(ft.Icons.DESCRIPTION, "Exames gerados", "/documentos"),
-            self.menu_item(ft.Icons.CALENDAR_TODAY, "Agendamento", "/agendamento"),
-        ]
-
-        self.sidebar_items_mobile = [
-            ft.Container(
-                content=ft.Image(src=r"logo.png", width=35, height=35),
-                padding=5,
-                bgcolor=ft.Colors.WHITE,
-            ),
-            self.menu_item(ft.Icons.HOME_OUTLINED, "Home", "/home"),
-            self.menu_item(ft.Icons.PERSON, "Login", "/login"),
-            self.menu_item(ft.Icons.MONETIZATION_ON, "Contabilidade", "/contabilidade"),
-            self.menu_item(ft.Icons.BUSINESS, "Empresas", "/empresas"),
-            self.menu_item(ft.Icons.CREATE_ROUNDED, "Gerar exames", "/gerardoc"),
-            self.menu_item(ft.Icons.DESCRIPTION, "Exames gerados", "/documentos"),
-        ]
-
         if not self.resize.is_shd():
             self.avatar = ft.Container(
                 content=ft.Column([
@@ -168,6 +136,28 @@ class Sidebar:
             )
 
         if self.resize.is_desktop():
+            self.menu_items = []
+            self.sidebar_items = [
+                ft.Container(
+                    content=ft.Row([ft.Image(src="logo.png", height=60, width=60)],
+                                alignment=ft.MainAxisAlignment.CENTER,
+                                vertical_alignment=ft.CrossAxisAlignment.CENTER),
+                    bgcolor=ft.Colors.WHITE,
+                    margin=ft.margin.only(top=5)
+                ),
+                self.menu_item(ft.Icons.HOME_OUTLINED, "Home", "/home"),
+                self.menu_item(ft.Icons.MONETIZATION_ON, "Contabilidade", "/contabilidade"),
+                ft.Container(
+                    content=ft.Row([ft.Text("Empresarial", weight=ft.FontWeight.BOLD, size=16)],
+                                alignment=ft.MainAxisAlignment.START),
+                    padding=0,
+                    margin=ft.Margin(bottom=0, top=10, left=5, right=0),
+                ),
+                self.menu_item(ft.Icons.BUSINESS, "Empresas", "/empresas"),
+                self.menu_item(ft.Icons.CREATE_ROUNDED, "Gerar exames", "/criar_exame"),
+                self.menu_item(ft.Icons.DESCRIPTION, "Exames gerados", "/exames_gerados"),
+                self.menu_item(ft.Icons.CALENDAR_TODAY, "Agendamento", "/agendamento"),
+            ]
             return ft.Container(
                 content=ft.Column([ft.Column(self.sidebar_items, expand=True), self.avatar],
                                    alignment=ft.MainAxisAlignment.SPACE_BETWEEN,
@@ -180,6 +170,19 @@ class Sidebar:
                 width=self.page.width * 0.12
             )
         elif self.resize.is_mobile() or self.resize.is_tablet():
+            self.sidebar_items_mobile = [
+                ft.Container(
+                    content=ft.Image(src=r"logo.png", width=35, height=35),
+                    padding=5,
+                    bgcolor=ft.Colors.WHITE,
+                ),
+                self.menu_item(ft.Icons.HOME_OUTLINED, "Home", "/home"),
+                self.menu_item(ft.Icons.PERSON, "Login", "/login"),
+                self.menu_item(ft.Icons.MONETIZATION_ON, "Contabilidade", "/contabilidade"),
+                self.menu_item(ft.Icons.BUSINESS, "Empresas", "/empresas"),
+                self.menu_item(ft.Icons.CREATE_ROUNDED, "Gerar exames", "/gerardoc"),
+                self.menu_item(ft.Icons.DESCRIPTION, "Exames gerados", "/documentos"),
+            ]
             return ft.Container(
                 content=ft.Row(self.sidebar_items_mobile, alignment=ft.MainAxisAlignment.CENTER,
                                vertical_alignment=ft.CrossAxisAlignment.CENTER),

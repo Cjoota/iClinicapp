@@ -22,6 +22,7 @@ class MainLayout:
                 ft.Container(content=self.content_area, expand=True, padding=10)
             ], spacing=0)
         else:
+            self.sidebar.rota = self.page.route
             return ft.Row([
                 ft.Column([self.sidebar.build()], alignment=ft.MainAxisAlignment.START),
                 ft.Container(content=self.content_area, expand=True, padding=20)

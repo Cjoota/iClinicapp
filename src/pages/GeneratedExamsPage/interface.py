@@ -65,7 +65,7 @@ class GeneratedExamsPage:
                 self.loading.visible = False
                 self.page.update()
 
-        async def build_content(self):
+        def build_content(self):
             if self.responsive.is_desktop():
                 self.tabela_exames = ft.Container(
                     content=self.buildtable(self.gerar_linhas(self.documentosprontos)),border_radius=10,expand=True

@@ -505,7 +505,7 @@ class CompaniesPage:
         self.tabempresas.content = self.buildtableE(self.gerarlinhas(self.dados))
         self.tabempresas.update()
 
-    async def build_content(self):
+    def build_content(self):
         if self.responsive.is_desktop():
             self.companie_content = ft.Container(content=ft.Row(
                 [

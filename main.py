@@ -1,17 +1,18 @@
 import flet as ft
 import logging
 import atexit
+import os
+import shutil
+from pathlib import Path
 
 from src.functions.funcs import excluir_agendamentos_vencidos,Verificacoes
 from src.core.api import iniciar_servidor_fastapi
 from src.database.databasecache import inicializar_db,contabilidade_db
 from src.core.routes import Router
 
-#Habilida o sistema de log.
-logging.basicConfig(level=logging.DEBUG)
-logger = logging.getLogger("CORE")
 # Flag para identificar se as verificações iniciais aconteceram
 initialize = False
+log = logging.Logger("MAIN")
 
 class Main():
 	"""SISTEMA PRINCIPAL\n - 
@@ -26,21 +27,8 @@ class Main():
 		self.page.title = "Clinica São Lucas"
 		self.page.theme_mode = ft.ThemeMode.LIGHT
 		self.page.on_route_change = self.router.route_change
-		self.page.on_disconnect = lambda _: self.Disconnect()
 		self.page.on_connect = self.page.go("/")
 
-	def Disconnect(self):
-		""" Limpa os dados salvos durante a sessão do usuário ao sair do sistema. """
-		try:
-			if self.page.session.contains_key("user"):
-				self.page.session.remove("user")
-			if self.page.session.contains_key("logado"):
-				self.page.session.remove("Logado")
-			if self.page.client_storage.contains_key("nick"):
-				self.page.client_storage.remove("nick")
-			logger.info("Sessão Limpa")
-		except:
-			logger.info("Usuário desconectado")
 	async def init_cache(self):
 		""" Inicia o cache inteligente e preenche com as informações do DB """
 		await contabilidade_db.buscar_dados(force_update=True)
@@ -60,15 +48,17 @@ class Main():
 @atexit.register
 def limpar_cache():
 	""" Limpa o cache do banco de dados e o que o sistema gerou. """
-	print("Limpando Cache")
-	import shutil
-	from pathlib import Path
-	for d in Path(".").rglob("__pycache__"):
-		shutil.rmtree(d)	
+	absolute = Path(os.getcwd())
+	for dirpath, dirnames, _ in os.walk(absolute):
+		if '__pycache__' in dirnames:
+			pycache_path = os.path.join(dirpath, '__pycache__')
+			shutil.rmtree(pycache_path)
 	for doc in Path("pdf_temp").glob("*.pdf"):
 		doc.unlink()
-	
-ft.app(target=Main,view=ft.AppView.WEB_BROWSER, host="192.168.0.245",port=53712,assets_dir="assets")
+	locals().clear()
+	log.info("CACHE LIMPO")
+
+ft.app(target=Main,view=ft.AppView.WEB_BROWSER, host="localhost",port=53712,assets_dir=f"{Path("assets").absolute()}")
 
 
 
