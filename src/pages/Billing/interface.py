@@ -1,6 +1,5 @@
 import flet as ft
 from pathlib import Path
-from collections import defaultdict
 from openpyxl import load_workbook
 from src.utils.telaresize import Responsive
 import re
@@ -27,11 +26,12 @@ def tratar_data(data_exame):
         return data_exame
     return str(data_exame)
 
+
 class Billings:
     def __init__(self, page: ft.Page):
         self.page = page
         self.responsive = Responsive(self.page)
-        self.empresas_exames = self.listar_exames()
+        self.empresas_exames = self.listar_empresas()
         self.search_field = ft.TextField(
             hint_text="Pesquisar empresa",
             on_change=self.filtrar_empresas,
@@ -43,16 +43,20 @@ class Billings:
             border_radius=8,
             height=48
         )
-        self.expansion_list = ft.ExpansionPanelList()
+        self.expansion_list = ft.ExpansionPanelList(
+            expand_icon_color=ft.Colors.GREY_700,
+            on_change=self.expandir_empresa
+        )
         self.carregar_empresas()
 
     def limpar_nome(self, nome):
         """Remove caracteres inválidos para nomes de arquivo no Windows"""
         return re.sub(r'[\\/*?:"<>|]', "", nome)
 
-    def listar_exames(self):
+    # Agora só lista empresas, não carrega exames
+    def listar_empresas(self):
         relacoes_dir = Path("relacoes")
-        exames_por_empresa = defaultdict(list)
+        empresas = {}
 
         if not relacoes_dir.exists():
             return {}
@@ -64,41 +68,48 @@ class Billings:
             partes = arquivo.stem.split(" - ")
             if len(partes) >= 3:
                 empresa_nome = partes[0].strip()
-                cnpj = ""  # Se quiser, pode tentar extrair o CNPJ de outro lugar
+                cnpj = ""
             else:
                 empresa_nome = arquivo.stem.split("_")[0]
                 cnpj = ""
 
-            try:
-                wb = load_workbook(arquivo)
-                ws = wb.active
-                for row in ws.iter_rows(min_row=6, values_only=True):
-                    if not row or len(row) < 11:
-                        continue
-                    nome_colaborador = row[1]
-                    exames = row[3]
-                    data_exame = tratar_data(row[10])
-                    if nome_colaborador or exames or data_exame:
-                        exames_por_empresa[(empresa_nome, cnpj)].append({
-                            "exame": exames,
-                            "colaborador": nome_colaborador,
-                            "data": data_exame,
-                            "hora": "",
-                            "arquivo": arquivo
-                        })
-            except Exception as e:
-                print(f"Erro ao ler arquivo {arquivo}: {e}")
-                continue
+            empresas[(empresa_nome, cnpj)] = arquivo
 
-        return exames_por_empresa
+        return empresas
+
+    # Carrega exames só quando abrir empresa
+    def carregar_exames_empresa(self, arquivo):
+        exames = []
+        try:
+            wb = load_workbook(arquivo)
+            ws = wb.active
+            for row in ws.iter_rows(min_row=6, values_only=True):
+                if not row or len(row) < 11:
+                    continue
+                nome_colaborador = row[1]
+                exames_nome = row[3]
+                data_exame = tratar_data(row[10])
+                if nome_colaborador or exames_nome or data_exame:
+                    exames.append({
+                        "exame": exames_nome,
+                        "colaborador": nome_colaborador,
+                        "data": data_exame,
+                        "hora": "",
+                        "arquivo": arquivo
+                    })
+        except Exception as e:
+            print(f"Erro ao ler {arquivo}: {e}")
+        return exames
 
     def carregar_empresas(self, filtro=""):
         self.expansion_list.controls.clear()
-        for (empresa, cnpj), exames in self.empresas_exames.items():
+        for (empresa, cnpj), arquivo in self.empresas_exames.items():
             if filtro.lower() in empresa.lower():
-                if len(self.expansion_list.controls) >= 10:
+                if len(self.expansion_list.controls) >= 50:  # limite de empresas na tela
                     break
-                self.expansion_list.controls.append(self.criar_painel_empresa(empresa, cnpj, exames))
+                self.expansion_list.controls.append(
+                    self.criar_painel_empresa(empresa, cnpj, arquivo)
+                )
         self.page.update()
 
     def filtrar_empresas(self, e):
@@ -122,10 +133,11 @@ class Billings:
         except Exception as e:
             print(f"Erro ao excluir exame: {e}")
 
-        self.empresas_exames = self.listar_exames()
+        # Recarrega só a empresa modificada
+        self.empresas_exames = self.listar_empresas()
         self.carregar_empresas(self.search_field.value if hasattr(self, 'search_field') else "")
 
-    def criar_painel_empresa(self, empresa, cnpj, exames):
+    def criar_painel_empresa(self, empresa, cnpj, arquivo):
         return ft.ExpansionPanel(
             can_tap_header=True,
             header=ft.Container(
@@ -150,30 +162,51 @@ class Billings:
                 padding=ft.padding.symmetric(vertical=8, horizontal=12),
                 bgcolor=ft.Colors.with_opacity(0.08, ft.Colors.GREY_100), 
                 border_radius=20,
-                
             ),
             content=ft.Container(
-                content=ft.Column(
-                    [
-                        self.criar_linha_exame(exame) for exame in exames
-                    ] if exames else [
-                        ft.Text(
-                            "Nenhum exame realizado.",
-                            italic=True,
-                            size=14,
-                            color=ft.Colors.GREY_500,
-                            font_family="Roboto"
-                        )
-                    ],
-                    spacing=4
+                content=ft.Text(
+                    "Clique para carregar exames...",
+                    italic=True,
+                    size=14,
+                    color=ft.Colors.GREY_500
                 ),
                 bgcolor=ft.Colors.WHITE,
                 border_radius=20,
-                border=ft.border.all(1, ft.Colors.GREY_100),
-                margin=ft.margin.symmetric(vertical=0, horizontal=0),
-                padding=ft.padding.all(16)
+                padding=16
             )
         )
+
+    def expandir_empresa(self, e):
+        index = int(e.data)  # índice do painel expandido
+        if index < 0:
+            return  # significa que fechou tudo
+
+        panel = self.expansion_list.controls[index]
+        empresa, cnpj = list(self.empresas_exames.keys())[index]
+        arquivo = self.empresas_exames[(empresa, cnpj)]
+
+        exames = self.carregar_exames_empresa(arquivo)
+
+        panel.content = ft.Container(
+            content=ft.Column(
+                [
+                    self.criar_linha_exame(exame) for exame in exames
+                ] if exames else [
+                    ft.Text(
+                        "Nenhum exame realizado.",
+                        italic=True,
+                        size=14,
+                        color=ft.Colors.GREY_500,
+                        font_family="Roboto"
+                    )
+                ],
+                spacing=4
+            ),
+            bgcolor=ft.Colors.WHITE,
+            border_radius=20,
+            padding=16
+        )
+        self.page.update()
 
     def criar_linha_exame(self, exame):
         return ft.Row(
@@ -248,4 +281,3 @@ class Billings:
             bgcolor=ft.Colors.with_opacity(0.03, ft.Colors.GREY_100),
             expand=True
         )
-        
