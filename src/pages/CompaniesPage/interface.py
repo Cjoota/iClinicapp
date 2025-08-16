@@ -464,6 +464,8 @@ class CompaniesPage:
                     )
                 ]
             else:
+                if len(linhas) > 10:
+                    break
                 cells = [
                     ft.DataCell(ft.Text(empresa[0].upper(),size=11)),
                     ft.DataCell(ft.Text(empresa[1],size=11)),

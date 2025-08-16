@@ -39,6 +39,8 @@ class GeneratedExamsPage:
         def gerar_linhas(self, dataatt):
             linhas = []
             for exame in dataatt:
+                if len(linhas) > 10:
+                    break
                 cells = [
                         ft.DataCell(ft.Container(content=ft.Text(exame[0]), alignment=ft.alignment.center)),
                         ft.DataCell(ft.Container(content=ft.Text(exame[1]), alignment=ft.alignment.center)),
@@ -235,9 +237,9 @@ class GeneratedExamsPage:
                             for _ in range(0,10):
                                 pass
                             self.loading_(False)
-                            self.page.launch_url(f"http://192.168.0.245:8001/pdf/{pdf_path.name}")
+                            self.page.launch_url(f"http://192.168.3.59:8001/pdf/{pdf_path.name}")
                         elif pdf_path.exists():
-                            self.page.launch_url(f"http://192.168.0.245:8001/pdf/{pdf_path.name}")
+                            self.page.launch_url(f"http://192.168.3.59:8001/pdf/{pdf_path.name}")
             except Exception as e:
                 self.main.barra_aviso(f"Erro ao gerar visualização: {str(e)}", ft.Colors.RED)
                 print("Erro na função",str(e))
