@@ -31,7 +31,6 @@ class Billings:
     def __init__(self, page: ft.Page):
         self.page = page
         self.responsive = Responsive(self.page)
-        self.page.title = "Relações"
         self.empresas_exames = self.listar_exames()
         self.search_field = ft.TextField(
             hint_text="Pesquisar empresa",
@@ -97,6 +96,8 @@ class Billings:
         self.expansion_list.controls.clear()
         for (empresa, cnpj), exames in self.empresas_exames.items():
             if filtro.lower() in empresa.lower():
+                if len(self.expansion_list.controls) >= 10:
+                    break
                 self.expansion_list.controls.append(self.criar_painel_empresa(empresa, cnpj, exames))
         self.page.update()
 
@@ -126,6 +127,7 @@ class Billings:
 
     def criar_painel_empresa(self, empresa, cnpj, exames):
         return ft.ExpansionPanel(
+            can_tap_header=True,
             header=ft.Container(
                 content=ft.Column(
                     [
@@ -148,6 +150,7 @@ class Billings:
                 padding=ft.padding.symmetric(vertical=8, horizontal=12),
                 bgcolor=ft.Colors.with_opacity(0.08, ft.Colors.GREY_100), 
                 border_radius=20,
+                
             ),
             content=ft.Container(
                 content=ft.Column(
@@ -245,3 +248,4 @@ class Billings:
             bgcolor=ft.Colors.with_opacity(0.03, ft.Colors.GREY_100),
             expand=True
         )
+        
