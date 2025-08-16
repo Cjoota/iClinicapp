@@ -73,13 +73,13 @@ class Billings:
             try:
                 wb = load_workbook(arquivo)
                 ws = wb.active
-                for row in ws.iter_rows(min_row=5, values_only=True):
+                for row in ws.iter_rows(min_row=6, values_only=True):
                     if not row or len(row) < 11:
                         continue
                     nome_colaborador = row[1]
                     exames = row[3]
                     data_exame = tratar_data(row[10])
-                    if nome_colaborador and exames and data_exame:
+                    if nome_colaborador or exames or data_exame:
                         exames_por_empresa[(empresa_nome, cnpj)].append({
                             "exame": exames,
                             "colaborador": nome_colaborador,

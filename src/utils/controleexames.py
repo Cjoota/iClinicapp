@@ -73,9 +73,7 @@ class ControleExames:
         inicial_value = self._carregar_json(empresa)
         
         ws[f"B{inicial_value}"] = self._limpar_texto_excel(nome)
-        ws[f"D{inicial_value}"] = self._limpar_texto_excel(
-            ", ".join(exames) if isinstance(exames, list) else str(exames)
-        )
+        ws[f"D{inicial_value}"] = self._limpar_texto_excel(", ".join(exames) if isinstance(exames, list) else str(exames)) if not exames == [] else "ASO"
         ws[f"K{inicial_value}"] = self._limpar_texto_excel(data_exame)
         
         self._salvar_json(empresa, inicial_value + 1)
