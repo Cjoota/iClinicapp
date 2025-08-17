@@ -30,10 +30,8 @@ class AppointmentPage:
 
         self.tab_agendamentos = ft.Container(
             content=self.build_table(self.gerar_linhas(self.agendamentos)),
-   
             alignment=ft.alignment.top_center,
             expand=True,
-            adaptive=True,
             border_radius=15
         )
 
@@ -194,12 +192,14 @@ class AppointmentPage:
                 ]
         return ft.Column([
             ft.DataTable(
+                border_radius=10,
                 columns=columns,
                 rows=linhas,
                 column_spacing=100,
                 heading_row_color="#A1FB8B",
                 data_row_color=ft.Colors.WHITE,
                 heading_text_style=ft.TextStyle(size=15, weight=ft.FontWeight.BOLD),
+                expand=True
                 
             )
         ], scroll=ft.ScrollMode.ADAPTIVE)
@@ -275,12 +275,8 @@ class AppointmentPage:
             ft.Row([self.btn_novo_agendamento], alignment=ft.MainAxisAlignment.END),
             ft.Column([
                 buscar,
-            ft.Container(
-                    content=self.tab_agendamentos,
-                    border_radius=15,
-                    
-                )
-            ], expand=True, scroll=ft.ScrollMode.ADAPTIVE)
+                self.tab_agendamentos,   
+            ],expand=True)
         ], expand=True)
 
         if self.responsive.is_desktop():

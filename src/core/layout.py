@@ -63,6 +63,7 @@ class MainLayout:
                 expand=True
             )
         self.content_area.update()
+        self.sidebar.on_change(e=None,rota=route)
 
     def get_view(self, route: str):
         return ft.View(

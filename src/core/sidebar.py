@@ -17,6 +17,7 @@ class Sidebar:
         self.usuario = str(self.page.session.get("user"))
         self.genero = gender.Detector()
         self.menu_items = []
+        self.rota = self.page.route
 
     def logout(self):
         def sair(e):

@@ -4,6 +4,7 @@ import datetime as dt
 import asyncio
 from pathlib import Path
 from src.utils.telaresize import Resize, Responsive
+from src.functions.funcs import listar_empresas_com_agendamento
 
 class HomePage:
     def __init__(self, page: ft.Page):
@@ -14,11 +15,12 @@ class HomePage:
         self.relogio = ft.Text("", text_align=ft.TextAlign.CENTER)
         self.gerados = self.get_gerados()
         self.documentospr = self.documentosgerados()
+        self.agendados = len(listar_empresas_com_agendamento())
         self.saud = ft.Text(size=self.responsive.font_size(), color=ft.Colors.GREY_800, weight=ft.FontWeight.BOLD, font_family="Inter")
         self.icone = ft.Icon(ft.Icons.SUNNY if self.saudacao() == 1 or self.saudacao() == 2 else ft.Icons.DARK_MODE, color=ft.Colors.YELLOW,size=self.responsive.font_size()+20)
         self.tabct = ft.Container(content=self.buildtableE(self.gerarlinhas(self.documentospr)),border_radius=10
                                   ,border=ft.Border(left=ft.BorderSide(2,ft.Colors.GREY_200),top=ft.BorderSide(2,ft.Colors.GREY_200),right=ft.BorderSide(2,ft.Colors.GREY_200),bottom=ft.BorderSide(2,ft.Colors.GREY_200)))
-        self.cardcontainer = ft.Container(content=self.buildcards(self.gerados[0], 0, 0)
+        self.cardcontainer = ft.Container(content=self.buildcards(self.gerados[0], self.agendados, 0)
                                           ,margin=ft.Margin(left=0,top=-150,right=0,bottom=0) if self.responsive.is_desktop() else None , padding=0
                                           )
         self.page.run_task(self.clock)
@@ -114,9 +116,9 @@ class HomePage:
 
     def buildcards(self, gerados, agendados, prontos):
         self.card_diario_home = self.cardfloat(icon=ft.Icons.DOMAIN_VERIFICATION_OUTLINED, title="Exames", value=gerados,
-                                  barra="Gerados Hoje", iconbarra=ft.Icons.DOMAIN_VERIFICATION, corbarra=ft.Colors.GREEN, larg=None, color=ft.Colors.BLACK)
+                                  barra="Gerados no Total", iconbarra=ft.Icons.DOMAIN_VERIFICATION, corbarra=ft.Colors.GREEN, larg=None, color=ft.Colors.BLACK)
         self.card_mensal_home = self.cardfloat(icon=ft.Icons.PERM_CONTACT_CALENDAR_OUTLINED, title="Agendados", value=agendados,
-                                  barra="Agendados Hoje", iconbarra=ft.Icons.CALENDAR_MONTH_ROUNDED, corbarra=ft.Colors.GREEN, larg=None, color=ft.Colors.BLACK)
+                                  barra="Exames Agendados", iconbarra=ft.Icons.CALENDAR_MONTH_ROUNDED, corbarra=ft.Colors.GREEN, larg=None, color=ft.Colors.BLACK)
         self.card_contas_home = self.cardfloat(icon=ft.Icons.VERIFIED_OUTLINED, title="Exames Prontos", value=prontos,
                                   barra="Prontos Hoje", iconbarra=ft.Icons.VERIFIED, corbarra=ft.Colors.GREEN, larg=None, color=ft.Colors.BLACK)
         for card in [self.card_diario_home, self.card_mensal_home, self.card_contas_home]:

@@ -10,7 +10,7 @@ from src.pages.GeneratedExamsPage.interface import GeneratedExamsPage
 from src.pages.AccountingPage.interface import AccountingPage
 from src.pages.CompaniesPage.interface import CompaniesPage
 from src.pages.CreateExamPage.interface import CreateExamPage
-from src.pages.Billing.interface import Billings
+from src.pages.Relations.interface import Relations
 class Router:
     def __init__(self, page: ft.Page):
         self.page = page
@@ -28,11 +28,11 @@ class Router:
             "/empresas": self.contentRouteBuilder(CompaniesPage,"/empresas",True),
             "/criar_exame": self.contentRouteBuilder(CreateExamPage,"/criar_exame",True),
             "/agendamento": self.contentRouteBuilder(AppointmentPage,"/agendamento",True),
-            "/relacoes": self.contentRouteBuilder(Billings,"/relacoes",True),
+            "/relacoes": self.contentRouteBuilder(Relations,"/relacoes",True),
         }
 
         self.page.on_route_change = self.route_change
-        self.page.on_view_pop = self.view_pop
+        self.page.on_view_pop = lambda e: self.view_pop()
         self.page.on_connect = self.page.go("/")
 
     def require_login(self, content_func):
@@ -83,10 +83,11 @@ class Router:
         self.page.run_task(trocar_view)
 
     def view_pop(self, view):
-        self.page.views.pop()
+        print("to voltando")
+        """self.page.views.pop()
         if self.page.views:
             top_view = self.page.views[-1]
-            self.page.go(top_view.route)
+            self.page.go(top_view.route)"""
 
 
     def contentRouteBuilder(self, pageclass, route,requireLogin=False):

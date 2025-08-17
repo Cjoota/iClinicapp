@@ -5,29 +5,7 @@ from src.utils.telaresize import Responsive
 import re
 from datetime import datetime
 
-def tratar_data(data_exame):
-    if not data_exame:
-        return None
-    if isinstance(data_exame, datetime):
-        return data_exame.strftime("%d/%m/%Y")
-    if isinstance(data_exame, int) or isinstance(data_exame, float):
-        data_str = str(int(data_exame))
-        try:
-            if len(data_str) == 8:
-                return datetime.strptime(data_str, "%d%m%Y").strftime("%d/%m/%Y")
-        except:
-            return data_str
-    if isinstance(data_exame, str):
-        for fmt in ("%d/%m/%Y", "%d-%m-%Y", "%Y-%m-%d", "%d%m%Y"):
-            try:
-                return datetime.strptime(data_exame, fmt).strftime("%d/%m/%Y")
-            except:
-                continue
-        return data_exame
-    return str(data_exame)
-
-
-class Billings:
+class Relations:
     def __init__(self, page: ft.Page):
         self.page = page
         self.responsive = Responsive(self.page)
@@ -48,6 +26,27 @@ class Billings:
             on_change=self.expandir_empresa
         )
         self.carregar_empresas()
+
+    def tratar_data(self,data_exame):
+        if not data_exame:
+            return None
+        if isinstance(data_exame, datetime):
+            return data_exame.strftime("%d/%m/%Y")
+        if isinstance(data_exame, int) or isinstance(data_exame, float):
+            data_str = str(int(data_exame))
+            try:
+                if len(data_str) == 8:
+                    return datetime.strptime(data_str, "%d%m%Y").strftime("%d/%m/%Y")
+            except:
+                return data_str
+        if isinstance(data_exame, str):
+            for fmt in ("%d/%m/%Y", "%d-%m-%Y", "%Y-%m-%d", "%d%m%Y"):
+                try:
+                    return datetime.strptime(data_exame, fmt).strftime("%d/%m/%Y")
+                except:
+                    continue
+            return data_exame
+        return str(data_exame)
 
     def limpar_nome(self, nome):
         """Remove caracteres inválidos para nomes de arquivo no Windows"""
@@ -88,7 +87,7 @@ class Billings:
                     continue
                 nome_colaborador = row[1]
                 exames_nome = row[3]
-                data_exame = tratar_data(row[10])
+                data_exame = self.tratar_data(row[10])
                 if nome_colaborador or exames_nome or data_exame:
                     exames.append({
                         "exame": exames_nome,

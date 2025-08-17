@@ -20,14 +20,23 @@ class Main():
 	"""
 	def __init__(self, page: ft.Page) -> None:
 		self.page = page
+		self.page.title = "Clinica São Lucas"
+		self.page.bgcolor = ft.Colors.WHITE
+		self.page.theme_mode = ft.ThemeMode.LIGHT
 		self.router = Router(page)
 		self.verfy = Verificacoes()
 		self.VerificacoesIniciais()
-		self.page.bgcolor = ft.Colors.WHITE
-		self.page.title = "Clinica São Lucas"
-		self.page.theme_mode = ft.ThemeMode.LIGHT
 		self.page.on_route_change = self.router.route_change
-		self.page.on_connect = self.page.go("/")
+		self.page.on_connect = self.refresh
+	
+	def refresh(self,e):
+		sncbar=ft.SnackBar(content=ft.Text("Sessão Expirada",color=ft.Colors.BLACK),bgcolor=ft.Colors.YELLOW)
+		if self.page.session.get_keys() == []:
+			self.page.go("/")
+			return
+		self.page.session.clear()
+		self.page.go("/login")
+		self.page.open(sncbar)
 
 	async def init_cache(self):
 		""" Inicia o cache inteligente e preenche com as informações do DB """

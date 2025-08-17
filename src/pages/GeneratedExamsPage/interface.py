@@ -16,10 +16,12 @@ class GeneratedExamsPage:
             self.documentosselecionados = None
             self.loading = ft.Container(content=ft.ProgressRing(width=60 , height=60 , stroke_width=6, color="#26f553"),visible=False,bgcolor=ft.Colors.with_opacity(0.4,ft.Colors.BLACK),expand=True,width=self.page.width,height=self.page.height,alignment=ft.alignment.center)
         
-        def buildtable(self,linhas) -> ft.Column:
+        def buildTable(self,linhas) -> ft.Column:
             return ft.Column([
                 ft.Row([
                     ft.DataTable(
+                        
+                        divider_thickness=0.3,
                         column_spacing=20,
                         heading_row_color="#A1FB8B",
                         border_radius=25,
@@ -70,22 +72,22 @@ class GeneratedExamsPage:
         def build_content(self):
             if self.responsive.is_desktop():
                 self.tabela_exames = ft.Container(
-                    content=self.buildtable(self.gerar_linhas(self.documentosprontos)),border_radius=10,expand=True
+                    content=self.buildTable(self.gerar_linhas(self.documentosprontos)),border_radius=10,expand=True
                 )
                 self.search_exam = ft.TextField(label="Buscar",width=300,on_change=self.atualizar_tabela,prefix_icon=ft.Icons.SEARCH)
                 self.exames_interface = ft.Container(
                     content=ft.Column(
                         [
-                            ft.Row([self.tabela_exames],expand=True)
-                        ],expand=True),expand=True
+                            self.tabela_exames
+                        ])
                 )
                 self.doccontent = ft.Container(
                     content=ft.Column(
                         [
-                            ft.Column([ft.Text("Buscar exame:"),self.search_exam],alignment=ft.MainAxisAlignment.START,expand=True),
-                            self.main.cardmain("Exames gerados",None,self.page.height*0.90,self.exames_interface,True)
+                            ft.Column([ft.Text("Buscar exame:"),self.search_exam],alignment=ft.MainAxisAlignment.START),
+                            self.main.cardmain("Exames gerados",None,None,self.exames_interface,True)
                         ]
-                        ,alignment=ft.MainAxisAlignment.START,horizontal_alignment=ft.CrossAxisAlignment.START,expand=True,scroll=ft.ScrollMode.ADAPTIVE),expand=True,border_radius=10,adaptive=True,
+                        ,alignment=ft.MainAxisAlignment.START,horizontal_alignment=ft.CrossAxisAlignment.START,expand=True),alignment=ft.alignment.top_center
                 )
                 return self.doccontent
             elif self.responsive.is_tablet():
@@ -176,7 +178,7 @@ class GeneratedExamsPage:
             termo_busca = str(self.search_exam.value).upper()
             if termo_busca == "" or termo_busca == None:
                 self.documentosprontos = self.documentosgerados()
-                self.tabela_exames.content = self.buildtable(self.gerar_linhas(self.documentosprontos))
+                self.tabela_exames.content = self.buildTable(self.gerar_linhas(self.documentosprontos))
                 self.tabela_exames.update()
             else:
                 self.documentosprontos = self.documentosgerados()
@@ -189,7 +191,7 @@ class GeneratedExamsPage:
                         (termo_busca or "") in (linha[3] or "").upper()
                     ):
                         linhas_filtradas.append(linha)
-                self.tabela_exames.content = self.buildtable(self.gerar_linhas(linhas_filtradas))
+                self.tabela_exames.content = self.buildTable(self.gerar_linhas(linhas_filtradas))
                 self.tabela_exames.update()
         
         def delete(self,idx)-> None:
@@ -201,7 +203,7 @@ class GeneratedExamsPage:
                     if requesite in doc.name:
                         doc.unlink()
                 self.documentosprontos = self.documentosgerados()
-                self.tabela_exames.content = self.buildtable(self.gerar_linhas(self.documentosprontos))
+                self.tabela_exames.content = self.buildTable(self.gerar_linhas(self.documentosprontos))
                 alert_dialog.open = False
                 self.page.update()
             def close(e):

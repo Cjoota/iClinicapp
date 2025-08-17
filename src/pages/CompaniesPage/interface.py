@@ -12,14 +12,12 @@ class CompaniesPage:
         self.responsive = Responsive(self.page)
         self.main = HomePage(self.page)
         self.dados = verempresa()
-        """ Controles """
         self.razao = ft.TextField(
             label="Razão Social",
             border_radius=30,
             focused_border_color="#74FE4E",
             label_style=ft.TextStyle(color=ft.Colors.GREY_800)
         )
-
         self.tipo_doc = ft.Dropdown(
             label="Tipo Documento",
             options=[
@@ -31,7 +29,6 @@ class CompaniesPage:
             width=150,
             on_change=self.on_tipo_doc_change
         )
-
         self.cnpj = ft.TextField(
             label="CNPJ / CEI / CAEPF",
             border_radius=10,
@@ -67,7 +64,7 @@ class CompaniesPage:
             width=300
         )
         self.tabempresas = ft.Container(
-            content=self.buildtableE(self.gerarlinhas(self.dados)),
+            content=self.buildTable(self.gerarLinhas(self.dados)),
             border_radius=10,
             alignment=ft.alignment.top_center,
             expand=True,
@@ -116,15 +113,12 @@ class CompaniesPage:
                 fmt = f"{nums[:3]}.{nums[3:8]}.{nums[8:10]}-{nums[10:12]}"
             return fmt
 
-
     def mascarar_documento(self, e):
         tipo = self.tipo_doc.value or "CNPJ"
         valor = self.cnpj.value or ""
         formatado = self.formatar_documento(valor, tipo)
         self.cnpj.value = formatado
         self.cnpj.update()
-
-    # ... segue o resto do seu código sem alterações
 
     def on_resize(self, e):
         if self.page.route == "/empresas":
@@ -142,7 +136,7 @@ class CompaniesPage:
                     self.municipio.value
                 )
                 self.dados = verempresa()
-                self.tabempresas.content = self.buildtableE(self.gerarlinhas(self.dados))
+                self.tabempresas.content = self.buildTable(self.gerarLinhas(self.dados))
                 self.tabempresas.update()
                 self.dialog_cadastro.open = False
                 self.page.update()
@@ -161,7 +155,6 @@ class CompaniesPage:
         self.endereco.value = ""
         self.municipio.value = ""
         self.tipo_doc.value = "CNPJ" 
-
         # Configuração dos campos
         for campo in [self.razao, self.cnpj, self.contato, self.endereco, self.municipio, self.tipo_doc]:
             campo.height = 50
@@ -249,20 +242,15 @@ class CompaniesPage:
 
     def abrir_dialog_edicao(self, index):
         empresa = self.dados[index]
-        
-
-        self.cnpj_original = empresa[1]
-        
+        self.cnpj_original = empresa[1]    
         self.razao.value = empresa[0]
         self.cnpj.value = empresa[1]    
         self.contato.value = empresa[2]
         self.endereco.value = empresa[3]
         self.municipio.value = empresa[4]
-
         doc = empresa[1]
         doc_limpo = re.sub(r'\D', '', doc)
         tipo_inferido = "CNPJ"
-
         if len(doc_limpo) == 14 and "/" in doc and "-" in doc:
             if doc.startswith("0") or int(doc_limpo[:3]) <= 999:
                 tipo_inferido = "CAEPF"
@@ -272,7 +260,6 @@ class CompaniesPage:
             tipo_inferido = "CEI"
 
         self.tipo_doc.value = tipo_inferido
-
         # Configuração dos campos
         for campo in [self.razao, self.cnpj, self.contato, self.endereco, self.municipio, self.tipo_doc]:
             campo.height = 50
@@ -281,11 +268,9 @@ class CompaniesPage:
             campo.fill_color = ft.Colors.GREY_100
             campo.border_color = ft.Colors.GREY_300
             campo.focused_border_color = "#74FE4E"
-
         # Ajuste dos labels
         self.cnpj.label = "Número"
         self.tipo_doc.label = "Tipo"
-        
         # Criação da linha para documento
         linha_documento = ft.Row(
             controls=[
@@ -295,7 +280,6 @@ class CompaniesPage:
             spacing=10,
             alignment=ft.MainAxisAlignment.START,
         )
-
         # Trunca o nome da empresa se for muito longo
         nome_empresa = empresa[0]
         titulo = f"Editar Empresa: {nome_empresa[:20]}..." if len(nome_empresa) > 20 else f"Editar Empresa: {nome_empresa}"
@@ -380,7 +364,7 @@ class CompaniesPage:
                 atualizarempresa(cnpj_original, "cnpj", novo_cnpj)
             
             self.dados = verempresa()
-            self.tabempresas.content = self.buildtableE(self.gerarlinhas(self.dados))
+            self.tabempresas.content = self.buildTable(self.gerarLinhas(self.dados))
             self.tabempresas.update()
             self.fechar_dialog_edicao(None)
             self.mostrar_snackbar("Empresa atualizada com sucesso!")
@@ -396,7 +380,7 @@ class CompaniesPage:
             ex = self.dados[index]
             excluiremp(ex[1])
             self.dados = verempresa()
-            self.tabempresas.content = self.buildtableE(self.gerarlinhas(self.dados))
+            self.tabempresas.content = self.buildTable(self.gerarLinhas(self.dados))
             self.tabempresas.update()
             self.mostrar_snackbar("Empresa excluída com sucesso!")
         except Exception as e:
@@ -406,7 +390,7 @@ class CompaniesPage:
         self.snack_bar = ft.SnackBar(ft.Text(mensagem),bgcolor=cor)
         self.page.open(self.snack_bar)
 
-    def buildtableE(self, linhas):
+    def buildTable(self, linhas):
         if self.responsive.is_mobile():
             columns = [
                 ft.DataColumn(ft.Text("Razão Social", text_align=ft.TextAlign.CENTER)),
@@ -415,21 +399,20 @@ class CompaniesPage:
             ]
         else:
             columns = [
-                ft.DataColumn(ft.Text("Razão Social", text_align=ft.TextAlign.CENTER)),
-                ft.DataColumn(ft.Text("CNPJ / CAEPF / CEI", text_align=ft.TextAlign.CENTER)),
-                ft.DataColumn(ft.Text("Contato", text_align=ft.TextAlign.CENTER)),
-                ft.DataColumn(ft.Text("Endereço", text_align=ft.TextAlign.CENTER)),
-                ft.DataColumn(ft.Text("Município", text_align=ft.TextAlign.CENTER)),
-                ft.DataColumn(ft.Text("Ações", text_align=ft.TextAlign.CENTER)),
+                ft.DataColumn(ft.Text("Razão Social", text_align=ft.TextAlign.CENTER),heading_row_alignment=ft.MainAxisAlignment.CENTER),
+                ft.DataColumn(ft.Text("CNPJ/CAEPF/CEI"),heading_row_alignment=ft.MainAxisAlignment.CENTER),
+                ft.DataColumn(ft.Text("Contato", text_align=ft.TextAlign.CENTER),heading_row_alignment=ft.MainAxisAlignment.CENTER),
+                ft.DataColumn(ft.Text("Endereço", text_align=ft.TextAlign.CENTER),heading_row_alignment=ft.MainAxisAlignment.CENTER),
+                ft.DataColumn(ft.Text("Município", text_align=ft.TextAlign.CENTER),heading_row_alignment=ft.MainAxisAlignment.CENTER),
+                ft.DataColumn(ft.Text("Ações", text_align=ft.TextAlign.CENTER),heading_row_alignment=ft.MainAxisAlignment.CENTER),
             ]
         return ft.Column([ft.DataTable(
 
             heading_row_color="#A1FB8B",
-            horizontal_lines=ft.BorderSide(1),
             data_row_color=ft.Colors.WHITE,
-            divider_thickness=1,
+            divider_thickness=0.5,
             heading_text_style=ft.TextStyle(
-                size=15 if self.responsive.is_mobile() else 20,
+                size=15 if self.responsive.is_mobile() else 15,
                 weight=ft.FontWeight.BOLD,
                 font_family="Arial"
             ),
@@ -441,7 +424,7 @@ class CompaniesPage:
         )
         ],scroll=ft.ScrollMode.AUTO)
 
-    def gerarlinhas(self, data):
+    def gerarLinhas(self, data):
         linhas = []
         for i, empresa in enumerate(data):
             if self.responsive.is_mobile():
@@ -468,15 +451,15 @@ class CompaniesPage:
                     break
                 cells = [
                     ft.DataCell(ft.Text(empresa[0].upper(),size=11)),
-                    ft.DataCell(ft.Text(empresa[1],size=11)),
-                    ft.DataCell(ft.Text(empresa[2],size=11)),
-                    ft.DataCell(ft.Text(empresa[3].upper(),size=11)),
+                    ft.DataCell(ft.Container(content=ft.Text(empresa[1],size=11),alignment=ft.alignment.center)),
+                    ft.DataCell(ft.Container(content=ft.Text(empresa[2],size=11,text_align=ft.TextAlign.CENTER),alignment=ft.alignment.center)),
+                    ft.DataCell(ft.Container(content=ft.Text(empresa[3].upper(),size=11,text_align=ft.TextAlign.CENTER),alignment=ft.alignment.center)),
                     ft.DataCell(ft.Text(empresa[4].upper(),size=11)),
                     ft.DataCell(
                         ft.Row([
                             ft.IconButton(
                                 icon=ft.Icons.EDIT,
-                                icon_color=ft.Colors.BLUE,
+                                icon_color=ft.Colors.GREY_600,
                                 on_click=lambda e, idx=i: self.abrir_dialog_edicao(idx)
                             ),
                             ft.IconButton(
@@ -504,7 +487,7 @@ class CompaniesPage:
                    (termo_busca in (emp[3] or "").lower())
             ]
         
-        self.tabempresas.content = self.buildtableE(self.gerarlinhas(self.dados))
+        self.tabempresas.content = self.buildTable(self.gerarLinhas(self.dados))
         self.tabempresas.update()
 
     def build_content(self):
