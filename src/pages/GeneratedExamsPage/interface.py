@@ -41,7 +41,7 @@ class GeneratedExamsPage:
         def gerar_linhas(self, dataatt):
             linhas = []
             for exame in dataatt:
-                if len(linhas) > 10:
+                if len(linhas) >= 8:
                     break
                 cells = [
                         ft.DataCell(ft.Container(content=ft.Text(exame[0]), alignment=ft.alignment.center)),

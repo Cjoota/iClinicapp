@@ -10,7 +10,7 @@ from src.pages.GeneratedExamsPage.interface import GeneratedExamsPage
 from src.pages.AccountingPage.interface import AccountingPage
 from src.pages.CompaniesPage.interface import CompaniesPage
 from src.pages.CreateExamPage.interface import CreateExamPage
-from src.pages.Relations.interface import Relations
+from src.pages.RelationsPage.interface import Relations
 class Router:
     def __init__(self, page: ft.Page):
         self.page = page

@@ -22,8 +22,11 @@ class Relations:
             height=48
         )
         self.expansion_list = ft.ExpansionPanelList(
-            expand_icon_color=ft.Colors.GREY_700,
-            on_change=self.expandir_empresa
+            expand_icon_color=ft.Colors.BLACK54,
+            on_change=self.expandir_empresa,
+            divider_color=ft.Colors.WHITE,
+            elevation=10,
+            
         )
         self.carregar_empresas()
 
@@ -61,9 +64,6 @@ class Relations:
             return {}
 
         for arquivo in relacoes_dir.rglob("*.[xX][lL][sS][xX]"):
-            if "modelo" in arquivo.name.lower():
-                continue
-
             partes = arquivo.stem.split(" - ")
             if len(partes) >= 3:
                 empresa_nome = partes[0].strip()
@@ -102,12 +102,12 @@ class Relations:
 
     def carregar_empresas(self, filtro=""):
         self.expansion_list.controls.clear()
-        for (empresa, cnpj), arquivo in self.empresas_exames.items():
+        for (empresa, cnpj), _ in self.empresas_exames.items():
             if filtro.lower() in empresa.lower():
                 if len(self.expansion_list.controls) >= 50:  # limite de empresas na tela
                     break
                 self.expansion_list.controls.append(
-                    self.criar_painel_empresa(empresa, cnpj, arquivo)
+                    self.criar_painel_empresa(empresa, cnpj)
                 )
         self.page.update()
 
@@ -120,30 +120,31 @@ class Relations:
             wb = load_workbook(arquivo)
             ws = wb.active
             for row_num in range(6, ws.max_row + 1):
-                if (ws[f"B{row_num}"].value == colaborador and
-                    ws[f"D{row_num}"].value == exame_texto and
+                if (ws[f"B{row_num}"].value == colaborador or
+                    ws[f"D{row_num}"].value == exame_texto or
                     str(ws[f"K{row_num}"].value) == str(data)):
                     ws[f"B{row_num}"] = None
                     ws[f"D{row_num}"] = None
                     ws[f"K{row_num}"] = None
                     break
             wb.save(arquivo)
-            print(f"Exame excluído com sucesso")
+            self.page.open(ft.SnackBar(content=ft.Text("Registro Excluído.",color=ft.Colors.BLACK),bgcolor=ft.Colors.GREEN))
         except Exception as e:
-            print(f"Erro ao excluir exame: {e}")
+            self.page.open(ft.SnackBar(content=ft.Text(f"Erro ao excluir: {str(e)}",color=ft.Colors.BLACK),bgcolor=ft.Colors.RED))
 
         # Recarrega só a empresa modificada
         self.empresas_exames = self.listar_empresas()
         self.carregar_empresas(self.search_field.value if hasattr(self, 'search_field') else "")
 
-    def criar_painel_empresa(self, empresa, cnpj, arquivo):
+    def criar_painel_empresa(self, empresa:str, cnpj):
         return ft.ExpansionPanel(
             can_tap_header=True,
+            bgcolor="#EEFFEA",
             header=ft.Container(
                 content=ft.Column(
                     [
                         ft.Text(
-                            empresa,
+                            empresa.upper(),
                             size=18,
                             weight=ft.FontWeight.NORMAL,
                             color=ft.Colors.GREY_900,
@@ -156,21 +157,21 @@ class Relations:
                             font_family="Roboto"
                         ) if cnpj else ft.Container()
                     ],
-                    spacing=2
+                    spacing=2,
+                    
                 ),
                 padding=ft.padding.symmetric(vertical=8, horizontal=12),
-                bgcolor=ft.Colors.with_opacity(0.08, ft.Colors.GREY_100), 
-                border_radius=20,
+                bgcolor="#EEFFEA",
+                border_radius=5
             ),
             content=ft.Container(
                 content=ft.Text(
-                    "Clique para carregar exames...",
+                    "Carregando exames",
                     italic=True,
                     size=14,
                     color=ft.Colors.GREY_500
                 ),
-                bgcolor=ft.Colors.WHITE,
-                border_radius=20,
+                bgcolor="#EEFFEA",
                 padding=16
             )
         )
@@ -202,7 +203,6 @@ class Relations:
                 spacing=4
             ),
             bgcolor=ft.Colors.WHITE,
-            border_radius=20,
             padding=16
         )
         self.page.update()

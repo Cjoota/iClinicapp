@@ -8,15 +8,12 @@ import shutil
 class ControleExames:
     def __init__(self, pasta_export="exportados"):
         self.raiz = Path("relacoes")
-        self.raiz_modelos = Path("relacoes/modelos")
-        self.modelo = Path("relacoes/modelos/relacao.xlsx")
+        self.modelo = Path("modelos_excel/modelo_relacao/relacao.xlsx")
         self.json = Path("Relacao_empresas.json")
         self.pasta_export = Path(pasta_export)
 
         if not self.raiz.exists():
             self.raiz.mkdir(exist_ok=True)
-        if not self.raiz_modelos.exists():
-            self.raiz_modelos.mkdir(exist_ok=True)
         if not self.pasta_export.exists():
             self.pasta_export.mkdir(exist_ok=True)
 
