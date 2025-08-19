@@ -644,6 +644,22 @@ class CreateExamPage:
                         saida.mkdir(exist_ok=True)
                         self.nome_arquivo = f"{modelo} {self.empresas[0].replace(' ', '-')} {nome.replace(' ', '-')} {dt.datetime.now().strftime('%d-%m-%Y %H-%M')}.xlsx"
                         wb.save(saida / self.nome_arquivo)
+                    elif modelo == "ACUIDADE VISUAL":
+                        wb = load_workbook(caminho_modelo)
+                        ws = wb.active
+                        ws["E8"] = nome # type: ignore
+                        ws["D9"] = cpf # type: ignore
+                        ws["I9"] = nascimento # type: ignore
+                        ws["L8"] = funcao # type: ignore
+                        ws["L9"] = setor # type: ignore
+                        ws["G9"] = f"{idade} Anos"
+                        ws["F7"] = self.empresas[0] # type: ignore
+                        ws["N6"] = self.dataselect # type: ignore
+                        ws["M7"] = tipo_exame[0]
+                        saida = Path(r"documentos_gerados")
+                        saida.mkdir(exist_ok=True)
+                        self.nome_arquivo = f"{str(modelo).replace(" ","")} {self.empresas[0].replace(' ', '-')} {nome.replace(' ', '-')} {dt.datetime.now().strftime('%d-%m-%Y %H-%M')}.xlsx"
+                        wb.save(saida / self.nome_arquivo)
                 self.nomeclb.value = None
                 self.cpfclb.value = None
                 self.datanascimentoclb.value = None
