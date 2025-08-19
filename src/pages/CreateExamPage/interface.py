@@ -578,6 +578,8 @@ class CreateExamPage:
                     if not caminho_modelo.exists():
                         continue  
                     if modelo == "ANAMNESE":
+                        if not "ANAMNESE" in exames_selecionados:
+                            exames_selecionados.append("ANAMNESE")
                         wb = load_workbook(caminho_modelo)
                         ws = wb.active
                         ws["C10"] = nome # type: ignore
@@ -599,6 +601,8 @@ class CreateExamPage:
                             return
                         if not exames_selecionados:
                             self.main.modal("Aviso","Exame será gerado sem exames complementares!")
+                        if not "ASO" in exames_selecionados:
+                            exames_selecionados.insert(0,"ASO")
                         wb = load_workbook(caminho_modelo)
                         ws = wb.active
                         ws["D13"] = nome# type: ignore
@@ -629,6 +633,8 @@ class CreateExamPage:
                         self.nome_arquivo = f"{modelo} {self.empresas[0].replace(' ', '-')} {nome.replace(' ', '-')} {dt.datetime.now().strftime('%d-%m-%Y %H-%M')}.xlsx"
                         wb.save(saida / self.nome_arquivo)
                     elif modelo == "AUDIOMETRIA":
+                        if not "AUDIOMETRIA" in exames_selecionados:
+                            exames_selecionados.append("AUDIOMETRIA")
                         wb = load_workbook(caminho_modelo)
                         ws = wb.active
                         ws["E15"] = nome# type: ignore
@@ -645,6 +651,8 @@ class CreateExamPage:
                         self.nome_arquivo = f"{modelo} {self.empresas[0].replace(' ', '-')} {nome.replace(' ', '-')} {dt.datetime.now().strftime('%d-%m-%Y %H-%M')}.xlsx"
                         wb.save(saida / self.nome_arquivo)
                     elif modelo == "ACUIDADE VISUAL":
+                        if not "ACUIDADE VISUAL" in exames_selecionados:
+                            exames_selecionados.append("ACUIDADE VISUAL")
                         wb = load_workbook(caminho_modelo)
                         ws = wb.active
                         ws["E8"] = nome # type: ignore
@@ -674,7 +682,7 @@ class CreateExamPage:
                 self.page.snack_bar = self.modal
                 self.modal.open = True
                 self.clean_risks()
-                self.controle.registrar_exames(self.empresas[0], nome, exames_selecionados, self.dataselect)
+                self.controle.registrar_exames(self.empresas[0], nome, exames_selecionados , self.dataselect)
                 self.page.add(self.modal)      
                 
         def show_loading(self,page, show=True):
