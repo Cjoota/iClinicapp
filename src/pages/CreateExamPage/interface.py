@@ -277,6 +277,7 @@ class CreateExamPage:
                 "GLICEMIA",
                 "PSICOSSOCIAL",
                 "V.D.R.L",
+                "BETA-HCG",
                 "ESPIROMETRIA",
                 "RAIO-X (TORAX)",
                 "RAIO-X (LOMBO)",
@@ -430,7 +431,8 @@ class CreateExamPage:
                 "Névoas",
                 "Solventes",
                 "Vapores Orgânicos",
-                "Poeiras Minerais",]
+                "Poeiras Minerais",
+            ]
             riscos_biologicos = [
                 "Bactérias",
                 "Fungos",
@@ -438,7 +440,8 @@ class CreateExamPage:
                 "Vírus",
                 "Bacilos",
                 "Protozoarios",
-                "Micoses",]
+                "Micoses",
+            ]
             riscos_ergonomicos = [
                 "Esforço Fisícos",
                 "Levantamento de carga",
@@ -447,7 +450,8 @@ class CreateExamPage:
                 "Trabalho em Turno",
                 "Postura Inadequada",
                 "Objetos Perfurocortantes",
-                "Deslocamento em Ambiente Industrial",]
+                "Deslocamento em Ambiente Industrial",
+            ]
             modal = ft.AlertDialog(
                 modal=True,
                 bgcolor="#FFFFFF",
