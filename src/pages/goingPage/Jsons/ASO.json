@@ -2,7 +2,10 @@
   "APTO para função": "B47",
   "APTO para trabalho em altura": "B49",
   "APTO para trabalho confinado": "B51",
-  "APTO com restrição": "B53",
+  "Apto com restrição": {
+        "check_cell": "B53",
+        "text_cell": "D53" 
+    },
   "INAPTO para a função": "J47",
   "INAPTO temporariamente": "J49",
   "Em observação": "J51"

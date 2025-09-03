@@ -1,6 +1,7 @@
 import json
 from dataclasses import dataclass
 from PIL import Image as PILImage
+import base64
 import shutil
 import os
 import flet as ft
@@ -189,22 +190,25 @@ class Andamentos:
 
         controles_exames = []
         for exame in exames_da_empresa:
-            botoes = self.gerenciar_painel_exames(exame["arquivo"], exame["tipo_exame"])
 
             linha_exame = ft.Row(
-                [
-                    ft.Text(
-                        f"Colaborador: {exame['colaborador']} | Exame: {exame['tipo_exame']} | Data: {exame['data']}",
-                        size=14,
-                        color=ft.Colors.GREY_800,
-                        expand=True
-                    ),
-                    *botoes
-                ],
                 alignment=ft.MainAxisAlignment.SPACE_BETWEEN,
                 vertical_alignment=ft.CrossAxisAlignment.CENTER,
                 spacing=10
             )
+            
+            botoes = self.gerenciar_painel_exames(exame["arquivo"], exame["tipo_exame"], linha_exame)
+            
+            linha_exame.controls = [
+                ft.Text(
+                    f"Colaborador: {exame['colaborador']} | Exame: {exame['tipo_exame']} | Data: {exame['data']}",
+                    size=14,
+                    color=ft.Colors.GREY_800,
+                    expand=True
+                ),
+                *botoes
+            ]
+        
             controles_exames.append(linha_exame)
 
         painel.content = ft.Container(
@@ -401,7 +405,7 @@ class Andamentos:
 
         return caminho_copia
 
-    def gerenciar_painel_exames(self, caminho_xlsx: Path, tipo_exame: str):
+    def gerenciar_painel_exames(self, caminho_xlsx: Path, tipo_exame: str, linha_exame: ft.Row):
         botoes = []
         tipo = tipo_exame.upper()
 
@@ -470,7 +474,17 @@ class Andamentos:
                     on_click=lambda e, caminho=caminho_xlsx, tipo=tipo: self.abrir_dialog_assinatura(caminho, tipo, "paciente")
                 )
             )
-
+        botoes.append(
+            ft.ElevatedButton(
+                text="Finalizar",
+                icon=ft.Icons.DONE_ALL,
+                bgcolor=ft.Colors.GREEN_700,
+                color=ft.Colors.WHITE,
+                # O on_click chama a nossa nova função, passando o ficheiro e a própria linha da UI
+                on_click=lambda e, c=caminho_xlsx, r=linha_exame: self.finalizar_exame(c, r)
+            )
+        )   
+        
         return botoes
 
     def controlar_anamnese(self, caminho_xlsx: Path):
@@ -545,43 +559,68 @@ class Andamentos:
 
         self.page.open(dialog_opcoes)
         self.page.update()
-
+   
     def controlar_aso(self, caminho_xlsx: Path):
         caminho_x_img = self.criar_imagem_x()
 
         controles_opcoes = []
-        for descricao, celula in self.json_aso.items():
-            cb = ft.Checkbox(label=descricao, value=False)
-            controles_opcoes.append((descricao, celula, cb))
+        mapa_check_textfield = {}
 
-        lista_controles = [cb for _, _, cb in controles_opcoes]
-        coluna_opcoes = ft.Column(lista_controles, scroll=ft.ScrollMode.AUTO, height=400)
+        for descricao, dados in self.json_aso.items():
+            if isinstance(dados, dict):
+                check_cell = dados.get("check_cell")
+                text_cell = dados.get("text_cell")
+
+                campo_texto_restricao = ft.TextField(
+                    label="Descreva a restrição",
+                    width=400,
+                    disabled=True,
+                    data=text_cell
+                )
+
+                def toggle_textfield(e):
+                    textfield = mapa_check_textfield[e.control]
+                    textfield.disabled = not e.control.value
+                    if not e.control.value:
+                        textfield.value = ""
+                    self.page.update()
+
+                cb = ft.Checkbox(
+                    label=descricao, 
+                    value=False, 
+                    data=check_cell,
+                    on_change=toggle_textfield
+                )
+
+                controles_opcoes.append(cb)
+                controles_opcoes.append(campo_texto_restricao)
+                mapa_check_textfield[cb] = campo_texto_restricao
+
+            else:
+                celula = dados
+                cb = ft.Checkbox(label=descricao, value=False, data=celula)
+                controles_opcoes.append(cb)
+
+        coluna_opcoes = ft.Column(controles_opcoes, scroll=ft.ScrollMode.AUTO, height=400, spacing=10)
 
         def salvar_opcoes(e):
             try:
                 wb = openpyxl.load_workbook(str(caminho_xlsx))
                 ws = wb.worksheets[0]
 
-                # Remove imagens antigas nas células do ASO
-                todas_celulas = [celula for _, celula, _ in controles_opcoes]
-                imagens_para_remover = []
-                for img in ws._images:
-                    anchor = img.anchor
-                    if isinstance(anchor, str) and anchor in todas_celulas:
-                        imagens_para_remover.append(img)
-                    elif hasattr(anchor, "_from"):
-                        col = anchor._from.col + 1
-                        row = anchor._from.row + 1
-                        cel = openpyxl.utils.get_column_letter(col) + str(row)
-                        if cel in todas_celulas:
-                            imagens_para_remover.append(img)
-                for img in imagens_para_remover:
-                    ws._images.remove(img)
+                # (Opcional) Pode re-adicionar aqui a sua lógica para remover imagens antigas se precisar
 
-                # Insere as novas marcações com deslocamento ajustado
-                for descricao, celula, cb in controles_opcoes:
-                    if cb.value:
-                        self.inserir_marcacao(ws, celula, caminho_x_img, offset_x_pixels=4, offset_y_pixels=3)
+                for controle in coluna_opcoes.controls:
+                    if isinstance(controle, ft.Checkbox):
+                        if controle.value:
+                            celula_check = controle.data
+                            self.inserir_marcacao(ws, celula_check, caminho_x_img, offset_x_pixels=4, offset_y_pixels=3)
+
+                            if controle in mapa_check_textfield:
+                                textfield_associado = mapa_check_textfield[controle]
+                                celula_texto = textfield_associado.data
+                                texto_restricao = textfield_associado.value or ""
+                                ws[celula_texto] = texto_restricao
 
                 wb.save(str(caminho_xlsx))
                 dialog_opcoes.open = False
@@ -605,6 +644,9 @@ class Andamentos:
 
     def controlar_audiometria(self, caminho_xlsx: str):
 
+        LARGURA_EXATA_PX = 1127
+        ALTURA_EXATA_PX = 539
+        
         caminho_x_img = self.caminho_imagem_x
 
         offsets_personalizados = {
@@ -630,59 +672,47 @@ class Andamentos:
 
         def salvar_desenho_audiometria(e, linhas_desenhadas, caminho_xlsx_alvo, dialog_para_fechar):
             if not linhas_desenhadas:
-                print("Nenhum desenho para salvar.")
                 self.fechar_dialog(dialog_para_fechar)
                 return
 
             try:
-                LARGURA_EXCEL_PX = 1116
-                ALTURA_EXCEL_PX = 516
-
                 caminho_imagem_fundo = Path("assets/audiometria/audiometria.png")
-                with Image.open(caminho_imagem_fundo) as img_fundo:
-                    largura_canvas, altura_canvas = img_fundo.size
-
-                # Define o caminho de saída para a nova imagem transparente
                 pasta_saida_desenhos = Path("assets/desenhos_audiometria")
                 pasta_saida_desenhos.mkdir(parents=True, exist_ok=True)
-                nome_arquivo_saida = f"{Path(caminho_xlsx_alvo).stem}_desenho_overlay.png"
+                nome_arquivo_saida = f"{Path(caminho_xlsx_alvo).stem}_desenho_final.png"
                 caminho_imagem_saida = pasta_saida_desenhos / nome_arquivo_saida
 
-                # Cria uma imagem transparente com as mesmas dimensões do canvas onde foi desenhado
-                desenho_transparente = Image.new("RGBA", (largura_canvas, altura_canvas), (0, 0, 0, 0))
-                draw = ImageDraw.Draw(desenho_transparente)
+                # Redimensiona a imagem de fundo para as dimensões exatas antes de compor
+                fundo = Image.open(caminho_imagem_fundo).convert("RGBA")
+                fundo = fundo.resize((LARGURA_EXATA_PX, ALTURA_EXATA_PX))
 
-                # Desenha as linhas nesta imagem transparente
+                # O overlay já é criado com o tamanho certo indiretamente pelo canvas
+                desenho_overlay = Image.new("RGBA", (LARGURA_EXATA_PX, ALTURA_EXATA_PX), (255, 255, 255, 0))
+                draw = ImageDraw.Draw(desenho_overlay)
                 for linha in linhas_desenhadas:
-                    draw.line(
-                        [(linha.x1, linha.y1), (linha.x2, linha.y2)],
-                        fill=(255, 0, 0, 255),  # Cor vermelha (RGBA)
-                        width=3
-                    )
+                    draw.line([(linha.x1, linha.y1), (linha.x2, linha.y2)], fill=(255, 0, 0, 255), width=3)
 
-                # Salva a imagem que contém APENAS o desenho transparente
-                desenho_transparente.save(caminho_imagem_saida)
-                print(f"Desenho transparente salvo em: {caminho_imagem_saida}")
+                # Compõe a imagem final, que agora já tem o tamanho perfeito
+                imagem_final = Image.alpha_composite(fundo, desenho_overlay)
+                imagem_final.save(caminho_imagem_saida)
 
+                # Insere no Excel (sem necessidade de forçar o tamanho, pois já está correto)
                 wb = openpyxl.load_workbook(str(caminho_xlsx_alvo))
                 ws = wb.worksheets[0]
-                
-
                 img_excel = ExcelImage(caminho_imagem_saida)
+
+                # Opcional: A imagem já tem o tamanho certo, mas podemos garantir
+                img_excel.width = LARGURA_EXATA_PX
+                img_excel.height = ALTURA_EXATA_PX
                 
-
-                img_excel.width = LARGURA_EXCEL_PX
-                img_excel.height = ALTURA_EXCEL_PX
-
+                # Célula de destino confirmada
                 celula_alvo = 'A22'
                 ws.add_image(img_excel, celula_alvo)
-
                 wb.save(str(caminho_xlsx_alvo))
-                print(f"Desenho sobreposto e redimensionado com sucesso no Excel!")
+                print(f"Imagem inserida com alinhamento perfeito em '{celula_alvo}'!")
 
             except Exception as ex:
                 print(f"Erro ao salvar o desenho da audiometria: {ex}")
-            
             finally:
                 self.fechar_dialog(dialog_para_fechar)
         
@@ -690,41 +720,39 @@ class Andamentos:
             dialog.open = False
             self.page.update()
 
-        def abrir_dialogo_tabela_audio(self, e=None):
+        def abrir_dialogo_tabela_audio(e=None):
+            # Usamos a lógica anti-cache que implementámos antes
+            caminho_imagem_path = Path("assets/audiometria/audiometria.png")
+            with open(caminho_imagem_path, "rb") as f:
+                imagem_bytes = f.read()
+            imagem_b64 = base64.b64encode(imagem_bytes).decode("utf-8")
 
-            caminho_imagem = "audiometria/audiometria.png"
-            with Image.open(os.path.abspath("assets/audiometria/audiometria.png")) as img:
-                largura, altura = img.size
-
+            # A lógica de desenho continua igual
             linhas_desenhadas = []
             last_x, last_y = 0, 0
-
             def pan_start(e: ft.DragStartEvent):
                 nonlocal last_x, last_y
                 last_x = e.local_x
                 last_y = e.local_y
-
             def pan_update(e: ft.DragUpdateEvent):
                 nonlocal last_x, last_y
-                linha = ft.canvas.Line(
-                    last_x, last_y, e.local_x, e.local_y,
-                    paint=ft.Paint(stroke_width=3, color=ft.Colors.RED)
-                )
+                linha = ft.canvas.Line(last_x, last_y, e.local_x, e.local_y, paint=ft.Paint(stroke_width=3, color=ft.Colors.RED))
                 linhas_desenhadas.append(linha)
                 canvas.shapes.append(linha)
                 canvas.update()
-                last_x = e.local_x
-                last_y = e.local_y
-
+                last_x, last_y = e.local_x, e.local_y
             def limpar_canvas(e):
                 canvas.shapes.clear()
                 linhas_desenhadas.clear()
                 canvas.update()
 
+            # --- ALTERAÇÃO PRINCIPAL AQUI ---
+            # Todos os elementos agora usam as dimensões exatas.
+
             canvas = ft.canvas.Canvas(
                 [],
-                width=largura,
-                height=altura,
+                width=LARGURA_EXATA_PX,
+                height=ALTURA_EXATA_PX,
             )
 
             gesture_detector = ft.GestureDetector(
@@ -732,35 +760,38 @@ class Andamentos:
                 on_pan_start=pan_start,
                 on_pan_update=pan_update,
                 drag_interval=2,
-                width=largura,
-                height=altura,
+                width=LARGURA_EXATA_PX,
+                height=ALTURA_EXATA_PX,
             )
 
             stack = ft.Stack(
                 controls=[
                     ft.Image(
-                src=caminho_imagem,
-                width=largura,
-                height=altura,
-                fit=ft.ImageFit.CONTAIN
-            ),
-                gesture_detector,
+                        src_base64=imagem_b64,
+                        width=LARGURA_EXATA_PX,
+                        height=ALTURA_EXATA_PX,
+                        # 'FILL' força a imagem a preencher a área, mesmo que estique.
+                        # Isto garante que o seu guia visual corresponde perfeitamente ao canvas.
+                        fit=ft.ImageFit.FILL,
+                    ),
+                    gesture_detector,
                 ],
-                width=largura,
-                height=altura,
+                width=LARGURA_EXATA_PX,
+                height=ALTURA_EXATA_PX,
             )
 
             dialog = ft.AlertDialog(
                 modal=True,
                 title=ft.Text("Tabela Audiometria - Marque as frequências"),
                 content=stack,
-                actions=[
-                    ft.TextButton("Limpar", on_click=lambda:limpar_canvas),
-                    ft.TextButton("Fechar", on_click=lambda:fechar_dialog),
-                    ft.TextButton("Salvar", on_click=lambda e: salvar_desenho_audiometria(e, linhas_desenhadas, caminho_xlsx, dialog)),
-                ],
                 actions_alignment=ft.MainAxisAlignment.END,
             )
+            
+            dialog.actions = [
+                ft.TextButton("Limpar", on_click=limpar_canvas),
+                ft.TextButton("Fechar", on_click=lambda e: self.fechar_dialog(dialog)),
+                ft.TextButton("Salvar", on_click=lambda e: salvar_desenho_audiometria(e, linhas_desenhadas, caminho_xlsx, dialog)),
+            ]
 
             self.page.open(dialog)
             self.page.update()
@@ -850,6 +881,69 @@ class Andamentos:
         self.page.open(dialog_opcoes)
         self.page.update()
         
+    def finalizar_exame(self, caminho_xlsx: Path, linha_exame: ft.Row):
+        """
+        Verifica se o exame está completo, move-o para a pasta 'exames_prontos' e remove-o da UI.
+        A lógica de verificação agora está contida aqui dentro.
+        """
+
+        # --- Função de verificação agora está aninhada aqui dentro ---
+        def _verificar_exame_assinado() -> bool:
+            """
+            Função interna que verifica se a assinatura do paciente existe.
+            Ela tem acesso direto à variável 'caminho_xlsx' da função externa.
+            """
+            nome_assinatura = f"{caminho_xlsx.stem}_assinatura_paciente.png"
+            caminho_assinatura = Path("assets/assinaturas") / nome_assinatura
+            return caminho_assinatura.exists()
+
+        # -----------------------------------------------------------
+
+        print(f"A tentar finalizar o exame: {caminho_xlsx.name}")
+
+        # A chamada agora é para a função interna, mais limpa e direta
+        if not _verificar_exame_assinado():
+            aviso = "Exame não pode ser finalizado. A assinatura do paciente é necessária."
+            print(aviso)
+            self.page.snack_bar = ft.SnackBar(
+                content=ft.Text(aviso),
+                bgcolor=ft.Colors.ORANGE_700,
+            )
+            self.page.snack_bar.open = True
+            self.page.update()
+            return
+
+        # O resto da função continua exatamente igual
+        try:
+            pasta_destino = Path("exames_prontos")
+            pasta_destino.mkdir(parents=True, exist_ok=True)
+            
+            shutil.move(str(caminho_xlsx), str(pasta_destino))
+            print(f"Ficheiro movido com sucesso para {pasta_destino}")
+
+            for empresa, arquivos in list(self.empresas_exames.items()):
+                if caminho_xlsx in arquivos:
+                    self.empresas_exames[empresa].remove(caminho_xlsx)
+                    if not self.empresas_exames[empresa]:
+                        del self.empresas_exames[empresa]
+                    break
+            
+            linha_exame.visible = False
+            self.page.snack_bar = ft.SnackBar(
+                content=ft.Text(f"Exame '{caminho_xlsx.stem}' finalizado com sucesso!"),
+                bgcolor=ft.Colors.GREEN_700,
+            )
+            self.page.snack_bar.open = True
+            self.page.update()
+
+        except Exception as ex:
+            print(f"Erro ao finalizar o exame: {ex}")
+            self.page.snack_bar = ft.SnackBar(
+                content=ft.Text(f"Erro ao finalizar exame: {ex}"),
+                bgcolor=ft.Colors.RED_700,
+            )
+            self.page.snack_bar.open = True
+            self.page.update()
 
     def fechar_dialog(self, dialog):
         dialog.open = False

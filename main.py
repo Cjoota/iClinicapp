@@ -67,7 +67,7 @@ def limpar_cache():
 	locals().clear()
 	log.info("CACHE LIMPO")
 
-ft.app(target=Main,view=ft.AppView.WEB_BROWSER, host="192.168.3.23",port=53712,assets_dir=f"{Path("assets").absolute()}")
+ft.app(target=Main,view=ft.AppView.WEB_BROWSER, host="localhost",port=53712,assets_dir=f"{Path("assets").absolute()}")
 
 
 
