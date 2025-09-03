@@ -11,6 +11,7 @@ from src.pages.AccountingPage.interface import AccountingPage
 from src.pages.CompaniesPage.interface import CompaniesPage
 from src.pages.CreateExamPage.interface import CreateExamPage
 from src.pages.RelationsPage.interface import Relations
+from src.pages.goingPage.interface import Andamentos
 class Router:
     def __init__(self, page: ft.Page):
         self.page = page
@@ -29,6 +30,7 @@ class Router:
             "/criar_exame": self.contentRouteBuilder(CreateExamPage,"/criar_exame",True),
             "/agendamento": self.contentRouteBuilder(AppointmentPage,"/agendamento",True),
             "/relacoes": self.contentRouteBuilder(Relations,"/relacoes",True),
+            "/andamentos": self.contentRouteBuilder(Andamentos,"/andamentos",True),
         }
 
         self.page.on_route_change = self.route_change

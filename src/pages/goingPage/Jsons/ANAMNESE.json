@@ -1,0 +1,102 @@
+{
+  "Audição: ouve bem": {
+    "sim": "E15",
+    "nao": "F15"
+  },
+  "Visão: enxerga bem": {
+    "sim": "E16",
+    "nao": "F16"
+  },
+  "Alergia": {
+    "sim": "E17",
+    "nao": "F17"
+  },
+  "Desmaios/tonturas/convulsões": {
+    "sim": "E18",
+    "nao": "F18"
+  },
+  "Falta de ar/tosse crônica": {
+    "sim": "E19",
+    "nao": "F19"
+  },
+  "Dor no peito": {
+    "sim": "E20",
+    "nao": "F20"
+  },
+  "Dor nas costas/juntas": {
+    "sim": "E21",
+    "nao": "F21"
+  },
+  "Ansiedade / Depressão": {
+    "sim": "E22",
+    "nao": "F22"
+  },
+  "Dor de cabeça": {
+    "sim": "E23",
+    "nao": "F23"
+  },
+  "Diabetes": {
+    "sim": "E24",
+    "nao": "F24"
+  },
+  "Bronquite": {
+    "sim": "E25",
+    "nao": "F25"
+  },
+  "Hérnias": {
+    "sim": "E26",
+    "nao": "F26"
+  },
+  "Tem alguma doença de trabalho": {
+    "sim": "E27",
+    "nao": "F27"
+  },
+  "Doenças cardíacas": {
+    "sim": "J15",
+    "nao": "K15"
+  },
+  "Cirurgias": {
+    "sim": "J16",
+    "nao": "K16"
+  },
+  "Internamento": {
+    "sim": "J17",
+    "nao": "K17"
+  },
+  "Pressão alta": {
+    "sim": "J18",
+    "nao": "K18"
+  },
+  "Doenças pulmonares": {
+    "sim": "J19",
+    "nao": "K19"
+  },
+  "Afastamento por doença": {
+    "sim": "J20",
+    "nao": "K20"
+  },
+  "Afastamento por acidente": {
+    "sim": "J21",
+    "nao": "K21"
+  },
+  "Problemas ao levantar peso": {
+    "sim": "J22",
+    "nao": "K22"
+  },
+  "Dor no ombro, cotovelo, punho.": {
+    "sim": "J23",
+    "nao": "K23"
+  },
+  "Doença na coluna": {
+    "sim": "J24",
+    "nao": "K24"
+  },
+  "Faz uso de bebida alcoólica": {
+    "sim": "J25",
+    "nao": "K25"
+  },
+  "Fuma": {
+    "sim": "J26",
+    "nao": "K26"
+  }
+}

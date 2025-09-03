@@ -1,0 +1,46 @@
+import flet as ft
+import flet.canvas as cv
+from PIL import Image
+
+def main(page: ft.Page):
+    caminho_imagem = "assets/audiometria/audiometria.png"
+    with Image.open(caminho_imagem) as img:
+        largura, altura = img.size
+
+    linhas = []
+    last_x, last_y = 0, 0
+
+    canvas = cv.Canvas(width=largura, height=altura)
+
+    def pan_start(e: ft.DragStartEvent):
+        nonlocal last_x, last_y
+        last_x, last_y = e.local_x, e.local_y
+
+    def pan_update(e: ft.DragUpdateEvent):
+        nonlocal last_x, last_y
+        linha = cv.Line(last_x, last_y, e.local_x, e.local_y, paint=ft.Paint(stroke_width=3, color=ft.Colors.RED))
+        linhas.append(linha)
+        canvas.shapes.append(linha)
+        canvas.update()
+        last_x, last_y = e.local_x, e.local_y
+
+    gesture_detector = ft.GestureDetector(
+        content=canvas,
+        on_pan_start=pan_start,
+        on_pan_update=pan_update,
+        width=largura,
+        height=altura,
+    )
+
+    stack = ft.Stack(
+        controls=[
+            ft.Image(src=caminho_imagem, width=largura, height=altura),
+            gesture_detector,
+        ],
+        width=largura,
+        height=altura,
+    )
+
+    page.add(stack)
+
+ft.app(target=main)

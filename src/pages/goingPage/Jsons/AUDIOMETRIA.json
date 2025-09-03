@@ -1,0 +1,22 @@
+{
+    "Orelha direita": {
+    "Limiares auditivos dentro dos padrões de normalidade": {"celula": "B54","tipo": "checkbox"},
+    "Alterado na(s)frequência(s) de": {"celula": "K55", "tipo": "texto"},
+    "Clinico: Normal": {"celula": "D56", "tipo": "checkbox"},
+    "Clinico: Alterado na(s)frequência(s) de": {"celula": "F56", "tipo": "checkbox"},
+    "Perda leve": {"celula": "B57", "tipo": "checkbox"},
+    "Perda Moderada": {"celula": "E57", "tipo": "checkbox"},
+    "Perda Severa": {"celula": "I57", "tipo": "checkbox"},
+    "Perda Profunda": {"celula": "M57", "tipo": "checkbox"}
+    },
+    "Orelha esquerda": {
+    "Limiares auditivos dentro dos padrões de normalidade": {"celula": "B60","tipo": "checkbox"},
+    "Alterado na(s)frequência(s) de": {"celula": "K61", "tipo": "texto"},
+    "Clinico: Normal": {"celula": "D62", "tipo": "checkbox"},
+    "Clinico: Alterado na(s)frequência(s) de": {"celula": "F62", "tipo": "checkbox"},
+    "Perda leve": {"celula": "B63", "tipo": "checkbox"},
+    "Perda Moderada": {"celula": "E63", "tipo": "checkbox"},
+    "Perda Severa": {"celula": "I63", "tipo": "checkbox"},
+    "Perda Profunda": {"celula": "M63", "tipo": "checkbox"}
+    }
+}

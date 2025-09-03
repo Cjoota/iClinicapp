@@ -2,6 +2,8 @@ from datetime import datetime
 import asyncio
 import hashlib
 import secrets
+from pdf2image import convert_from_path
+import fitz
 import re
 import psycopg2
 import datetime
@@ -10,7 +12,7 @@ from pathlib import Path
 import json
 import subprocess
 import platform
-
+from PIL import Image
 from src.database.datacreator import connectlocal,commitlocal
 from src.database.databasecache import ContabilidadeDB
 from src.database.models import CaixaDiario, CaixaMensal,User,Agendamentos,Empresa
@@ -79,7 +81,29 @@ class Auth:
         except Exception as e:
             return f"Erro ao cadastrar: {str(e)}", 150
 
+def pdf_para_imagem(caminho_pdf, caminho_imagem):
+    """
+    Converte a primeira página do PDF para uma imagem PNG usando PyMuPDF.
+    caminho_imagem deve ser o caminho completo do arquivo PNG, ex: 'assets/imagens_temp/arquivo.png'
+    """
     
+    doc = fitz.open(str(caminho_pdf))
+    pagina = doc.load_page(0)  # primeira página
+    pix = pagina.get_pixmap(dpi=200)  # define a resolução
+    pix.save(str(caminho_imagem))  # caminho completo com nome e extensão .png
+    doc.close()
+
+def pdf_para_imagem_redimensionada(caminho_pdf, caminho_imagem, largura_desejada, altura_desejada):
+    doc = fitz.open(str(caminho_pdf))
+    pagina = doc.load_page(0)
+    pix = pagina.get_pixmap(dpi=200)
+    pix.save(str(caminho_imagem))
+    doc.close()
+
+    img = Image.open(caminho_imagem)
+    img = img.resize((largura_desejada, altura_desejada), Image.LANCZOS)
+    img.save(caminho_imagem)
+
 def excluir_agendamentos_vencidos():
     try:
         from datetime import datetime
@@ -168,17 +192,16 @@ def atualizarempresa(cnpj, coluna, valor):
                 else:
                     raise ValueError("Empresa não encontrada com esse CNPJ.")
 
+
 def converter_xlsx_para_pdf(caminho_xlsx, caminho_pdf):
     """ Converte arquivos ( .xlsx ) para ( .pdf )."""
     if platform.system() == "Windows":
-        # Caminho completo para o executável soffice.exe
         libreoffice_path = r"C:\Program Files\LibreOffice\program\soffice.exe"
     else:
-        # No Linux geralmente está no PATH
         libreoffice_path = "libreoffice"
 
-    caminho_arquivo = caminho_xlsx
-    pasta_saida = caminho_pdf
+    caminho_arquivo = Path(caminho_xlsx)
+    pasta_saida = Path(caminho_pdf).parent  # Diretório onde salvar o PDF
 
     subprocess.run([
         libreoffice_path,
@@ -187,6 +210,13 @@ def converter_xlsx_para_pdf(caminho_xlsx, caminho_pdf):
         str(caminho_arquivo),
         "--outdir", str(pasta_saida)
     ], check=True)
+
+    # O LibreOffice gera o PDF com o mesmo nome do arquivo Excel, mas extensão .pdf
+    pdf_gerado = pasta_saida / (caminho_arquivo.stem + ".pdf")
+
+    # Se o caminho final for diferente, renomeia o arquivo gerado
+    if pdf_gerado != Path(caminho_pdf):
+        pdf_gerado.rename(caminho_pdf)
 
 
 def get_cargo(user):

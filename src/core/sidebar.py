@@ -6,7 +6,6 @@ from src.utils.telaresize import Responsive
 from src.pages.LoginPage.interface import LoginPage
 from src.functions.funcs import Verificacoes, get_cargo, get_apelido
 
-
 class Sidebar:
     def __init__(self, page: ft.Page):
         self.page = page
@@ -159,6 +158,7 @@ class Sidebar:
                 self.menu_item(ft.Icons.DESCRIPTION, "Exames gerados", "/exames_gerados"),
                 self.menu_item(ft.Icons.CALENDAR_TODAY, "Agendamento", "/agendamento"),
                 self.menu_item(ft.Icons.ASSIGNMENT, "Relacoes", "/relacoes"),
+                self.menu_item(ft.Icons.ASSIGNMENT_LATE_SHARP, "Andamentos", "/andamentos")
             ]
             return ft.Container(
                 content=ft.Column([ft.Column(self.sidebar_items, expand=True), self.avatar],
@@ -185,6 +185,7 @@ class Sidebar:
                 self.menu_item(ft.Icons.CREATE_ROUNDED, "Gerar exames", "/gerardoc"),
                 self.menu_item(ft.Icons.DESCRIPTION, "Exames gerados", "/documentos"),
                 self.menu_item(ft.Icons.ASSIGNMENT, "Relacoes", "/relacoes"),
+                self.menu_item(ft.Icons.ASSIGNMENT, "Andamentos", "/andamentos")
             ]
             return ft.Container(
                 content=ft.Row(self.sidebar_items_mobile, alignment=ft.MainAxisAlignment.CENTER,

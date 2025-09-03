@@ -553,9 +553,13 @@ class CreateExamPage:
                 control.title.value # type: ignore
                 for control in self.listviewtypes.controls 
                 if isinstance(control, ft.ListTile) and getattr(control, "selected", False)]
-            dtn = nascimento.replace("/","-")
-            idade = dt.datetime.strptime(dtn, "%d-%m-%Y").date()
-            idade = self.calcular_idade(idade)
+            if nascimento is not None:
+                dtn = nascimento.replace("/", "-")
+                idade_dt = dt.datetime.strptime(dtn, "%d-%m-%Y").date()
+                idade = self.calcular_idade(idade_dt)
+            else:
+                self.main.barra_aviso("Preencha a data de nascimento!", ft.Colors.YELLOW, text_color=ft.Colors.BLACK)
+                return
             if not self.empresas:
                 self.main.barra_aviso("Selecione pelo menos uma empresa!",ft.Colors.YELLOW,text_color=ft.Colors.BLACK)
                 return
