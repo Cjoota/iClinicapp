@@ -1,102 +1,137 @@
 {
-  "Audição: ouve bem": {
-    "sim": "E15",
-    "nao": "F15"
+  "Página 1: Anamnese Geral": {
+    "Audição: ouve bem": {
+      "opcoes": ["sim", "nao"],
+      "celulas": ["E15", "F15"]
+    },
+    "Visão: enxerga bem": {
+      "opcoes": ["sim", "nao"],
+      "celulas": ["E16", "F16"]
+    },
+    "Alergia": {
+      "opcoes": ["sim", "nao"],
+      "celulas": ["E17", "F17"]
+    },
+    "Desmaios/tonturas/convulsões": {
+      "opcoes": ["sim", "nao"],
+      "celulas": ["E18", "F18"]
+    },
+    "Falta de ar/tosse crônica": {
+      "opcoes": ["sim", "nao"],
+      "celulas": ["E19", "F19"]
+    },
+    "Dor no peito": {
+      "opcoes": ["sim", "nao"],
+      "celulas": ["E20", "F20"]
+    },
+    "Dor nas costas/juntas": {
+      "opcoes": ["sim", "nao"],
+      "celulas": ["E21", "F21"]
+    },
+    "Ansiedade / Depressão": {
+      "opcoes": ["sim", "nao"],
+      "celulas": ["E22", "F22"]
+    },
+    "Dor de cabeça": {
+      "opcoes": ["sim", "nao"],
+      "celulas": ["E23", "F23"]
+    },
+    "Diabetes": {
+      "opcoes": ["sim", "nao"],
+      "celulas": ["E24", "F24"]
+    },
+    "Bronquite": {
+      "opcoes": ["sim", "nao"],
+      "celulas": ["E25", "F25"]
+    },
+    "Hérnias": {
+      "opcoes": ["sim", "nao"],
+      "celulas": ["E26", "F26"]
+    },
+    "Tem alguma doença de trabalho": {
+      "opcoes": ["sim", "nao"],
+      "celulas": ["E27", "F27"]
+    },
+    "Doenças cardíacas": {
+      "opcoes": ["sim", "nao"],
+      "celulas": ["J15", "K15"]
+    },
+    "Cirurgias": {
+      "opcoes": ["sim", "nao"],
+      "celulas": ["J16", "K16"]
+    },
+    "Internamento": {
+      "opcoes": ["sim", "nao"],
+      "celulas": ["J17", "K17"]
+    },
+    "Pressão alta": {
+      "opcoes": ["sim", "nao"],
+      "celulas": ["J18", "K18"]
+    },
+    "Doenças pulmonares": {
+      "opcoes": ["sim", "nao"],
+      "celulas": ["J19", "K19"]
+    },
+    "Afastamento por doença": {
+      "opcoes": ["sim", "nao"],
+      "celulas": ["J20", "K20"]
+    },
+    "Afastamento por acidente": {
+      "opcoes": ["sim", "nao"],
+      "celulas": ["J21", "K21"]
+    },
+    "Problemas ao levantar peso": {
+      "opcoes": ["sim", "nao"],
+      "celulas": ["J22", "K22"]
+    },
+    "Dor no ombro, cotovelo, punho.": {
+      "opcoes": ["sim", "nao"],
+      "celulas": ["J23", "K23"]
+    },
+    "Doença na coluna": {
+      "opcoes": ["sim", "nao"],
+      "celulas": ["J24", "K24"]
+    },
+    "Faz uso de bebida alcoólica": {
+      "opcoes": ["sim", "nao"],
+      "celulas": ["J25", "K25"]
+    },
+    "Fuma": {
+      "opcoes": ["sim", "nao"],
+      "celulas": ["J26", "K26"]
+    }
   },
-  "Visão: enxerga bem": {
-    "sim": "E16",
-    "nao": "F16"
-  },
-  "Alergia": {
-    "sim": "E17",
-    "nao": "F17"
-  },
-  "Desmaios/tonturas/convulsões": {
-    "sim": "E18",
-    "nao": "F18"
-  },
-  "Falta de ar/tosse crônica": {
-    "sim": "E19",
-    "nao": "F19"
-  },
-  "Dor no peito": {
-    "sim": "E20",
-    "nao": "F20"
-  },
-  "Dor nas costas/juntas": {
-    "sim": "E21",
-    "nao": "F21"
-  },
-  "Ansiedade / Depressão": {
-    "sim": "E22",
-    "nao": "F22"
-  },
-  "Dor de cabeça": {
-    "sim": "E23",
-    "nao": "F23"
-  },
-  "Diabetes": {
-    "sim": "E24",
-    "nao": "F24"
-  },
-  "Bronquite": {
-    "sim": "E25",
-    "nao": "F25"
-  },
-  "Hérnias": {
-    "sim": "E26",
-    "nao": "F26"
-  },
-  "Tem alguma doença de trabalho": {
-    "sim": "E27",
-    "nao": "F27"
-  },
-  "Doenças cardíacas": {
-    "sim": "J15",
-    "nao": "K15"
-  },
-  "Cirurgias": {
-    "sim": "J16",
-    "nao": "K16"
-  },
-  "Internamento": {
-    "sim": "J17",
-    "nao": "K17"
-  },
-  "Pressão alta": {
-    "sim": "J18",
-    "nao": "K18"
-  },
-  "Doenças pulmonares": {
-    "sim": "J19",
-    "nao": "K19"
-  },
-  "Afastamento por doença": {
-    "sim": "J20",
-    "nao": "K20"
-  },
-  "Afastamento por acidente": {
-    "sim": "J21",
-    "nao": "K21"
-  },
-  "Problemas ao levantar peso": {
-    "sim": "J22",
-    "nao": "K22"
-  },
-  "Dor no ombro, cotovelo, punho.": {
-    "sim": "J23",
-    "nao": "K23"
-  },
-  "Doença na coluna": {
-    "sim": "J24",
-    "nao": "K24"
-  },
-  "Faz uso de bebida alcoólica": {
-    "sim": "J25",
-    "nao": "K25"
-  },
-  "Fuma": {
-    "sim": "J26",
-    "nao": "K26"
+  "Página 2: Exame Físico": {
+    "Mucosas": {
+      "opcoes": ["Coradas", "Descoradas"],
+      "celulas": ["B35", "B36"]
+    },
+    "Respiratório": {
+      "opcoes": ["MV Presente, sem RA", "Alterado"],
+      "celulas": ["B38", "B39"]
+    },
+    "Cardiovascular": {
+      "opcoes": ["BNF, regular, sem Sopros", "Alterado"],
+      "celulas": ["B41", "B42"]
+    },
+    "Abdome": {
+      "opcoes": ["Plano, flácido, sem dor à palpação", "Alterado"],
+      "celulas": ["B44", "B45"]
+    },
+    "Extremidades": {
+      "opcoes": ["Simétricas, sem edemas, pulsos periféricos palpáveis", "Alterado"],
+      "celulas": ["B47", "B48"]
+    },
+    "Coluna": {
+      "tipo": "checkbox",
+      "opcoes": ["normal", "lordose", "cifose", "escoliose"],
+      "celulas": ["B51", "B52", "C52", "D52"]
+    },
+    "Pulso": { "tipo": "texto", "celula": "E36" },
+    "Pressão arterial": { "tipo": "texto", "celula": "E39" },
+    "D.U.M": { "tipo": "texto", "celula": "E42" },
+    "Peso": { "tipo": "texto", "celula": "E45" },
+    "Altura": { "tipo": "texto", "celula": "E48" },
+    "Observações": { "tipo": "texto_grande", "celula": "E52" }
   }
-}
+  }
