@@ -281,7 +281,7 @@ class Andamentos:
             painel_colaborador = ft.ExpansionPanel(
                 can_tap_header=True,
                 header=ft.ListTile(
-                    leading=ft.Icon(ft.icons.PERSON_OUTLINE),
+                    leading=ft.Icon(ft.Icons.PERSON_OUTLINE),
                     title=ft.Text(colaborador, weight=ft.FontWeight.BOLD)
                 )
             )
@@ -296,7 +296,7 @@ class Andamentos:
                 # Passa o painel_colaborador para a função que cria os botões
                 botoes = self.gerenciar_painel_exames(exame["arquivo"], exame["tipo_exame"], linha_exame, painel_colaborador)
                 linha_exame.controls = [
-                    ft.Text(f"Exame: {exame['tipo_exame']} | Data: {exame['data']}", size=14, color=ft.colors.GREY_800, expand=True),
+                    ft.Text(f"Exame: {exame['tipo_exame']} | Data: {exame['data']}", size=14, color=ft.Colors.GREY_800, expand=True),
                     *botoes
                 ]
                 linhas_de_exames_do_colaborador.append(linha_exame)
@@ -391,30 +391,32 @@ class Andamentos:
             self.state.y = e.local_y
 
         def salvar_assinatura(e):
-            # Converte as linhas desenhadas no canvas para uma imagem PNG transparente.
+            """ Salva a assinatura e atualiza o ficheiro original. """
             try:
+                # 1. Cria a imagem .png da assinatura (sem alterações)
                 img = Image.new("RGBA", (largura, altura), (255, 255, 255, 0))
                 draw = ImageDraw.Draw(img)
-
                 for linha in linhas_desenhadas:
-                    draw.line(
-                        [(linha.x1, linha.y1), (linha.x2, linha.y2)],
-                        fill=(0, 0, 0, 255),
-                        width=3
-                    )
-                # Salva a imagem da assinatura
+                    draw.line([(linha.x1, linha.y1), (linha.x2, linha.y2)], fill=(0, 0, 0, 255), width=3)
+                
                 nome_assinatura = f"{caminho_para_editar.stem}_assinatura_{quem_assina}.png"
                 caminho_assinatura = Path("assets/assinaturas") / nome_assinatura
                 caminho_assinatura.parent.mkdir(parents=True, exist_ok=True)
                 img.save(str(caminho_assinatura))
 
-                # Insere a assinatura no ficheiro Excel
+                # 2. Insere a assinatura na CÓPIA do ficheiro Excel (sem alterações)
                 self.inserir_assinatura_excel(caminho_para_editar, caminho_assinatura, tipo_exame, quem_assina)
-                
-                # Fecha o diálogo
+
+                # --- 3. LINHA NOVA E CRUCIAL ---
+                # Agora, movemos a cópia editada para substituir o ficheiro original.
+                # Isto garante que o ficheiro principal está sempre atualizado.
+                print(f"A atualizar o ficheiro original '{caminho_xlsx.name}' com a versão assinada.")
+                shutil.move(str(caminho_para_editar), str(caminho_xlsx))
+                # ---------------------------
+
                 dialog_assinatura.open = False
                 self.page.update()
-                
+
             except Exception as ex:
                 print(f"Erro ao salvar assinatura: {ex}")
 
@@ -536,7 +538,7 @@ class Andamentos:
         # Retorna o caminho do arquivo copiado
         return caminho_copia
 
-    def gerenciar_painel_exames(self, caminho_xlsx: Path, tipo_exame: str, linha_exame: ft.Row):
+    def gerenciar_painel_exames(self, caminho_xlsx: Path, tipo_exame: str, linha_exame: ft.Row, painel_colaborador: ft.ExpansionPanel):
         """ Cria os botões de ação para cada exame, dependendo do tipo de exame. """
 
         botoes = []
@@ -615,7 +617,7 @@ class Andamentos:
                 bgcolor=ft.Colors.GREEN_700,
                 color=ft.Colors.WHITE,
                 # O on_click chama a nossa nova função, passando o ficheiro e a própria linha da UI
-                on_click=lambda e, c=caminho_xlsx, r=linha_exame: self.finalizar_exame(c, r)
+                on_click=lambda e, c=caminho_xlsx, r=linha_exame, p=painel_colaborador: self.finalizar_exame(c, r, p)
             )
         )   
         
@@ -626,7 +628,7 @@ class Andamentos:
         lista_controles_geral, mapa_controles = [], {}
         
         for nome_pagina, questoes in self.json_anamnese.items():
-            lista_controles_geral.append(ft.Text(nome_pagina, size=18, weight=ft.FontWeight.BOLD, color=ft.colors.BLUE_GREY_700))
+            lista_controles_geral.append(ft.Text(nome_pagina, size=18, weight=ft.FontWeight.BOLD, color=ft.Colors.BLUE_GREY_700))
             for descricao, dados in questoes.items():
                 tipo_controle = dados.get("tipo", "radio")
                 controle = None
@@ -1017,9 +1019,9 @@ class Andamentos:
         botao_tabela_audio = ft.ElevatedButton("Tabela Audio", on_click=abrir_dialogo_tabela_audio)
 
         # Cria os controles de opções baseados no JSON
-        self.controles_opcoes = []
+        controles_opcoes = []
         for secao, opcoes in self.json_audio.items():
-            self.controles_opcoes.append(ft.Text(secao, style="headlineSmall", weight=ft.FontWeight.BOLD))
+            controles_opcoes.append(ft.Text(secao, style="headlineSmall", weight=ft.FontWeight.BOLD))
             grupo_secao = []
             for descricao, dados in opcoes.items():
                 tipo = dados.get("tipo", "checkbox")
@@ -1031,11 +1033,11 @@ class Andamentos:
                 else:
                     controle = ft.Text(f"Tipo desconhecido para {descricao}")
                 grupo_secao.append((descricao, celula, tipo, controle))
-            self.controles_opcoes.append(grupo_secao)
+            controles_opcoes.append(grupo_secao)
 
         # Cria uma lista plana de controles para a coluna
         lista_controles = []
-        for item in self.controles_opcoes:
+        for item in controles_opcoes:
             if isinstance(item, ft.Text):
                 lista_controles.append(item)
             else:
@@ -1053,7 +1055,7 @@ class Andamentos:
 
                 # Remove imagens antigas nas células de checkbox para evitar sobreposição
                 todas_celulas_checkbox = []
-                for item in self.controles_opcoes:
+                for item in controles_opcoes:
                     if isinstance(item, list):
                         for _, celula, tipo, _ in item:
                             if tipo == "checkbox":
@@ -1074,7 +1076,7 @@ class Andamentos:
                     ws._images.remove(img_excel)
 
                 # Itera sobre os controles e insere as marcações no Excel
-                for item in self.controles_opcoes:
+                for item in controles_opcoes:
                     if isinstance(item, list):
                         for descricao, celula, tipo, controle in item:
                             if tipo == "checkbox":
@@ -1111,6 +1113,7 @@ class Andamentos:
         Move o ficheiro do exame e atualiza a UI, escondendo a linha do exame
         e também o painel do colaborador se ele ficar vazio.
         """
+        print(f"--- 1. INICIANDO finalização para: {caminho_xlsx.name} ---")
         # A função interna _verificar_exame_assinado continua igual
         def _verificar_exame_assinado() -> bool:
             nome_assinatura = f"{caminho_xlsx.stem}_assinatura_paciente.png"
@@ -1121,6 +1124,7 @@ class Andamentos:
             # ... (lógica de aviso de assinatura em falta, sem alterações) ...
             return
 
+        print("--- 2. Verificação de assinatura OK. A prosseguir para o bloco try... ---")
         try:
             # ... (lógica para mover o ficheiro e atualizar os dados, sem alterações) ...
             pasta_destino = Path("exames_prontos")
@@ -1132,7 +1136,7 @@ class Andamentos:
                     if not self.empresas_exames[empresa]:
                         del self.empresas_exames[empresa]
                     break
-            
+            print(f"--- 6. FICHEIRO MOVIDO para '{pasta_destino}' com sucesso. Atualizando UI... ---")
             # --- LÓGICA DE ATUALIZAÇÃO DA UI MELHORADA ---
             # 1. Esconde a linha do exame finalizado
             linha_exame.visible = False
@@ -1146,7 +1150,7 @@ class Andamentos:
 
             self.page.snack_bar = ft.SnackBar(
                 content=ft.Text(f"Exame '{caminho_xlsx.stem}' finalizado com sucesso!"),
-                bgcolor=ft.colors.GREEN_700,
+                bgcolor=ft.Colors.GREEN_700,
             )
             self.page.snack_bar.open = True
             self.page.update()
@@ -1155,7 +1159,7 @@ class Andamentos:
             print(f"!!!!!!!! 7. ERRO INESPERADO OCORREU: {ex} !!!!!!!!")
             self.page.snack_bar = ft.SnackBar(
                 content=ft.Text(f"Erro ao finalizar exame: {ex}"),
-                bgcolor=ft.colors.RED_700,
+                bgcolor=ft.Colors.RED_700,
             )
             self.page.snack_bar.open = True
             self.page.update()
