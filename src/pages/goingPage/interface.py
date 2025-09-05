@@ -630,7 +630,7 @@ class Andamentos:
 
         # Itera sobre cada página definida no JSON
         for nome_pagina, questoes in self.json_anamnese.items():
-            lista_controles_geral.append(ft.Text(nome_pagina, size=18, weight=ft.FontWeight.BOLD, color=ft.colors.BLUE_GREY_700))
+            lista_controles_geral.append(ft.Text(nome_pagina, size=18, weight=ft.FontWeight.BOLD, color=ft.Colors.BLUE_GREY_700))
             
             # Itera sobre cada item (seja de marcar ou de texto)
             for descricao, dados in questoes.items():
