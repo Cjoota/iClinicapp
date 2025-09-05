@@ -104,34 +104,61 @@
   "Página 2: Exame Físico": {
     "Mucosas": {
       "opcoes": ["Coradas", "Descoradas"],
-      "celulas": ["B35", "B36"]
+      "celulas": ["D33", "D34"]
     },
     "Respiratório": {
       "opcoes": ["MV Presente, sem RA", "Alterado"],
-      "celulas": ["B38", "B39"]
+      "celulas": ["D35", "D36"]
     },
     "Cardiovascular": {
       "opcoes": ["BNF, regular, sem Sopros", "Alterado"],
-      "celulas": ["B41", "B42"]
+      "celulas": ["D37", "D38"]
     },
     "Abdome": {
       "opcoes": ["Plano, flácido, sem dor à palpação", "Alterado"],
-      "celulas": ["B44", "B45"]
+      "celulas": ["D39", "D40"]
     },
     "Extremidades": {
       "opcoes": ["Simétricas, sem edemas, pulsos periféricos palpáveis", "Alterado"],
-      "celulas": ["B47", "B48"]
+      "celulas": ["D41", "D42"]
     },
     "Coluna": {
       "tipo": "checkbox",
       "opcoes": ["normal", "lordose", "cifose", "escoliose"],
-      "celulas": ["B51", "B52", "C52", "D52"]
+      "celulas": ["D43", "D44", "E44", "F44"]
     },
-    "Pulso": { "tipo": "texto", "celula": "E36" },
-    "Pressão arterial": { "tipo": "texto", "celula": "E39" },
-    "D.U.M": { "tipo": "texto", "celula": "E42" },
-    "Peso": { "tipo": "texto", "celula": "E45" },
-    "Altura": { "tipo": "texto", "celula": "E48" },
-    "Observações": { "tipo": "texto_grande", "celula": "E52" }
+    "Pulso": {
+      "tipo": "texto",
+      "celula": "I33",
+      "max_length": 2,
+      "input_filter": "digits"
+    },
+    "Pressão arterial": {
+      "tipo": "texto",
+      "celula": "I35",
+      "hint_text": "Ex: 120/80"
+    },
+    "D.U.M": {
+      "tipo": "texto",
+      "celula": "I37",
+      "hint_text": "Ex: DD/MM/AAAA"
+    },
+    "Peso": {
+      "tipo": "texto",
+      "celula": "I39",
+      "suffix": " KG",
+      "input_filter": "numbers"
+    },
+    "Altura": {
+      "tipo": "texto",
+      "celula": "I41",
+      "suffix": " m",
+      "input_filter": "numbers"
+    },
+    "Observações": {
+      "tipo": "texto_grande",
+      "celula": "H43",
+      "vertical_align": "bottom"
+    }
   }
-  }
+}
