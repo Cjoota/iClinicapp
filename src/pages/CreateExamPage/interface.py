@@ -277,6 +277,7 @@ class CreateExamPage:
                 "GLICEMIA",
                 "PSICOSSOCIAL",
                 "V.D.R.L",
+                "BETA-HCG",
                 "ESPIROMETRIA",
                 "RAIO-X (TORAX)",
                 "RAIO-X (LOMBO)",
@@ -430,7 +431,8 @@ class CreateExamPage:
                 "Névoas",
                 "Solventes",
                 "Vapores Orgânicos",
-                "Poeiras Minerais",]
+                "Poeiras Minerais",
+            ]
             riscos_biologicos = [
                 "Bactérias",
                 "Fungos",
@@ -438,7 +440,8 @@ class CreateExamPage:
                 "Vírus",
                 "Bacilos",
                 "Protozoarios",
-                "Micoses",]
+                "Micoses",
+            ]
             riscos_ergonomicos = [
                 "Esforço Fisícos",
                 "Levantamento de carga",
@@ -447,7 +450,8 @@ class CreateExamPage:
                 "Trabalho em Turno",
                 "Postura Inadequada",
                 "Objetos Perfurocortantes",
-                "Deslocamento em Ambiente Industrial",]
+                "Deslocamento em Ambiente Industrial",
+            ]
             modal = ft.AlertDialog(
                 modal=True,
                 bgcolor="#FFFFFF",
@@ -578,6 +582,8 @@ class CreateExamPage:
                     if not caminho_modelo.exists():
                         continue  
                     if modelo == "ANAMNESE":
+                        if not "ANAMNESE" in exames_selecionados:
+                            exames_selecionados.append("ANAMNESE")
                         wb = load_workbook(caminho_modelo)
                         ws = wb.active
                         ws["C10"] = nome # type: ignore
@@ -599,6 +605,8 @@ class CreateExamPage:
                             return
                         if not exames_selecionados:
                             self.main.modal("Aviso","Exame será gerado sem exames complementares!")
+                        if not "ASO" in exames_selecionados:
+                            exames_selecionados.insert(0,"ASO")
                         wb = load_workbook(caminho_modelo)
                         ws = wb.active
                         ws["D13"] = nome# type: ignore
@@ -629,6 +637,8 @@ class CreateExamPage:
                         self.nome_arquivo = f"{modelo} {self.empresas[0].replace(' ', '-')} {nome.replace(' ', '-')} {dt.datetime.now().strftime('%d-%m-%Y %H-%M')}.xlsx"
                         wb.save(saida / self.nome_arquivo)
                     elif modelo == "AUDIOMETRIA":
+                        if not "AUDIOMETRIA" in exames_selecionados:
+                            exames_selecionados.append("AUDIOMETRIA")
                         wb = load_workbook(caminho_modelo)
                         ws = wb.active
                         ws["E15"] = nome# type: ignore
@@ -644,6 +654,24 @@ class CreateExamPage:
                         saida.mkdir(exist_ok=True)
                         self.nome_arquivo = f"{modelo} {self.empresas[0].replace(' ', '-')} {nome.replace(' ', '-')} {dt.datetime.now().strftime('%d-%m-%Y %H-%M')}.xlsx"
                         wb.save(saida / self.nome_arquivo)
+                    elif modelo == "ACUIDADE VISUAL":
+                        if not "ACUIDADE VISUAL" in exames_selecionados:
+                            exames_selecionados.append("ACUIDADE VISUAL")
+                        wb = load_workbook(caminho_modelo)
+                        ws = wb.active
+                        ws["E8"] = nome # type: ignore
+                        ws["D9"] = cpf # type: ignore
+                        ws["I9"] = nascimento # type: ignore
+                        ws["L8"] = funcao # type: ignore
+                        ws["L9"] = setor # type: ignore
+                        ws["G9"] = f"{idade} Anos"
+                        ws["F7"] = self.empresas[0] # type: ignore
+                        ws["N6"] = self.dataselect # type: ignore
+                        ws["M7"] = tipo_exame[0]
+                        saida = Path(r"documentos_gerados")
+                        saida.mkdir(exist_ok=True)
+                        self.nome_arquivo = f"{str(modelo).replace(" ","")} {self.empresas[0].replace(' ', '-')} {nome.replace(' ', '-')} {dt.datetime.now().strftime('%d-%m-%Y %H-%M')}.xlsx"
+                        wb.save(saida / self.nome_arquivo)
                 self.nomeclb.value = None
                 self.cpfclb.value = None
                 self.datanascimentoclb.value = None
@@ -658,7 +686,7 @@ class CreateExamPage:
                 self.page.snack_bar = self.modal
                 self.modal.open = True
                 self.clean_risks()
-                self.controle.registrar_exames(self.empresas[0], nome, exames_selecionados, self.dataselect)
+                self.controle.registrar_exames(self.empresas[0], nome, exames_selecionados , self.dataselect)
                 self.page.add(self.modal)      
                 
         def show_loading(self,page, show=True):
