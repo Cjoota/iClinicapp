@@ -127,33 +127,36 @@
       "opcoes": ["normal", "lordose", "cifose", "escoliose"],
       "celulas": ["D43", "D44", "E44", "F44"]
     },
-    "Pulso": {
-      "tipo": "texto",
-      "celula": "I33",
-      "max_length": 2,
-      "input_filter": "digits"
+    "Pulso": { "tipo": "texto", "celula": "I33", "max_length": 3, "validation": "ppm" },
+      "Pressão arterial": { 
+      "tipo": "texto", 
+      "celula": "I35", 
+      "hint_text": "Ex: 120/808", 
+      "max_length": 7, 
+      "mask": "pressure",
+      "validation_regex": "^\\d{1,3}\\/\\d{1,3}$" 
     },
-    "Pressão arterial": {
-      "tipo": "texto",
-      "celula": "I35",
-      "hint_text": "Ex: 120/80"
-    },
-    "D.U.M": {
-      "tipo": "texto",
-      "celula": "I37",
-      "hint_text": "Ex: DD/MM/AAAA"
+    "D.U.M": { 
+      "tipo": "texto", 
+      "celula": "I37", 
+      "hint_text": "DD/MM/AAAA", 
+      "max_length": 10, 
+      "mask": "date",
+      "validation_regex": "^\\d{2}\\/\\d{2}\\/\\d{4}$"
     },
     "Peso": {
       "tipo": "texto",
       "celula": "I39",
       "suffix": " KG",
-      "input_filter": "numbers"
+      "input_filter": "numbers",
+      "max_length": 3
     },
     "Altura": {
       "tipo": "texto",
       "celula": "I41",
-      "suffix": " m",
-      "input_filter": "numbers"
+      "suffix": " cm",
+      "input_filter": "numbers",
+      "max_length": 3
     },
     "Observações": {
       "tipo": "texto_grande",
